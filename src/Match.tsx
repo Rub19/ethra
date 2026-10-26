@@ -254,16 +254,18 @@ export default function Match({ gameId, puuid, go }: { gameId: number; puuid: st
 
       {teams && (
         <div className="objs">
-          {teams.map((t) => (
-            <div key={t.teamId} className={`card ${t.teamId === p.teamId ? "mine" : ""}`}>
-              <b>{t.teamId === p.teamId ? "Ton équipe" : "Adversaires"}</b>
-              <span>{t.towerKills} tours</span>
-              <span>{t.dragonKills} dragons</span>
-              <span>{t.hordeKills ?? 0} larves</span>
-              <span>{t.riftHeraldKills} héraut</span>
-              <span>{t.baronKills} nashor</span>
-            </div>
-          ))}
+          {[...teams].sort((x) => (x.teamId === p.teamId ? -1 : 1)).map((t) => {
+            const kills = g.participants.filter((x) => x.teamId === t.teamId).reduce((a, x) => a + n(x.stats, "kills"), 0);
+            const stats: [number, string][] = g.mapId === 11
+              ? [[kills, "Kills"], [t.towerKills, "Tours"], [t.dragonKills, "Dragons"], [t.hordeKills ?? 0, "Larves"], [t.riftHeraldKills, "Héraut"], [t.baronKills, "Nashor"]]
+              : [[kills, "Kills"], [t.towerKills, "Tours"]];
+            return (
+              <div key={t.teamId} className={`card ${t.teamId === p.teamId ? "mine" : ""}`}>
+                <b className="ot">{t.teamId === p.teamId ? "Ton équipe" : "Adversaires"}</b>
+                <div className="ostats">{stats.map(([v, l]) => <div key={l}><b>{v}</b><small>{l}</small></div>)}</div>
+              </div>
+            );
+          })}
         </div>
       )}
 

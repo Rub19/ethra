@@ -109,29 +109,56 @@ function MatchRow({ g, puuid, d, queues, onOpen, onMatch }: { g: Game; puuid: st
 export function Scoreboard({ g, d, puuid, onOpen }: { g: Game; d: DD; puuid: string; onOpen: (p: string) => void }) {
   const min = g.gameDuration / 60;
   const maxDmg = Math.max(...g.participants.map((x) => n(x.stats, "totalDamageDealtToChampions")));
+  const myId = g.participantIdentities.find((i) => i.player.puuid === puuid)?.participantId;
+  const myTeam = g.participants.find((x) => x.participantId === myId)?.teamId ?? 100;
+  const teams = [myTeam, myTeam === 100 ? 200 : 100];
   return (
-    <div className="board">
-      {[100, 200].map((t) => (
-        <table key={t}>
-          <tbody>
-            {g.participants.filter((x) => x.teamId === t).map((x) => {
+    <table className="board">
+      <colgroup>
+        <col style={{ width: 52 }} />
+        <col />
+        <col style={{ width: 120 }} />
+        <col style={{ width: 70 }} />
+        <col style={{ width: 120 }} />
+        <col style={{ width: 170 }} />
+        <col style={{ width: 252 }} />
+      </colgroup>
+      {teams.map((t) => {
+        const list = g.participants.filter((x) => x.teamId === t);
+        const win = list[0]?.stats.win;
+        const k = list.reduce((a, x) => a + n(x.stats, "kills"), 0);
+        const de = list.reduce((a, x) => a + n(x.stats, "deaths"), 0);
+        const as = list.reduce((a, x) => a + n(x.stats, "assists"), 0);
+        const teamKills = Math.max(1, k);
+        return (
+          <tbody key={t}>
+            <tr className="bhead">
+              <th colSpan={2}><b className={win ? "good" : "bad"}>{win ? "Victoire" : "Défaite"}</b> · {t === myTeam ? "Ton équipe" : "Adversaires"}</th>
+              <th>{k} / {de} / {as}</th>
+              <th>KP</th>
+              <th>CS</th>
+              <th>Dégâts</th>
+              <th>Objets</th>
+            </tr>
+            {list.map((x) => {
               const who = g.participantIdentities.find((i) => i.participantId === x.participantId)?.player;
               const dmg = n(x.stats, "totalDamageDealtToChampions");
               return (
                 <tr key={x.participantId} className={who?.puuid === puuid ? "me" : ""}>
-                  <td><img src={img.champ(d, x.championId)} /></td>
+                  <td><img className="bc" src={img.champ(d, x.championId)} /></td>
                   <td className="name" onClick={() => who?.puuid && onOpen(who.puuid)}>{who?.gameName ?? "?"}<small>#{who?.tagLine}</small></td>
-                  <td>{n(x.stats, "kills")}/{n(x.stats, "deaths")}/{n(x.stats, "assists")}</td>
-                  <td>{cs(x.stats)} ({(cs(x.stats) / min).toFixed(1)})</td>
-                  <td className="bar"><i style={{ width: `${(dmg / maxDmg) * 100}%` }} />{dmg.toLocaleString("fr")}</td>
+                  <td className="c"><b>{n(x.stats, "kills")} / <span className="bad">{n(x.stats, "deaths")}</span> / {n(x.stats, "assists")}</b><small>{kda(x.stats).toFixed(2)} KDA</small></td>
+                  <td className="c">{Math.round(((n(x.stats, "kills") + n(x.stats, "assists")) / teamKills) * 100)}%</td>
+                  <td className="c">{cs(x.stats)}<small>{(cs(x.stats) / min).toFixed(1)}/min</small></td>
+                  <td className="c">{dmg.toLocaleString("fr")}<i className="dbar2"><i style={{ width: `${(dmg / maxDmg) * 100}%` }} /></i></td>
                   <td className="items">{[0, 1, 2, 3, 4, 5, 6].map((k) => n(x.stats, `item${k}`)).map((id, i) => (id ? <img key={i} src={img.item(d, id)} /> : <span key={i} />))}</td>
                 </tr>
               );
             })}
           </tbody>
-        </table>
-      ))}
-    </div>
+        );
+      })}
+    </table>
   );
 }
 
