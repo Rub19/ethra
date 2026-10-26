@@ -38,9 +38,8 @@ export function badges(g: Game, puuid: string) {
   return out;
 }
 
-function MatchRow({ g, puuid, d, queues, onOpen }: { g: Game; puuid: string; d: DD; queues: Record<number, string>; onOpen: (p: string) => void }) {
+function MatchRow({ g, puuid, d, queues, onOpen, onMatch }: { g: Game; puuid: string; d: DD; queues: Record<number, string>; onOpen: (p: string) => void; onMatch: () => void }) {
   const [full, setFull] = useState<Game | null>(null);
-  const [open, setOpen] = useState(false);
   useEffect(() => {
     gameDetails(g.gameId).then(setFull, () => {});
   }, [g.gameId]);
@@ -53,7 +52,7 @@ function MatchRow({ g, puuid, d, queues, onOpen }: { g: Game; puuid: string; d: 
     full?.participants.filter((x) => x.teamId === team).map((x) => {
       const who = full.participantIdentities.find((i) => i.participantId === x.participantId)?.player;
       return (
-        <button key={x.participantId} className={`pl ${who?.puuid === puuid ? "me" : ""}`} onClick={() => who?.puuid && onOpen(who.puuid)}>
+        <button key={x.participantId} className={`pl ${who?.puuid === puuid ? "me" : ""}`} onClick={(e) => (e.stopPropagation(), who?.puuid && onOpen(who.puuid))}>
           <img src={img.champ(d, x.championId)} />
           <span>{who?.gameName || who?.summonerName || "?"}</span>
         </button>
@@ -61,7 +60,7 @@ function MatchRow({ g, puuid, d, queues, onOpen }: { g: Game; puuid: string; d: 
     });
   return (
     <div className={`match ${remake ? "remake" : s.win ? "win" : "loss"}`}>
-      <div className="mrow" onClick={() => setOpen(!open)}>
+      <div className="mrow" onClick={onMatch}>
         <img className="champ" src={img.champ(d, p.championId)} />
         <div className="mmain">
           <div className="mtitle">
@@ -88,12 +87,11 @@ function MatchRow({ g, puuid, d, queues, onOpen }: { g: Game; puuid: string; d: 
           <div>{names(200)}</div>
         </div>
       </div>
-      {open && full && <Scoreboard g={full} d={d} puuid={puuid} onOpen={onOpen} />}
     </div>
   );
 }
 
-function Scoreboard({ g, d, puuid, onOpen }: { g: Game; d: DD; puuid: string; onOpen: (p: string) => void }) {
+export function Scoreboard({ g, d, puuid, onOpen }: { g: Game; d: DD; puuid: string; onOpen: (p: string) => void }) {
   const min = g.gameDuration / 60;
   const maxDmg = Math.max(...g.participants.map((x) => n(x.stats, "totalDamageDealtToChampions")));
   return (
@@ -204,7 +202,7 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
         </aside>
         <div className="list">
           {!games ? <p className="muted">Chargement de l'historique…</p> : sub === "apercu" ? (
-            games.map((g) => <MatchRow key={g.gameId} g={g} puuid={sum.puuid} d={d} queues={queues} onOpen={onOpen} />)
+            games.map((g) => <MatchRow key={g.gameId} g={g} puuid={sum.puuid} d={d} queues={queues} onOpen={onOpen} onMatch={() => go({ page: "match", gameId: g.gameId, puuid: sum.puuid })} />)
           ) : (
             <table className="pool">
               <thead><tr><th>Champion</th><th>Parties</th><th>Winrate</th><th>KDA</th><th>CS/min</th></tr></thead>

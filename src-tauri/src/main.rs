@@ -73,11 +73,30 @@ async fn live(state: tauri::State<'_, AppState>, path: String) -> Result<Value, 
     read(res).await
 }
 
+#[tauri::command]
+async fn opgg(state: tauri::State<'_, AppState>, tool: String, args: Value) -> Result<String, String> {
+    let body = serde_json::json!({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": tool, "arguments": args}});
+    let res = state
+        .http
+        .post("https://mcp-api.op.gg/mcp")
+        .header("Accept", "application/json, text/event-stream")
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+    let v = read(res).await?;
+    let text = v["result"]["content"][0]["text"].as_str().unwrap_or_default().to_string();
+    if v.get("error").is_some() || v["result"]["isError"] == true || text.is_empty() {
+        return Err(format!("OPGG {}", if text.is_empty() { v.to_string() } else { text }));
+    }
+    Ok(text)
+}
+
 fn main() {
     let http = reqwest::Client::builder().danger_accept_invalid_certs(true).build().unwrap();
     tauri::Builder::default()
         .manage(AppState { lcu: Mutex::new(None), http })
-        .invoke_handler(tauri::generate_handler![lcu, live])
+        .invoke_handler(tauri::generate_handler![lcu, live, opgg])
         .setup(|app| {
             let o = app.get_webview_window("overlay").unwrap();
             if let Some(m) = o.primary_monitor()? {

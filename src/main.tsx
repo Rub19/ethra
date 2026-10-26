@@ -8,11 +8,15 @@ import Live from "./Live";
 import Builds from "./Builds";
 import Champions from "./Champions";
 import Settings from "./Settings";
+import TierList from "./TierList";
+import Match from "./Match";
 
 export type Route =
   | { page: "profil"; puuid?: string }
   | { page: "champions" }
-  | { page: "champion"; champ: number }
+  | { page: "tierlist" }
+  | { page: "match"; gameId: number; puuid: string }
+  | { page: "champion"; champ: number; role?: string }
   | { page: "partie" }
   | { page: "overlays" }
   | { page: "reglages" };
@@ -65,7 +69,7 @@ function Search({ d, go, toast }: { d: DD | null; go: Go; toast: (s: string) => 
   type Opt = { key: string; label: string; sub: string; icon?: string; run: () => void };
   const opts: Opt[] = [
     ...(q.includes("#") ? [{ key: "find", label: q.trim(), sub: "Chercher ce joueur", run: () => lookup(q.trim()) }] : []),
-    ...champs.map(([id, c]) => ({ key: `c${id}`, label: c.name, sub: "Champion · build", icon: d ? img.champ(d, +id) : undefined, run: () => go({ page: "champion", champ: +id }) })),
+    ...champs.map(([id, c]) => ({ key: `c${id}`, label: c.name, sub: "Champion · build méta", icon: d ? img.champ(d, +id) : undefined, run: () => go({ page: "champion", champ: +id }) })),
     ...players.map((p) => ({ key: p.puuid, label: p.name, sub: "Joueur récent", run: () => go({ page: "profil", puuid: p.puuid }) })),
   ];
 
@@ -155,7 +159,7 @@ function App() {
         const b = await bestBuild(dd, champ, POSITIONS[mine?.assignedPosition] ?? "NONE", map, s.source);
         if (!b) return setToast(`Pas de build trouvé pour ${dd.champs[champ]?.name}`);
         const done = await applyBuild(dd, champ, b, { runes: s.autoRunes, spells: s.autoSpells, items: s.autoItems });
-        setToast(`${dd.champs[champ]?.name} : ${done.join(", ")} importés (${b.source === "toi" ? `tes ${b.games} parties` : "reco Riot"})`);
+        setToast(`${dd.champs[champ]?.name} : ${done.join(", ")} importés (${b.source === "toi" ? `tes ${b.games} parties` : b.source === "opgg" ? "méta OP.GG" : "reco Riot"})`);
       } catch (e) {
         setToast(`Import impossible : ${e}`);
       }
@@ -172,9 +176,9 @@ function App() {
   }, [toast]);
 
   const inGame = !!phase && LIVE.includes(phase);
-  const tabs: [Route["page"], string][] = [["profil", "Profil"], ["champions", "Champions"], ["partie", "Partie en cours"], ["overlays", "Overlays"], ["reglages", "Réglages"]];
+  const tabs: [Route["page"], string][] = [["profil", "Profil"], ["tierlist", "Tier list"], ["champions", "Champions"], ["partie", "Partie en cours"], ["overlays", "Overlays"], ["reglages", "Réglages"]];
   const active = route.page === "champion" ? "champions" : route.page === "profil" && route.puuid && route.puuid !== self?.puuid ? "" : route.page;
-  const needsClient = phase === null && !["reglages", "overlays", "champions", "champion"].includes(route.page);
+  const needsClient = phase === null && !["reglages", "overlays", "champions", "champion", "tierlist"].includes(route.page);
 
   return (
     <div className="app">
@@ -218,10 +222,14 @@ function App() {
           </div>
         ) : route.page === "profil" ? (
           <Profile key={route.puuid ?? "me"} puuid={route.puuid ?? null} go={go} />
+        ) : route.page === "match" ? (
+          <Match key={route.gameId} gameId={route.gameId} puuid={route.puuid} go={go} />
+        ) : route.page === "tierlist" ? (
+          <TierList go={go} />
         ) : route.page === "champions" ? (
           <Champions go={go} />
         ) : route.page === "champion" ? (
-          <Builds key={route.champ} champ={route.champ} go={go} />
+          <Builds key={`${route.champ}-${route.role}`} champ={route.champ} role={route.role} go={go} />
         ) : route.page === "partie" ? (
           <Live phase={phase ?? ""} go={go} />
         ) : (

@@ -41,9 +41,10 @@ export default function Settings({ only }: { only: "general" | "overlay" }) {
         ))}
         {only === "general" && (
           <label className="toggle">
-            <div><b>Source des builds</b><small>« Auto » utilise tes parties dès que tu as 3 games sur le champion.</small></div>
+            <div><b>Source des builds</b><small>« Auto » prend le build méta OP.GG ; si OP.GG ne répond pas, tes propres parties, puis la reco Riot.</small></div>
             <select value={cfg.source} onChange={(e) => save({ source: e.target.value })}>
-              <option value="auto">Auto</option>
+              <option value="auto">Auto (OP.GG, sinon tes parties, sinon Riot)</option>
+              <option value="opgg">Toujours la méta OP.GG</option>
               <option value="toi">Toujours tes parties</option>
               <option value="riot">Toujours la reco Riot</option>
             </select>

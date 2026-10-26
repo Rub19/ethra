@@ -1,7 +1,8 @@
 import { DD, Participant, history, isCompleted, lcu, me, n } from "./lcu";
+import { opggBuild } from "./opgg";
 
 export type Build = {
-  source: "toi" | "riot";
+  source: "toi" | "riot" | "opgg";
   games: number;
   wins: number;
   primary: number;
@@ -74,14 +75,18 @@ export async function myBuild(d: DD, champ: number, map = 11): Promise<Build | n
   };
 }
 
-export async function bestBuild(d: DD, champ: number, position: string, map: number, source: string) {
+export async function bestBuild(d: DD, champ: number, position: string, map: number, source: string): Promise<Build | null> {
   const riot = await riotBuild(champ, position, map);
-  const mine = source === "riot" ? null : await myBuild(d, champ, map).catch(() => null);
-  if (mine && (source === "toi" || mine.games >= 3)) {
-    if (mine.perks.length < 9 && riot) mine.perks = [...mine.perks, ...riot.perks.slice(6)];
-    return mine;
-  }
-  return riot ?? mine;
+  const fill = (b: Build | null) => {
+    if (b && b.perks.length < 9 && riot) b.perks = [...b.perks, ...riot.perks.slice(6)];
+    return b;
+  };
+  const opgg = () => (map === 11 ? opggBuild(d, champ, position).catch(() => null) : Promise.resolve(null));
+  const mine = () => myBuild(d, champ, map).catch(() => null).then(fill);
+  if (source === "riot") return riot;
+  if (source === "toi") return (await mine()) ?? riot;
+  if (source === "opgg") return (await opgg()) ?? riot;
+  return (await opgg()) ?? (await mine()) ?? riot;
 }
 
 export async function applyBuild(d: DD, champ: number, b: Build, opts: { runes: boolean; spells: boolean; items: boolean }) {
@@ -108,7 +113,11 @@ export async function applyBuild(d: DD, champ: number, b: Build, opts: { runes: 
     sets.itemSets.push({
       title: name, associatedChampions: [champ], associatedMaps: [], map: "any", mode: "any", type: "custom", sortrank: 0,
       uid: crypto.randomUUID(),
-      blocks: [b.start.length && block("Départ", b.start), block(`Ton build (${b.games} parties)`, items)].filter(Boolean),
+      blocks: [
+        b.start.length && block("Départ", b.start),
+        block(b.source === "opgg" ? `Build méta OP.GG (${b.games.toLocaleString("fr")} parties)` : `Ton build (${b.games} parties)`, items),
+        "boots" in b && (b as any).boots.length && block("Bottes", (b as any).boots),
+      ].filter(Boolean),
     });
     await lcu(path, "PUT", sets);
     done.push("items");

@@ -229,3 +229,53 @@ nav button.on::after { content: ""; position: absolute; left: 12px; right: 12px;
 .toggle input[type="checkbox"]:checked { background: #35d0c633; border-color: var(--teal); }
 .toggle input[type="checkbox"]:checked::after { transform: translateX(18px); background: var(--teal); }
 @media (max-width: 1100px) { .prow { grid-template-columns: repeat(3, 1fr); } .cols { grid-template-columns: 1fr; } }
+
+.tier { display: inline-grid; place-items: center; min-width: 28px; height: 24px; padding: 0 6px; border-radius: 6px; font-weight: 800; font-size: 13px; }
+.tier.t1 { background: #e8b53e26; color: var(--accent); }
+.tier.t2 { background: #35d0c626; color: var(--teal); }
+.tier.t3 { background: #4c6fff26; color: #8fa6ff; }
+.tier.t4, .tier.t5 { background: var(--panel2); color: var(--muted); }
+.pagehead h1 .muted { font-size: 16px; font-weight: 400; }
+.cstats { display: flex; gap: 22px; margin-left: 24px; }
+.cstats > div { display: grid; justify-items: center; gap: 2px; }
+.cstats b { font-size: 17px; }
+.ctwo { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.counters { display: flex; gap: 10px; flex-wrap: wrap; }
+.counters button { display: grid; justify-items: center; gap: 2px; width: 64px; }
+.counters img { width: 44px; height: 44px; border-radius: 10px; }
+.counters small { font-size: 11px; max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.matchpage { display: grid; gap: 16px; }
+.mhead { display: flex; align-items: center; gap: 16px; padding: 18px 20px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); }
+.mhead.win { background: linear-gradient(90deg, #1f9e8f2e, var(--panel) 50%); }
+.mhead.loss { background: linear-gradient(90deg, #d4475b2e, var(--panel) 50%); }
+.mhead.win h1 { color: var(--teal); }
+.mhead.loss h1 { color: var(--loss); }
+.mhead .badges { margin-left: auto; }
+.mhead .ghostbtn { margin-left: 0; }
+.perf2 { display: grid; grid-template-columns: auto 1fr; gap: 28px; align-items: center; }
+.gauges { display: grid; grid-template-columns: repeat(4, 96px); gap: 8px; }
+.gauge { position: relative; display: grid; justify-items: center; gap: 2px; }
+.gauge svg { width: 80px; }
+.gauge .track, .gauge .fill { fill: none; stroke-width: 5; stroke-linecap: round; }
+.gauge .track { stroke: var(--panel2); }
+.gauge .fill { stroke: var(--accent); }
+.gauge > b { position: absolute; top: 14px; font-size: 20px; }
+.gauge span { font-weight: 600; }
+.summary p { font-size: 20px; line-height: 1.45; margin: 6px 0 0; }
+.hl { color: var(--accent); }
+.chart { position: relative; }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .axis { fill: var(--muted); font-size: 11px; }
+.chart .mark14 { stroke: var(--muted); stroke-dasharray: 3 4; opacity: .6; }
+.chart .cross { stroke: var(--muted); stroke-width: 1; }
+.chart .endlabel { fill: var(--text); font-size: 12px; }
+.legend { display: flex; gap: 14px; justify-content: flex-end; font-size: 12px; color: var(--muted); }
+.legend i, .tip i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.tip { position: absolute; top: 28px; transform: translateX(-50%); pointer-events: none; display: grid; gap: 2px; padding: 8px 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); font-size: 12px; white-space: nowrap; }
+.center { text-align: center; }
+.objs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.objs .card { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+.objs .card.mine b { color: var(--accent); }
+.objs span { color: var(--muted); }

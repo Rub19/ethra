@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "check": "node src/opggParse.check.ts"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.12.4",
