@@ -1,6 +1,6 @@
-# Riftwatch
+# Ethra
 
-Tracker League of Legends gratuit et open source, inspiré de Blitz / tracker.gg. App desktop Windows (Tauri).
+Tracker de jeux gratuit et open source, inspiré de Blitz / tracker.gg. App desktop Windows (Tauri). Premier jeu supporté : League of Legends, d'autres suivront.
 
 Aucune clé API Riot nécessaire : comme Blitz, l'app parle au client League installé sur ton PC.
 
@@ -19,4 +19,4 @@ Build installeur : `npm run tauri build` (sortie dans `src-tauri/target/release/
 
 Overlays : mets le jeu en **mode fenêtré sans bordure**.
 
-Riftwatch n'est pas approuvé par Riot Games et ne reflète pas les opinions de Riot Games.
+Ethra n'est pas approuvé par Riot Games et ne reflète pas les opinions de Riot Games.
