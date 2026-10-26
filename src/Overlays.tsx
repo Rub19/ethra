@@ -1,32 +1,55 @@
 import { useState } from "react";
 import { settings, Settings as S } from "./lcu";
+import { Alert, ICON, Row, SkillHint, Widget } from "./Widget";
 
 type Card = { key: keyof S; title: string; desc: string; preview: React.ReactNode };
 
 const CARDS: Card[] = [
   {
     key: "ovTimers", title: "Timers d'objectifs", desc: "Dragon, Nashor et réapparition des inhibiteurs, calculés depuis les événements de la partie.",
-    preview: <div className="pvbox"><div className="ovt"><span>Nashor</span><b>0:48</b></div><div className="ovt"><span>Dragon</span><b>0:31</b></div></div>,
+    preview: (
+      <Widget title="Objectifs">
+        <Row icon={ICON.baron} label="Nashor" value="0:48" bar={0.85} />
+        <Row icon={ICON.dragon} label="Dragon" value="UP" tone="up" />
+        <Row icon={ICON.inhib} label="Inhib mid rouge" value="3:12" bar={0.35} />
+      </Widget>
+    ),
   },
   {
     key: "ovAlerts", title: "Alertes d'objectifs", desc: "Bandeau en haut de l'écran 30 secondes avant l'apparition d'un objectif.",
-    preview: <div className="pvalert"><b>Dragon</b> apparaît dans <b>30 s</b></div>,
+    preview: <Alert icon={ICON.dragon} name="Dragon" secs={30} />,
   },
   {
-    key: "ovSkill", title: "Ordre des compétences", desc: "Te dit quelle compétence monter à chaque niveau, selon le build méta OP.GG de ton champion.",
-    preview: <div className="pvskill"><span>Monte</span><b>Q</b></div>,
+    key: "ovSkill", title: "Ordre des compétences", desc: "Indique la compétence à monter à chaque niveau, selon le build méta OP.GG.",
+    preview: <SkillHint skill="Q" level={4} icon="https://cdn.communitydragon.org/latest/champion/Ahri/ability-icon/q" />,
   },
   {
-    key: "ovBench", title: "Benchmark de lane", desc: "Ton écart de CS, de valeur d'objets et de niveau avec ton adversaire direct, en direct.",
-    preview: <div className="pvbox"><div className="ovh">vs Yasuo</div><div className="ovt"><span>CS</span><b className="good">+12</b></div><div className="ovt"><span>Objets</span><b className="bad">-0.4k</b></div></div>,
+    key: "ovBench", title: "Benchmark de lane", desc: "Ton écart de CS, de valeur d'objets et de niveau avec ton adversaire direct.",
+    preview: (
+      <Widget title="vs Yasuo">
+        <Row label="CS" value="+12" tone="good" />
+        <Row label="Objets" value="-0.4k" tone="bad" />
+        <Row label="Niveau" value="+1" tone="good" />
+      </Widget>
+    ),
   },
   {
     key: "ovGold", title: "Valeur des objets", desc: "Différence de valeur totale des objets entre ton équipe et l'équipe adverse.",
-    preview: <div className="pvbox"><div className="ovt"><span>Valeur objets</span><b className="good">+3.8k</b></div></div>,
+    preview: (
+      <Widget title="Valeur des objets">
+        <Row label="Équipes" value="+3.8k" tone="good" />
+      </Widget>
+    ),
   },
   {
     key: "ovStats", title: "Tes stats", desc: "KDA, CS par minute et or disponible, toujours visibles.",
-    preview: <div className="pvbox"><div className="ovt"><span>KDA</span><b>4/1/6</b></div><div className="ovt"><span>CS/min</span><b>7.8</b></div></div>,
+    preview: (
+      <Widget title="Toi">
+        <Row label="KDA" value="4 / 1 / 6" />
+        <Row label="CS/min" value="7.8" />
+        <Row label="Or" value="1 240" />
+      </Widget>
+    ),
   },
 ];
 

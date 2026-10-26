@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { useEffect, useState } from "react";
-import { DD, ddragon, live, mmss, settings } from "./lcu";
+import { DD, ddragon, img, live, mmss, settings } from "./lcu";
+import { Alert, ICON, Row, SkillHint, Widget } from "./Widget";
 import { champId, opggBuild } from "./opgg";
 import "./style.css";
 
@@ -70,44 +71,51 @@ function Overlay() {
   const nextKey = spent < g.activePlayer.level && nextSlot ? KEYS[nextSlot - 1] : null;
 
   const sign = (x: number) => `${x >= 0 ? "+" : ""}${x}`;
+  const tone = (x: number): "good" | "bad" => (x >= 0 ? "good" : "bad");
+  const champ = d ? champId(d, meP.championName) : 0;
+  const objIcon = (label: string) => (label.startsWith("Dragon") ? ICON.dragon : label.startsWith("Nashor") ? ICON.baron : ICON.inhib);
+  const period = (label: string) => (label.startsWith("Dragon") ? DRAGON_RESPAWN : label.startsWith("Nashor") ? BARON_RESPAWN : INHIB_RESPAWN);
+  const all = [...timers, ...inhibs];
+  const itemDiff = opp ? worth(meP) - worth(opp) : 0;
 
   return (
     <>
       {cfg.ovAlerts && alerts.length > 0 && (
         <div className="ovalert">
-          {alerts.map((a) => <div key={a.label}><b>{a.label}</b> apparaît dans <b>{Math.ceil(a.at - t)} s</b></div>)}
+          {alerts.map((a) => <Alert key={a.label} icon={objIcon(a.label)} name={a.label} secs={Math.ceil(a.at - t)} />)}
         </div>
       )}
-      {cfg.ovSkill && nextKey && (
-        <div className="ovskill"><span>Monte</span><b>{nextKey}</b></div>
+      {cfg.ovSkill && nextKey && d && (
+        <div className="ovskill">
+          <SkillHint skill={nextKey} level={g.activePlayer.level} icon={champ ? img.ability(d, d.champs[champ].id, nextKey) : undefined} />
+        </div>
       )}
       <div className="ov">
-        {cfg.ovStats && (
-          <div className="ovbox">
-            <div className="ovt"><span>KDA</span><b>{s.kills}/{s.deaths}/{s.assists}</b></div>
-            <div className="ovt"><span>CS/min</span><b>{(s.creepScore / Math.max(1, t / 60)).toFixed(1)}</b></div>
-            <div className="ovt"><span>Or</span><b>{Math.floor(g.activePlayer.currentGold)}</b></div>
-          </div>
+        {cfg.ovTimers && all.length > 0 && (
+          <Widget title="Objectifs">
+            {all.map((x) => (
+              <Row key={x.label} icon={objIcon(x.label)} label={x.label} value={x.at <= t ? "UP" : mmss(x.at - t)} tone={x.at <= t ? "up" : undefined} bar={x.at <= t ? undefined : 1 - (x.at - t) / period(x.label)} />
+            ))}
+          </Widget>
         )}
         {cfg.ovBench && opp && (
-          <div className="ovbox">
-            <div className="ovh">vs {opp.championName}</div>
-            <div className="ovt"><span>CS</span><b className={s.creepScore >= opp.scores.creepScore ? "good" : "bad"}>{sign(s.creepScore - opp.scores.creepScore)}</b></div>
-            <div className="ovt"><span>Objets</span><b className={worth(meP) >= worth(opp) ? "good" : "bad"}>{sign(Math.round((worth(meP) - worth(opp)) / 100) / 10)}k</b></div>
-            <div className="ovt"><span>Niveau</span><b>{sign(meP.level - opp.level)}</b></div>
-          </div>
+          <Widget title={`vs ${opp.championName}`}>
+            <Row label="CS" value={sign(s.creepScore - opp.scores.creepScore)} tone={tone(s.creepScore - opp.scores.creepScore)} />
+            <Row label="Objets" value={`${sign(Math.round(itemDiff / 100) / 10)}k`} tone={tone(itemDiff)} />
+            <Row label="Niveau" value={sign(meP.level - opp.level)} tone={tone(meP.level - opp.level)} />
+          </Widget>
         )}
         {cfg.ovGold && d && (
-          <div className="ovbox">
-            <div className="ovt"><span>Valeur objets équipe</span><b className={diff >= 0 ? "good" : "bad"}>{diff >= 0 ? "+" : ""}{(diff / 1000).toFixed(1)}k</b></div>
-          </div>
+          <Widget title="Valeur des objets">
+            <Row label="Équipes" value={`${diff >= 0 ? "+" : ""}${(diff / 1000).toFixed(1)}k`} tone={tone(diff)} />
+          </Widget>
         )}
-        {cfg.ovTimers && timers.length + inhibs.length > 0 && (
-          <div className="ovbox">
-            {[...timers, ...inhibs].map((x) => (
-              <div key={x.label} className="ovt"><span>{x.label}</span><b className={x.at <= t ? "good" : ""}>{x.at <= t ? "UP" : mmss(x.at - t)}</b></div>
-            ))}
-          </div>
+        {cfg.ovStats && (
+          <Widget title="Toi">
+            <Row label="KDA" value={`${s.kills} / ${s.deaths} / ${s.assists}`} />
+            <Row label="CS/min" value={(s.creepScore / Math.max(1, t / 60)).toFixed(1)} />
+            <Row label="Or" value={Math.floor(g.activePlayer.currentGold).toLocaleString("fr")} />
+          </Widget>
         )}
       </div>
     </>
