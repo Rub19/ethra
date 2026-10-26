@@ -3,6 +3,7 @@ import {
   ago, cs, DD, ddragon, Game, gameDetails, history, img, kda, me, mmss, n, Queue, queueNames, rankLabel, ranked, rankScore, summoner, Summoner,
 } from "./lcu";
 import type { Go } from "./main";
+import { useAvatar } from "./Account";
 
 const QUEUES: [string, string][] = [["RANKED_SOLO_5x5", "Classé Solo/Duo"], ["RANKED_FLEX_SR", "Classé Flex"], ["CHERRY", "Arena"]];
 
@@ -47,7 +48,19 @@ function MatchRow({ g, puuid, d, queues, onOpen, onMatch }: { g: Game; puuid: st
   const s = p.stats;
   const min = g.gameDuration / 60;
   const remake = g.gameDuration < 300;
-  const items = [0, 1, 2, 3, 4, 5, 6].map((k) => n(s, `item${k}`));
+  const result = remake ? "remake" : s.win ? "win" : "loss";
+  const items = [0, 1, 2, 3, 4, 5].map((k) => n(s, `item${k}`));
+  const trinket = n(s, "item6");
+  const sr = g.mapId === 11;
+  const me = full?.participants.find((x) => x.participantId === full.participantIdentities.find((i) => i.player.puuid === puuid)?.participantId);
+  const teamKills = me ? full!.participants.filter((x) => x.teamId === me.teamId).reduce((a, x) => a + n(x.stats, "kills"), 0) : 0;
+  const kp = teamKills ? Math.round(((n(s, "kills") + n(s, "assists")) / teamKills) * 100) : null;
+  const icons = [
+    d.spells[p.spell1Id] && img.spell(d, p.spell1Id),
+    d.spells[p.spell2Id] && img.spell(d, p.spell2Id),
+    d.runes[n(s, "perk0")] && img.rune(d, n(s, "perk0")),
+    d.runes[n(s, "perkSubStyle")] && img.rune(d, n(s, "perkSubStyle")),
+  ];
   const names = (team: number) =>
     full?.participants.filter((x) => x.teamId === team).map((x) => {
       const who = full.participantIdentities.find((i) => i.participantId === x.participantId)?.player;
@@ -59,33 +72,34 @@ function MatchRow({ g, puuid, d, queues, onOpen, onMatch }: { g: Game; puuid: st
       );
     });
   return (
-    <div className={`match ${remake ? "remake" : s.win ? "win" : "loss"}`}>
-      <div className="mrow" onClick={onMatch}>
-        <img className="champ" src={img.champ(d, p.championId)} />
-        <div className="mmain">
-          <div className="mtitle">
-            <b>{remake ? "Remake" : s.win ? "Victoire" : "Défaite"}</b>
-            <span>· {queues[g.queueId] ?? `File ${g.queueId}`} · {mmss(g.gameDuration)} · {ago(g.gameCreation)}</span>
-          </div>
-          <div className="mstats">
-            <div><b>{kda(s).toFixed(1)} KDA</b><small>{n(s, "kills")} / {n(s, "deaths")} / {n(s, "assists")}</small></div>
-            <div><b>{(cs(s) / min).toFixed(1)} CS/min</b><small>{cs(s)} CS</small></div>
-            <div><b>{Math.round(n(s, "totalDamageDealtToChampions") / min).toLocaleString("fr")} DPM</b><small>{n(s, "totalDamageDealtToChampions").toLocaleString("fr")}</small></div>
-            <div><b>{Math.round(n(s, "goldEarned") / min)} GPM</b><small>{n(s, "visionScore")} vision</small></div>
-            <div className="spells">
-              <img src={img.spell(d, p.spell1Id)} />
-              <img src={img.spell(d, p.spell2Id)} />
-              <img src={img.rune(d, n(s, "perk0"))} />
-              <img src={img.rune(d, n(s, "perkSubStyle"))} />
-            </div>
-            <div className="items">{items.map((id, i) => (id ? <img key={i} src={img.item(d, id)} /> : <span key={i} />))}</div>
-          </div>
-          <div className="badges">{full && badges(full, puuid).map((b) => <span key={b} className={b === "MVP" || b === "ACE" ? "gold" : ""}>{b}</span>)}</div>
-        </div>
-        <div className="teams">
-          <div>{names(100)}</div>
-          <div>{names(200)}</div>
-        </div>
+    <div className={`match ${result}`} onClick={onMatch} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onMatch()}>
+      <div className="mres">
+        <b>{remake ? "Remake" : s.win ? "Victoire" : "Défaite"}</b>
+        <small>{queues[g.queueId] ?? `File ${g.queueId}`}</small>
+        <small>{mmss(g.gameDuration)} · {ago(g.gameCreation)}</small>
+      </div>
+      <div className="mchamp">
+        <img src={img.champ(d, p.championId)} />
+        <span>{n(s, "champLevel")}</span>
+      </div>
+      <div className="micons">{icons.map((u, i) => (u ? <img key={i} src={u} /> : <span key={i} />))}</div>
+      <div className="mkda">
+        <b>{n(s, "kills")} <i>/</i> <em>{n(s, "deaths")}</em> <i>/</i> {n(s, "assists")}</b>
+        <small><span className={kda(s) >= 3 ? "good" : ""}>{kda(s).toFixed(2)} KDA</span>{kp !== null && ` · ${kp}% KP`}</small>
+      </div>
+      <div className="mnums">
+        <span><b>{(cs(s) / min).toFixed(1)}</b> CS/min</span>
+        <span><b>{(n(s, "totalDamageDealtToChampions") / 1000).toFixed(1)}k</b> dégâts</span>
+        <span>{sr ? <><b>{n(s, "visionScore")}</b> vision</> : <><b>{(n(s, "goldEarned") / 1000).toFixed(1)}k</b> or</>}</span>
+      </div>
+      <div className="mitems">
+        {items.map((id, i) => (id ? <img key={i} src={img.item(d, id)} title={d.items[id]?.name} /> : <span key={i} />))}
+        {trinket ? <img className="trk" src={img.item(d, trinket)} /> : <span className="trk" />}
+      </div>
+      <div className="mbadges">{full && badges(full, puuid).slice(0, 3).map((b) => <span key={b} className={b === "MVP" || b === "ACE" ? "gold" : ""}>{b}</span>)}</div>
+      <div className="teams">
+        <div>{names(100)}</div>
+        <div>{names(200)}</div>
       </div>
     </div>
   );
@@ -122,6 +136,7 @@ export function Scoreboard({ g, d, puuid, onOpen }: { g: Game; d: DD; puuid: str
 
 export default function Profile({ puuid, go }: { puuid: string | null; go: Go }) {
   const onOpen = (p: string) => go({ page: "profil", puuid: p });
+  const [avatar] = useAvatar();
   const [sum, setSum] = useState<Summoner | null>(null);
   const [ranks, setRanks] = useState<Record<string, Queue>>({});
   const [games, setGames] = useState<Game[] | null>(null);
@@ -160,7 +175,7 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
   return (
     <div className="profile">
       <div className="phead">
-        <div className="avatar"><img src={img.icon(d, sum.profileIconId)} /><span>{sum.summonerLevel}</span></div>
+        <div className="avatar"><img src={(!puuid && avatar) || img.icon(d, sum.profileIconId)} /><span>{sum.summonerLevel}</span></div>
         <h1>{sum.gameName} <span>#{sum.tagLine}</span></h1>
       </div>
       <div className="subtabs">

@@ -48,7 +48,10 @@ async fn lcu(state: tauri::State<'_, AppState>, method: String, path: String, bo
     let l = match cached {
         Some(l) => l,
         None => {
-            let l = tauri::async_runtime::spawn_blocking(find_lcu).await.ok().flatten().ok_or("LCU_CLOSED")?;
+            let l = tauri::async_runtime::spawn_blocking(find_lcu).await.ok().flatten().ok_or_else(|| {
+                eprintln!("[lcu] client introuvable");
+                "LCU_CLOSED".to_string()
+            })?;
             *state.lcu.lock().unwrap() = Some(l.clone());
             l
         }
@@ -61,6 +64,7 @@ async fn lcu(state: tauri::State<'_, AppState>, method: String, path: String, bo
     match req.send().await {
         Ok(res) => read(res).await,
         Err(e) => {
+            eprintln!("[lcu] {path}: {e:?}");
             *state.lcu.lock().unwrap() = None;
             Err(e.to_string())
         }
@@ -95,8 +99,29 @@ async fn opgg(state: tauri::State<'_, AppState>, tool: String, args: Value) -> R
 fn main() {
     let http = reqwest::Client::builder().danger_accept_invalid_certs(true).build().unwrap();
     tauri::Builder::default()
+        .plugin(tauri_plugin_clipboard_manager::init())
         .manage(AppState { lcu: Mutex::new(None), http })
         .invoke_handler(tauri::generate_handler![lcu, live, opgg])
+        .register_asynchronous_uri_scheme_protocol("ethone", |ctx, req, responder| {
+            let http = ctx.app_handle().state::<AppState>().http.clone();
+            let path = req.uri().path().to_string();
+            tauri::async_runtime::spawn(async move {
+                let fetched = async {
+                    let r = http.get(format!("https://ethone.dev/avatars/library{path}")).send().await.ok()?;
+                    if !r.status().is_success() {
+                        return None;
+                    }
+                    let ct = r.headers().get("content-type").and_then(|v| v.to_str().ok()).unwrap_or("image/webp").to_string();
+                    Some((ct, r.bytes().await.ok()?.to_vec()))
+                }
+                .await;
+                let res = match fetched {
+                    Some((ct, body)) => tauri::http::Response::builder().header("Content-Type", ct).header("Cache-Control", "max-age=604800").body(body),
+                    None => tauri::http::Response::builder().status(404).body(Vec::new()),
+                };
+                responder.respond(res.unwrap());
+            });
+        })
         .setup(|app| {
             let o = app.get_webview_window("overlay").unwrap();
             if let Some(m) = o.primary_monitor()? {

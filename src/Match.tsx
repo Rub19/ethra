@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toBlob } from "html-to-image";
+import { writeImage } from "@tauri-apps/plugin-clipboard-manager";
 import { cs, DD, ddragon, Game, gameDetails, img, kda, lcu, mmss, n, Participant, queueNames } from "./lcu";
 import { badges, Scoreboard } from "./Profile";
 import type { Go } from "./main";
@@ -60,12 +62,15 @@ function Chart({ series, unit }: { series: { name: string; color: string; pts: n
           <text key={i} x={x(i)} y={h - 6} textAnchor="middle" className="axis">{i}</text>
         ))}
         {len > 14 && <line x1={x(14)} x2={x(14)} y1={t} y2={h - b} className="mark14" />}
-        {series.map((s) => (
-          <g key={s.name}>
-            <polyline points={s.pts.map((v, i) => `${x(i)},${y(v)}`).join(" ")} fill="none" stroke={s.color} strokeWidth="2" strokeLinejoin="round" />
-            <text x={x(s.pts.length - 1) + 8} y={y(s.pts.at(-1) ?? 0) + 4} className="endlabel">{s.name}</text>
-          </g>
-        ))}
+        {series.map((s) => <polyline key={s.name} points={s.pts.map((v, i) => `${x(i)},${y(v)}`).join(" ")} fill="none" stroke={s.color} strokeWidth="2" strokeLinejoin="round" />)}
+        {series
+          .map((s) => ({ s, ly: y(s.pts.at(-1) ?? 0) + 4 }))
+          .sort((a, b) => a.ly - b.ly)
+          .map((e, i, all) => {
+            const ly = i > 0 ? Math.max(e.ly, all[i - 1].ly + 14) : e.ly;
+            all[i] = { ...e, ly };
+            return <text key={e.s.name} x={x(e.s.pts.length - 1) + 8} y={ly} className="endlabel">{e.s.name}</text>;
+          })}
         {hover !== null && (
           <g>
             <line x1={x(hover)} x2={x(hover)} y1={t} y2={h - b} className="cross" />
@@ -80,6 +85,55 @@ function Chart({ series, unit }: { series: { name: string; color: string; pts: n
         </div>
       )}
       <small className="muted center">Minutes de jeu · ligne pointillée : 14 min (fin de la phase de lane)</small>
+    </div>
+  );
+}
+
+function ShareCard({ g, p, d, label, mvp }: { g: Game; p: Participant; d: DD; label: string; mvp: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [msg, setMsg] = useState("");
+  const s = p.stats;
+  const c = d.champs[p.championId];
+  const remake = g.gameDuration < 300;
+  const copy = async () => {
+    if (!ref.current) return;
+    setMsg("…");
+    try {
+      const blob = await toBlob(ref.current, { pixelRatio: 2, cacheBust: true, filter: (el) => !(el as HTMLElement).classList?.contains("noshot") });
+      if (!blob) throw new Error("image vide");
+      await writeImage(new Uint8Array(await blob.arrayBuffer()));
+      setMsg("Image copiée, colle-la sur Discord");
+    } catch (e) {
+      setMsg(`Copie impossible : ${e}`);
+    }
+  };
+  const stat = (v: string | number, l: string) => <div><b>{typeof v === "number" ? v.toLocaleString("fr") : v}</b><small>{l}</small></div>;
+  return (
+    <div className="share" ref={ref} style={{ backgroundImage: `linear-gradient(90deg, #0b0f17 30%, #0b0f17cc 55%, #0b0f1733), url(https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${c?.id}_0.jpg)` }}>
+      <div className="shtop">
+        <b>{label}</b>
+        <span className={remake ? "" : s.win ? "good" : "bad"}>{remake ? "REMAKE" : s.win ? "VICTOIRE" : "DÉFAITE"}</span>
+        {mvp && <span className="hl">MVP</span>}
+        <span className="muted">{mmss(g.gameDuration)}</span>
+        <span className="shbrand">ETHRA</span>
+      </div>
+      <div className="shbig"><b>{n(s, "totalDamageDealtToChampions").toLocaleString("fr")}</b><span>dégâts aux champions</span></div>
+      <div className="shstats">
+        {stat(`${n(s, "kills")} / ${n(s, "deaths")} / ${n(s, "assists")}`, "KDA")}
+        {stat(n(s, "largestCriticalStrike"), "Plus gros critique")}
+        {stat(n(s, "goldEarned"), "Or gagné")}
+        {stat(cs(s), "CS")}
+        {stat(n(s, "totalHeal"), "Soins")}
+      </div>
+      <div className="shitems">
+        {[n(s, "perk0"), n(s, "perkSubStyle")].filter((id) => d.runes[id]).map((id) => <img key={id} className="rn" src={img.rune(d, id)} />)}
+        <i />
+        {[0, 1, 2, 3, 4, 5, 6].map((k) => n(s, `item${k}`)).filter(Boolean).map((id, i) => <img key={i} src={img.item(d, id)} />)}
+      </div>
+      <div className="shact noshot">
+        {msg && <small className="muted">{msg}</small>}
+        <button className="sharebtn" onClick={copy}>Copier l'image</button>
+      </div>
     </div>
   );
 }
@@ -119,7 +173,7 @@ export default function Match({ gameId, puuid, go }: { gameId: number; puuid: st
   const scores = [
     { k: "Farming", v: score(g, p, (x) => cs(x.stats)) },
     { k: "Combat", v: score(g, p, (x) => kda(x.stats) + kp(x) * 3 + n(x.stats, "totalDamageDealtToChampions") / 10000) },
-    { k: "Vision", v: score(g, p, (x) => n(x.stats, "visionScore")) },
+    ...(g.mapId === 11 ? [{ k: "Vision", v: score(g, p, (x) => n(x.stats, "visionScore")) }] : []),
     { k: "Objectifs", v: score(g, p, (x) => n(x.stats, "damageDealtToObjectives")) },
   ];
   const best = [...scores].sort((a, b) => b.v - a.v)[0];
@@ -138,6 +192,8 @@ export default function Match({ gameId, puuid, go }: { gameId: number; puuid: st
         <div className="badges">{badges(g, puuid).map((b) => <span key={b} className={b === "MVP" || b === "ACE" ? "gold" : ""}>{b}</span>)}</div>
         <button className="ghostbtn" onClick={() => go({ page: "champion", champ: p.championId })}>Build {d.champs[p.championId]?.name}</button>
       </div>
+
+      <ShareCard g={g} p={p} d={d} label={queues[g.queueId] ?? `File ${g.queueId}`} mvp={badges(g, puuid).includes("MVP")} />
 
       <section className="card perf2">
         <div className="gauges">

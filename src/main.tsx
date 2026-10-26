@@ -10,6 +10,8 @@ import Champions from "./Champions";
 import Settings from "./Settings";
 import TierList from "./TierList";
 import Match from "./Match";
+import AccountMenu from "./Account";
+import Overlays from "./Overlays";
 
 export type Route =
   | { page: "profil"; puuid?: string }
@@ -193,11 +195,7 @@ function App() {
           <div className={`client ${phase === null ? "off" : ""}`} title={phase === null ? "Client LoL fermé" : "Client LoL connecté"}>
             <i />
             {self && d ? (
-              <button className="mechip" onClick={() => go({ page: "profil" })}>
-                <img src={img.icon(d, self.profileIconId)} />
-                {self.gameName}
-                <span>#{self.tagLine}</span>
-              </button>
+              <AccountMenu self={self} d={d} go={go} />
             ) : (
               <span>{phase === null ? "Client fermé" : "Connexion…"}</span>
             )}
@@ -233,7 +231,7 @@ function App() {
         ) : route.page === "partie" ? (
           <Live phase={phase ?? ""} go={go} />
         ) : (
-          <Settings only={route.page === "overlays" ? "overlay" : "general"} />
+          route.page === "overlays" ? <Overlays /> : <Settings only="general" />
         )}
       </main>
       {inGame && route.page !== "partie" && (
@@ -250,5 +248,9 @@ function App() {
     </div>
   );
 }
+
+document.addEventListener("contextmenu", (e) => {
+  if (!(e.target as HTMLElement).closest("input, textarea")) e.preventDefault();
+});
 
 createRoot(document.getElementById("root")!).render(<App />);
