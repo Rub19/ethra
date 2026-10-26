@@ -249,7 +249,7 @@ nav button.on::after { content: ""; position: absolute; left: 12px; right: 12px;
 .mhead.loss h1 { color: var(--loss); }
 .mhead .badges { margin-left: auto; }
 .mhead .ghostbtn { margin-left: 0; }
-.perf2 { display: grid; grid-template-columns: auto 1fr; gap: 28px; align-items: center; }
+.perf2 { display: grid; grid-template-columns: auto 1fr; gap: 32px; align-items: center; }
 .gauges { display: grid; grid-template-columns: repeat(4, 96px); gap: 8px; }
 .gauge { position: relative; display: grid; justify-items: center; gap: 2px; }
 .gauge svg { width: 80px; }
@@ -440,3 +440,17 @@ h1 { letter-spacing: -.3px; }
 .wskill > div:last-child b { font-size: 17px; }
 .ovskill { position: fixed; bottom: 22%; left: 50%; transform: translateX(-50%); }
 .wrow.noi { grid-template-columns: 1fr auto; } .wrow.noi .wbar { grid-column: 1 / -1; }
+
+.scores { display: grid; grid-auto-flow: column; grid-auto-columns: 132px; gap: 10px; }
+.score { --c: var(--muted); display: grid; gap: 6px; padding: 12px 14px; border-radius: 12px; background: var(--panel2); border: 1px solid var(--line); }
+.score.g4 { --c: #3ddc97; }
+.score.g3 { --c: var(--accent); }
+.score.g2 { --c: #8fa6ff; }
+.score.g1 { --c: #ff6b7d; }
+.score > span { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
+.sv { display: flex; align-items: baseline; gap: 3px; }
+.sv b { font-size: 28px; line-height: 1; font-variant-numeric: tabular-nums; }
+.sv small { display: inline; font-size: 12px; }
+.score > i { display: block; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .07); overflow: hidden; }
+.score > i > i { display: block; height: 100%; border-radius: 3px; background: var(--c); }
+.score em { font-style: normal; font-size: 12px; font-weight: 600; color: var(--c); }

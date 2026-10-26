@@ -207,16 +207,13 @@ export default function Match({ gameId, puuid, go }: { gameId: number; puuid: st
       <ShareCard g={g} p={p} d={d} label={queues[g.queueId] ?? `File ${g.queueId}`} mvp={badges(g, puuid).includes("MVP")} />
 
       <section className="card perf2">
-        <div className="gauges">
+        <div className="scores">
           {scores.map((x) => (
-            <div key={x.k} className="gauge">
-              <svg viewBox="0 0 60 36" aria-hidden="true">
-                <path d="M6 32 A24 24 0 0 1 54 32" className="track" />
-                <path d="M6 32 A24 24 0 0 1 54 32" className="fill" pathLength={100} strokeDasharray={`${x.v} 100`} />
-              </svg>
-              <b>{x.v}</b>
+            <div key={x.k} className={`score g${x.v >= 80 ? 4 : x.v >= 60 ? 3 : x.v >= 40 ? 2 : 1}`}>
               <span>{x.k}</span>
-              <small>{grade(x.v)}</small>
+              <div className="sv"><b>{x.v}</b><small>/100</small></div>
+              <i role="meter" aria-valuenow={x.v} aria-valuemin={0} aria-valuemax={100} aria-label={x.k}><i style={{ width: `${x.v}%` }} /></i>
+              <em>{grade(x.v)}</em>
             </div>
           ))}
         </div>
