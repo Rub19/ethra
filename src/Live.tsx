@@ -87,6 +87,7 @@ export default function Live({ phase, go }: { phase: string; go: Go }) {
   const [d, setD] = useState<DD | null>(null);
   const [teams, setTeams] = useState<[Slot[], Slot[]]>([[], []]);
   const [mine, setMine] = useState<{ champ: number; role: string }>({ champ: 0, role: "NONE" });
+  const [aram, setAram] = useState(false);
 
   useEffect(() => {
     ddragon().then(setD);
@@ -94,6 +95,7 @@ export default function Live({ phase, go }: { phase: string; go: Go }) {
       if (phase === "ChampSelect") {
         const s = await lcu<any>("/lol-champ-select/v1/session").catch(() => null);
         if (!s) return;
+        lcu<any>("/lol-gameflow/v1/session").then((f) => setAram((f?.map?.id ?? f?.gameData?.queue?.mapId) === 12), () => {});
         const slot = (m: any): Slot => ({
           puuid: m.puuid ?? "", championId: m.championId || m.championPickIntent, position: m.assignedPosition, name: m.gameName, me: m.cellId === s.localPlayerCellId,
         });
@@ -132,7 +134,7 @@ export default function Live({ phase, go }: { phase: string; go: Go }) {
       </div>
       {phase === "ChampSelect" && (
         mine.champ ? (
-          <section className="card"><Builds key={`${mine.champ}-${mine.role}`} champ={mine.champ} role={mine.role} compact go={go} /></section>
+          <section className="card"><Builds key={`${mine.champ}-${mine.role}-${aram}`} champ={mine.champ} role={mine.role} mode={aram ? "aram" : "ranked"} compact go={go} /></section>
         ) : (
           <section className="card muted">Survole ou choisis un champion pour voir son build ici.</section>
         )

@@ -62,12 +62,12 @@ export type OpggBuild = Build & {
 
 const SLOT: Record<string, number> = { Q: 1, W: 2, E: 3, R: 4 };
 
-export async function opggBuild(d: DD, champ: number, position?: string): Promise<OpggBuild | null> {
+export async function opggBuild(d: DD, champ: number, position?: string, mode: "ranked" | "aram" = "ranked"): Promise<OpggBuild | null> {
   const c = d.champs[champ];
   if (!c) return null;
-  const pos = position && position !== "NONE" ? OPGG_POS[position] ?? position : await mainPosition(d, champ);
+  const pos = mode === "aram" ? "mid" : position && position !== "NONE" ? OPGG_POS[position] ?? position : await mainPosition(d, champ);
   const r = await call("lol_get_champion_analysis", {
-    champion: c.id.toUpperCase(), position: pos, game_mode: "ranked",
+    champion: c.id.toUpperCase(), position: pos, game_mode: mode,
     desired_output_fields: [
       "data.summary.average_stats", "data.runes", "data.summoner_spells", "data.starter_items", "data.core_items", "data.boots",
       "data.fourth_items", "data.fifth_items", "data.sixth_items", "data.skills", "data.skill_masteries.{ids[]}", "data.weak_counters", "data.strong_counters",
@@ -87,7 +87,7 @@ export async function opggBuild(d: DD, champ: number, position?: string): Promis
     order: x.core_items?.ids ?? [],
     core: [...new Set(ids([...(x.fourth_items ?? []), ...(x.fifth_items ?? []), ...(x.sixth_items ?? [])]))].slice(0, 8),
     skills: (x.skills?.order ?? []).map((k: string) => SLOT[k] ?? 0),
-    position: pos, tier: avg.tier, rank: avg.rank, winRate: avg.win_rate, pickRate: avg.pick_rate, banRate: avg.ban_rate,
+    position: pos, tier: avg.tier, rank: avg.rank, winRate: avg.win_rate ?? 0, pickRate: avg.pick_rate ?? 0, banRate: avg.ban_rate ?? 0,
     boots: x.boots?.ids ?? [],
     situational: [],
     maxOrder: x.skill_masteries?.ids ?? [],

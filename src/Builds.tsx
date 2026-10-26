@@ -8,7 +8,8 @@ type Src = "opgg" | "toi" | "riot";
 const RIOT_POS: Record<string, string> = { top: "TOP", jungle: "JUNGLE", mid: "MIDDLE", adc: "BOTTOM", support: "UTILITY" };
 const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
 
-export default function Builds({ champ, go, role: initialRole = "", compact = false }: { champ: number; go?: Go; role?: string; compact?: boolean }) {
+export default function Builds({ champ, go, role: initialRole = "", compact = false, mode: initialMode = "ranked" }: { champ: number; go?: Go; role?: string; compact?: boolean; mode?: "ranked" | "aram" }) {
+  const [mode, setMode] = useState(initialMode);
   const [d, setD] = useState<DD | null>(null);
   const [role, setRole] = useState(OPGG_POS[initialRole] ?? (POS_LABEL[initialRole] ? initialRole : ""));
   const [src, setSrc] = useState<Src>("opgg");
@@ -24,14 +25,15 @@ export default function Builds({ champ, go, role: initialRole = "", compact = fa
     setB(undefined);
     setMsg("");
     const load =
-      src === "opgg" ? (role ? Promise.resolve(role) : mainPosition(d, champ).then((p) => (setRole(p), p))).then((p) => opggBuild(d, champ, p))
-      : src === "toi" ? myBuild(d, champ)
-      : riotBuild(champ, RIOT_POS[role] ?? "NONE");
+      src === "opgg" && mode === "aram" ? opggBuild(d, champ, "mid", "aram")
+      : src === "opgg" ? (role ? Promise.resolve(role) : mainPosition(d, champ).then((p) => (setRole(p), p))).then((p) => opggBuild(d, champ, p))
+      : src === "toi" ? myBuild(d, champ, mode === "aram" ? 12 : 11)
+      : riotBuild(champ, mode === "aram" ? "NONE" : RIOT_POS[role] ?? "NONE", mode === "aram" ? 12 : 11);
     load.then(
       (x) => (x === null && src === "opgg" ? setSrc("toi") : x === null && src === "toi" ? setSrc("riot") : setB(x)),
       () => (src === "opgg" ? setSrc("toi") : src === "toi" ? setSrc("riot") : setB(null)),
     );
-  }, [d, champ, src, role]);
+  }, [d, champ, src, role, mode]);
 
   if (!d) return null;
 
@@ -100,7 +102,11 @@ export default function Builds({ champ, go, role: initialRole = "", compact = fa
           <button className={src === "toi" ? "on" : ""} onClick={() => setSrc("toi")}>Tes parties</button>
           <button className={src === "riot" ? "on" : ""} onClick={() => setSrc("riot")}>Reco Riot</button>
         </div>
-        {src !== "toi" && (
+        <div className="seg">
+          <button className={mode === "ranked" ? "on" : ""} onClick={() => setMode("ranked")}>Faille</button>
+          <button className={mode === "aram" ? "on" : ""} onClick={() => setMode("aram")}>ARAM</button>
+        </div>
+        {src !== "toi" && mode === "ranked" && (
           <div className="seg">
             {Object.entries(POS_LABEL).map(([k, l]) => <button key={k} className={role === k ? "on" : ""} onClick={() => setRole(k)}>{l}</button>)}
           </div>
