@@ -135,7 +135,7 @@ export const ago = (t: number) => {
 };
 
 export function settings() {
-  const def = { autoRunes: true, autoSpells: true, autoItems: true, autoAccept: false, source: "auto", ovTimers: true, ovStats: true, ovGold: true, ovEnabled: true, ovAlerts: true, ovBench: true, ovSkill: true };
+  const def = { autoRunes: true, autoSpells: true, autoItems: true, autoAccept: false, source: "auto", ovTimers: true, ovStats: true, ovGold: true, ovEnabled: true, ovAlerts: true, ovBench: true, ovSkill: true, ovDeaths: true, ovItem: true };
   try {
     return { ...def, ...JSON.parse(localStorage.getItem("rw-settings") || "{}") } as typeof def;
   } catch {

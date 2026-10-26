@@ -42,6 +42,7 @@ export default function Champions({ go }: { go: Go }) {
       const c = typeof x === "string" ? x.localeCompare(y as string) : (x as number) - (y as number);
       return sort.desc ? -c : c;
     });
+  if (!showPlayed) rows.sort((a, b) => a.name.localeCompare(b.name, "fr"));
   const th = (k: Key, l: string) => (
     <th className={sort.k === k ? "sorted" : ""} onClick={() => setSort({ k, desc: sort.k === k ? !sort.desc : k !== "name" })}>
       {l} {sort.k === k ? (sort.desc ? "▾" : "▴") : ""}

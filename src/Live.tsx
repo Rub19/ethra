@@ -119,10 +119,19 @@ export default function Live({ phase, go }: { phase: string; go: Go }) {
 
   if (!LIVE.includes(phase))
     return (
-      <div className="empty">
-        <h2>Pas de partie en cours</h2>
-        <p>Dès que tu entres en sélection des champions, Ethra affiche ton build, la composition des équipes et le rang de chaque joueur.</p>
-        <button className="primary" onClick={() => go({ page: "champions" })}>Préparer un champion</button>
+      <div className="liveempty">
+        <span className="pulse" />
+        <h1>En attente d'une partie</h1>
+        <p className="muted">Lance une file dans le client League : Ethra prend le relais dès la sélection des champions.</p>
+        <div className="ltiles">
+          <div><b>Build importé</b><small>Runes, sorts et item set méta posés automatiquement quand tu verrouilles.</small></div>
+          <div><b>Les 10 joueurs</b><small>Rang, winrate récent, mains et séries de chaque joueur.</small></div>
+          <div><b>Overlays en jeu</b><small>Objectifs, ennemis morts, prochain objet et ordre des compétences.</small></div>
+        </div>
+        <div className="lbtns">
+          <button className="primary" onClick={() => go({ page: "tierlist" })}>Voir la tier list</button>
+          <button className="ghostbtn" onClick={() => go({ page: "overlays" })}>Configurer les overlays</button>
+        </div>
       </div>
     );
   if (!d) return null;

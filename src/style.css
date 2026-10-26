@@ -469,3 +469,41 @@ tbody:first-of-type .bhead th { padding-top: 4px; }
 .ostats div { display: grid; justify-items: center; }
 .ostats b { font-size: 18px; font-variant-numeric: tabular-nums; }
 .ostats small { font-size: 11px; }
+
+.top { position: relative; z-index: 3; }
+.sresults { z-index: 40; }
+.table th:nth-child(n+4), .table td:nth-child(n+4) { text-align: center; }
+.table td .mini { margin: 4px auto 0; }
+.pagehead.center { text-align: center; }
+.pagehead.center p { margin-left: auto; margin-right: auto; max-width: 640px; }
+.settings { max-width: 1100px; margin: 0 auto; }
+.setgrid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; align-items: start; }
+.setside { display: grid; gap: 16px; }
+.settings .card { margin-top: 0; padding: 18px 20px 6px; }
+.settings .card h3 { margin: 0 0 4px; }
+.toggle.col { flex-direction: column; align-items: stretch; }
+.toggle.col select { width: 100%; padding: 10px 12px; }
+.about { padding-bottom: 18px !important; display: grid; gap: 10px; }
+.aboutrow { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+.aboutrow span { color: var(--muted); }
+@media (max-width: 960px) { .setgrid { grid-template-columns: 1fr; } }
+.session p { margin: 0; }
+.sess { display: flex; justify-content: space-between; gap: 12px; text-align: center; }
+.sess > div { display: grid; flex: 1; }
+.sess b { font-size: 18px; }
+.streak { display: flex; gap: 4px; justify-content: center; margin-top: 12px; }
+.streak i { width: 14px; height: 6px; border-radius: 3px; }
+.streak .sw { background: var(--teal); }
+.streak .sl { background: var(--loss); }
+.liveempty { max-width: 880px; margin: 40px auto 0; text-align: center; display: grid; justify-items: center; gap: 12px; }
+.liveempty h1 { font-size: 30px; }
+.liveempty > p { max-width: 560px; margin: 0; }
+.pulse { width: 14px; height: 14px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 0 0 #35d0c680; animation: ring 1.8s infinite; }
+@keyframes ring { to { box-shadow: 0 0 0 18px #35d0c600; } }
+@media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
+.ltiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; width: 100%; margin-top: 18px; }
+.ltiles > div { display: grid; gap: 6px; padding: 18px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); text-align: left; }
+.ltiles b { font-size: 15px; }
+.ltiles small { font-size: 13px; line-height: 1.45; }
+.lbtns { display: flex; gap: 10px; margin-top: 10px; }
+.lbtns .ghostbtn { margin-left: 0; }

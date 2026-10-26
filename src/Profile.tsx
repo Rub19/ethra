@@ -222,6 +222,28 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
       </div>
       <div className="cols">
         <aside>
+          {!puuid && games && (() => {
+            const midnight = new Date().setHours(0, 0, 0, 0);
+            const today = games.filter((g) => g.gameCreation >= midnight && g.gameDuration >= 300);
+            const w = today.filter((g) => g.participants[0].stats.win).length;
+            const before = lp.filter((x) => x.t < midnight).at(-1);
+            const delta = before && lp.length ? lp[lp.length - 1].v - before.v : null;
+            return (
+              <section className="card session">
+                <h3>Session du jour</h3>
+                {today.length === 0 ? (
+                  <p className="muted">Aucune partie aujourd'hui.</p>
+                ) : (
+                  <div className="sess">
+                    <div><b><span className="good">{w}V</span> <span className="bad">{today.length - w}D</span></b><small>{Math.round((w / today.length) * 100)}% de victoires</small></div>
+                    <div><b>{(today.reduce((a, g) => a + kda(g.participants[0].stats), 0) / today.length).toFixed(2)}</b><small>KDA moyen</small></div>
+                    {delta !== null && <div><b className={delta >= 0 ? "good" : "bad"}>{delta >= 0 ? "+" : ""}{delta} LP</b><small>Solo/Duo</small></div>}
+                  </div>
+                )}
+                {today.length > 0 && <div className="streak">{today.slice(0, 12).reverse().map((g) => <i key={g.gameId} className={g.participants[0].stats.win ? "sw" : "sl"} />)}</div>}
+              </section>
+            );
+          })()}
           <section className="card">
             {QUEUES.map(([k, l]) => {
               const q = ranks[k];
@@ -244,7 +266,7 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
             </section>
           )}
           <section className="card">
-            <h3>20 dernières parties</h3>
+            <h3>{games?.length ?? 0} dernières parties</h3>
             <div className="wr"><i style={{ width: `${games?.length ? (wins / games.length) * 100 : 0}%` }} /></div>
             <small className="muted">{wins}V - {(games?.length ?? 0) - wins}D</small>
             {champs.slice(0, 6).map(([c, x]) => (

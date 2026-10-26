@@ -2,6 +2,9 @@ import { useState } from "react";
 import { settings, Settings as S } from "./lcu";
 import { Alert, ICON, Row, SkillHint, Widget } from "./Widget";
 
+const CH = (id: string) => `https://ddragon.leagueoflegends.com/cdn/15.1.1/img/champion/${id}.png`;
+const IT = (id: number) => `https://ddragon.leagueoflegends.com/cdn/15.1.1/img/item/${id}.png`;
+
 type Card = { key: keyof S; title: string; desc: string; preview: React.ReactNode };
 
 const CARDS: Card[] = [
@@ -30,6 +33,23 @@ const CARDS: Card[] = [
         <Row label="CS" value="+12" tone="good" />
         <Row label="Objets" value="-0.4k" tone="bad" />
         <Row label="Niveau" value="+1" tone="good" />
+      </Widget>
+    ),
+  },
+  {
+    key: "ovDeaths", title: "Ennemis morts", desc: "Les adversaires morts et leur temps de réapparition, pour savoir quand forcer un objectif.",
+    preview: (
+      <Widget title="Ennemis morts">
+        <Row icon={CH("Yasuo")} label="Yasuo" value="24s" tone="good" />
+        <Row icon={CH("Thresh")} label="Thresh" value="11s" tone="good" />
+      </Widget>
+    ),
+  },
+  {
+    key: "ovItem", title: "Prochain objet", desc: "Le prochain objet de ton build méta et l'or qu'il te manque pour l'acheter.",
+    preview: (
+      <Widget title="Prochain objet">
+        <Row icon={IT(3089)} label="Coiffe de Rabadon" value="-620" bar={0.82} />
       </Widget>
     ),
   },

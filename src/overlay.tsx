@@ -12,7 +12,7 @@ function Overlay() {
   const [g, setG] = useState<any>(null);
   const [d, setD] = useState<DD | null>(null);
   const [cfg, setCfg] = useState(settings);
-  const [skills, setSkills] = useState<{ key: string; order: number[] } | null>(null);
+  const [skills, setSkills] = useState<{ key: string; order: number[]; items: number[] } | null>(null);
 
   useEffect(() => {
     ddragon().then(setD, () => {});
@@ -27,14 +27,14 @@ function Overlay() {
   const key = meP && d ? `${meP.championName}-${meP.position}-${g.gameData.mapNumber}` : "";
 
   useEffect(() => {
-    if (!key || !d || !cfg.ovSkill || skills?.key === key) return;
+    if (!key || !d || !(cfg.ovSkill || cfg.ovItem) || skills?.key === key) return;
     const champ = champId(d, meP.championName);
     const aram = g.gameData.mapNumber === 12;
     opggBuild(d, champ, aram ? "mid" : meP.position || undefined, aram ? "aram" : "ranked").then(
-      (b) => setSkills({ key, order: b?.skills ?? [] }),
-      () => setSkills({ key, order: [] }),
+      (b) => setSkills({ key, order: b?.skills ?? [], items: b ? [...b.order, ...b.boots.slice(0, 1), ...b.core] : [] }),
+      () => setSkills({ key, order: [], items: [] }),
     );
-  }, [key, d, cfg.ovSkill]);
+  }, [key, d, cfg.ovSkill, cfg.ovItem]);
 
   if (!g || !cfg.ovEnabled || !meP) return null;
 
@@ -63,6 +63,12 @@ function Overlay() {
   const teamWorth = (team: string) => players.filter((p) => p.team === team).reduce((a, p) => a + worth(p), 0);
   const enemyTeam = meP.team === "ORDER" ? "CHAOS" : "ORDER";
   const diff = teamWorth(meP.team) - teamWorth(enemyTeam);
+  const deadEnemies = players.filter((p) => p.team === enemyTeam && p.isDead && p.respawnTimer > 0).sort((a, b) => b.respawnTimer - a.respawnTimer);
+  const owned = new Set<number>(meP.items.map((it: any) => it.itemID));
+  // ponytail: missing gold uses the item's full price, ignoring components already bought; subtract component prices if players ask for precision
+  const nextItem = skills?.items.find((id) => !owned.has(id));
+  const nextPrice = nextItem && d ? d.items[nextItem]?.gold.total ?? 0 : 0;
+  const gold = Math.floor(g.activePlayer.currentGold);
   const opp = meP.position ? players.find((p) => p.team === enemyTeam && p.position === meP.position) : undefined;
 
   const abilities = g.activePlayer.abilities ?? {};
@@ -96,6 +102,19 @@ function Overlay() {
             {all.map((x) => (
               <Row key={x.label} icon={objIcon(x.label)} label={x.label} value={x.at <= t ? "UP" : mmss(x.at - t)} tone={x.at <= t ? "up" : undefined} bar={x.at <= t ? undefined : 1 - (x.at - t) / period(x.label)} />
             ))}
+          </Widget>
+        )}
+        {cfg.ovDeaths && d && deadEnemies.length > 0 && (
+          <Widget title="Ennemis morts">
+            {deadEnemies.map((p) => {
+              const id = champId(d, p.championName);
+              return <Row key={p.riotId ?? p.summonerName} icon={id ? img.champ(d, id) : undefined} label={d.champs[id]?.name ?? p.championName} value={`${Math.ceil(p.respawnTimer)}s`} tone="good" />;
+            })}
+          </Widget>
+        )}
+        {cfg.ovItem && d && nextItem && (
+          <Widget title="Prochain objet">
+            <Row icon={img.item(d, nextItem)} label={d.items[nextItem]?.name ?? ""} value={gold >= nextPrice ? "Achetable" : `-${(nextPrice - gold).toLocaleString("fr")}`} tone={gold >= nextPrice ? "up" : undefined} bar={nextPrice ? gold / nextPrice : undefined} />
           </Widget>
         )}
         {cfg.ovBench && opp && (
