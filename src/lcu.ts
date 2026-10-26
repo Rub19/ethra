@@ -10,7 +10,7 @@ export type Rune = { id: number; name: string; icon: string };
 export type Style = Rune & { slots: { runes: Rune[] }[] };
 export type DD = {
   v: string;
-  champs: Record<number, { id: string; name: string }>;
+  champs: Record<number, { id: string; name: string; tags: string[]; info: { attack: number; magic: number } }>;
   items: Record<string, Item>;
   styles: Style[];
   runes: Record<number, Rune>;
@@ -26,7 +26,7 @@ export function ddragon(): Promise<DD> {
     const get = (f: string) => fetch(`${CDN}/${v}/data/fr_FR/${f}.json`).then((r) => r.json());
     const [c, i, styles, s] = await Promise.all([get("champion"), get("item"), get("runesReforged"), get("summoner")]);
     const champs: DD["champs"] = {};
-    for (const x of Object.values<any>(c.data)) champs[+x.key] = { id: x.id, name: x.name };
+    for (const x of Object.values<any>(c.data)) champs[+x.key] = { id: x.id, name: x.name, tags: x.tags, info: x.info };
     const spells: DD["spells"] = {};
     for (const x of Object.values<any>(s.data)) spells[+x.key] = { id: x.id, name: x.name };
     const runes: DD["runes"] = {};

@@ -1,45 +1,32 @@
 import { useEffect, useState } from "react";
 import { applyBuild, Build, myBuild, riotBuild } from "./buildData";
 import { DD, ddragon, img, lcu } from "./lcu";
+import type { Go } from "./main";
 
 const ROLES: [string, string][] = [["NONE", "Toutes"], ["TOP", "Top"], ["JUNGLE", "Jungle"], ["MIDDLE", "Mid"], ["BOTTOM", "ADC"], ["UTILITY", "Support"]];
 
-export default function Builds() {
+export default function Builds({ champ, go, role: initialRole = "NONE", compact = false }: { champ: number; go?: Go; role?: string; compact?: boolean }) {
   const [d, setD] = useState<DD | null>(null);
-  const [champ, setChamp] = useState(0);
-  const [q, setQ] = useState("");
-  const [role, setRole] = useState("NONE");
+  const [role, setRole] = useState(initialRole);
   const [src, setSrc] = useState<"toi" | "riot">("toi");
   const [b, setB] = useState<Build | null | undefined>();
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
     ddragon().then(setD);
-    lcu<number>("/lol-champ-select/v1/current-champion").then((c) => c && setChamp(c), () => {});
   }, []);
 
   useEffect(() => {
     if (!d || !champ) return;
     setB(undefined);
     setMsg("");
-    (src === "toi" ? myBuild(d, champ) : riotBuild(champ, role)).then(setB, () => setB(null));
+    (src === "toi" ? myBuild(d, champ) : riotBuild(champ, role)).then(
+      (x) => (x === null && src === "toi" ? setSrc("riot") : setB(x)),
+      () => setB(null),
+    );
   }, [d, champ, src, role]);
 
   if (!d) return null;
-
-  if (!champ) {
-    const list = Object.entries(d.champs).filter(([, c]) => c.name.toLowerCase().includes(q.toLowerCase())).sort((a, b) => a[1].name.localeCompare(b[1].name));
-    return (
-      <div className="builds">
-        <input className="big" autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Choisis un champion" />
-        <div className="cgrid">
-          {list.map(([id, c]) => (
-            <button key={id} onClick={() => setChamp(+id)}><img src={img.champ(d, +id)} /><span>{c.name}</span></button>
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   const apply = async () => {
     if (!b) return;
@@ -49,20 +36,37 @@ export default function Builds() {
       (e) => setMsg(`Erreur : ${e}`),
     );
   };
+  const c = d.champs[champ];
 
   return (
     <div className="builds">
+      {!compact && (
+        <div className="chead" style={{ backgroundImage: `url(https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${c?.id}_0.jpg)` }}>
+          <img src={img.champ(d, champ)} />
+          <div>
+            <h1>{c?.name}</h1>
+            <small>{c?.tags.join(" · ")}</small>
+          </div>
+          {go && <button className="ghostbtn" onClick={() => go({ page: "champions" })}>Changer de champion</button>}
+        </div>
+      )}
       <div className="bbar">
-        <button className="champpick" onClick={() => setChamp(0)}><img src={img.champ(d, champ)} />{d.champs[champ]?.name} ▾</button>
+        {compact && (
+          <button className="cmini" onClick={() => go?.({ page: "champion", champ })}>
+            <img src={img.champ(d, champ)} />
+            <b>{c?.name}</b>
+          </button>
+        )}
         <div className="seg">
           <button className={src === "toi" ? "on" : ""} onClick={() => setSrc("toi")}>Tes parties</button>
           <button className={src === "riot" ? "on" : ""} onClick={() => setSrc("riot")}>Reco Riot</button>
         </div>
         {src === "riot" && (
-          <select value={role} onChange={(e) => setRole(e.target.value)}>{ROLES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
+          <div className="seg">{ROLES.map(([k, l]) => <button key={k} className={role === k ? "on" : ""} onClick={() => setRole(k)}>{l}</button>)}</div>
         )}
-        <button className="primary" disabled={!b} onClick={apply}>Importer dans le client</button>
+        <span className="grow" />
         {msg && <span className="muted">{msg}</span>}
+        <button className="primary" disabled={!b} onClick={apply}>Importer dans le client</button>
       </div>
       {b === undefined ? (
         <p className="muted">Analyse…</p>

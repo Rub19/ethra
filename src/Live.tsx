@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
-import { DD, ddragon, Game, history, img, kda, lcu, Queue, rankLabel, ranked, summoner } from "./lcu";
+import { DD, ddragon, Game, history, img, kda, lcu, Queue, ranked, summoner, TIERS } from "./lcu";
+import { POSITIONS } from "./buildData";
+import Builds from "./Builds";
+import type { Go } from "./main";
 
-type Slot = { puuid: string; championId: number; position?: string; name?: string };
+type Slot = { puuid: string; championId: number; position?: string; name?: string; me?: boolean };
 
 const POS: Record<string, string> = { top: "Top", jungle: "Jungle", middle: "Mid", bottom: "ADC", utility: "Support" };
+const LIVE = ["ChampSelect", "InProgress", "Reconnect", "GameStart"];
 
-function PlayerCard({ s, d, onOpen }: { s: Slot; d: DD; onOpen: (p: string) => void }) {
+function PlayerCard({ s, d, go }: { s: Slot; d: DD; go: Go }) {
   const [info, setInfo] = useState<{ name: string; q?: Queue; games: Game[] } | null>(null);
   useEffect(() => {
     if (!s.puuid) return;
     Promise.all([summoner(s.puuid), ranked(s.puuid).catch(() => ({}) as Record<string, Queue>), history(s.puuid, 20).catch(() => [])]).then(
-      ([sum, r, games]) => setInfo({ name: `${sum.gameName}#${sum.tagLine}`, q: r.RANKED_SOLO_5x5, games }),
+      ([sum, r, games]) => setInfo({ name: sum.gameName, q: r.RANKED_SOLO_5x5, games }),
       () => {},
     );
   }, [s.puuid]);
@@ -23,34 +27,66 @@ function PlayerCard({ s, d, onOpen }: { s: Slot; d: DD; onOpen: (p: string) => v
   for (const x of g) if (x.participants[0].stats.win === g[0]?.participants[0].stats.win) streak++; else break;
   const tags: string[] = [];
   if (onChamp.length >= 12) tags.push("OTP");
-  if (streak >= 3) tags.push(g[0].participants[0].stats.win ? `${streak} win d'affilée` : `${streak} défaites d'affilée`);
-  if (s.championId && onChamp.length === 0 && g.length) tags.push("Premier match sur ce champion (20 dernières)");
+  if (streak >= 3) tags.push(g[0].participants[0].stats.win ? `${streak} wins` : `${streak} défaites`);
+  if (s.championId && g.length && !onChamp.length) tags.push("1re sur ce champ");
+  const q = info?.q;
+  const tier = q?.tier && TIERS.includes(q.tier) ? q.tier : "";
+  const c = d.champs[s.championId];
 
   return (
-    <div className="pcard" onClick={() => s.puuid && onOpen(s.puuid)}>
-      {s.championId ? <img className="champ" src={img.champ(d, s.championId)} /> : <div className="champ ghost" />}
-      <div className="pinfo">
-        <b>{info?.name ?? s.name ?? (s.puuid ? "…" : "Joueur masqué")}</b>
-        <small>{s.position ? `${POS[s.position] ?? s.position} · ` : ""}{s.championId ? d.champs[s.championId]?.name : "Pas encore choisi"}</small>
+    <div
+      className={`pcard ${s.me ? "me" : ""} ${s.puuid ? "link" : ""}`}
+      onClick={() => s.puuid && go({ page: "profil", puuid: s.puuid })}
+      style={c ? { backgroundImage: `linear-gradient(180deg, #0b0f17 0%, #0b0f17aa 45%, #0b0f17ee 100%), url(https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${c.id}_0.jpg)` } : undefined}
+    >
+      <div className="ptags">{tags.map((t) => <span key={t}>{t}</span>)}</div>
+      <div className="prank">
+        <b className={`t-${tier.toLowerCase()}`}>{tier ? `${tier[0]}${tier.slice(1).toLowerCase()} ${TIERS.indexOf(tier) >= 7 ? "" : q!.division}` : info ? "Non classé" : ""}</b>
+        {q && q.wins + q.losses > 0 && <small>{q.wins}V - {q.losses}D</small>}
       </div>
-      {info && (
-        <div className="pnums">
-          <div><b>{rankLabel(info.q)}</b><small>{info.q?.wins ?? 0}V {info.q?.losses ?? 0}D</small></div>
-          <div><b className={wins / Math.max(1, g.length) >= 0.5 ? "good" : "bad"}>{g.length ? Math.round((wins / g.length) * 100) : 0}%</b><small>{g.length} récentes</small></div>
-          <div>
-            <b>{onChamp.length ? `${Math.round((champWins / onChamp.length) * 100)}%` : "-"}</b>
-            <small>{onChamp.length} sur le champ · {onChamp.length ? (onChamp.reduce((a, x) => a + kda(x.participants[0].stats), 0) / onChamp.length).toFixed(1) : "-"} KDA</small>
+      <div className="pbottom">
+        <b>{info?.name ?? s.name ?? (s.puuid ? "…" : "Joueur masqué")}</b>
+        <small>{c ? c.name : "Pas encore choisi"}{s.position ? ` · ${POS[s.position] ?? s.position}` : ""}</small>
+        {info && g.length > 0 && (
+          <div className="pnums">
+            <span className={wins / g.length >= 0.5 ? "good" : "bad"}>{Math.round((wins / g.length) * 100)}% récent</span>
+            {onChamp.length > 0 && (
+              <span>
+                {Math.round((champWins / onChamp.length) * 100)}% · {onChamp.length}p · {(onChamp.reduce((a, x) => a + kda(x.participants[0].stats), 0) / onChamp.length).toFixed(1)} KDA
+              </span>
+            )}
           </div>
-        </div>
-      )}
-      <div className="tags">{tags.map((t) => <span key={t}>{t}</span>)}</div>
+        )}
+      </div>
     </div>
   );
 }
 
-export default function Live({ phase, onOpen }: { phase: string; onOpen: (p: string) => void }) {
+function Damage({ team, d, label }: { team: Slot[]; d: DD; label: string }) {
+  let ad = 0, ap = 0;
+  for (const s of team) {
+    const i = d.champs[s.championId]?.info;
+    if (!i) continue;
+    ad += i.attack / Math.max(1, i.attack + i.magic);
+    ap += i.magic / Math.max(1, i.attack + i.magic);
+  }
+  const tot = ad + ap;
+  if (!tot) return null;
+  return (
+    <div className="dmg">
+      <small>{label}</small>
+      <div className="dbar">
+        <span className="ad" style={{ flex: ad }}>{Math.round((ad / tot) * 100)}% AD</span>
+        <span className="ap" style={{ flex: ap }}>{Math.round((ap / tot) * 100)}% AP</span>
+      </div>
+    </div>
+  );
+}
+
+export default function Live({ phase, go }: { phase: string; go: Go }) {
   const [d, setD] = useState<DD | null>(null);
   const [teams, setTeams] = useState<[Slot[], Slot[]]>([[], []]);
+  const [mine, setMine] = useState<{ champ: number; role: string }>({ champ: 0, role: "NONE" });
 
   useEffect(() => {
     ddragon().then(setD);
@@ -58,12 +94,20 @@ export default function Live({ phase, onOpen }: { phase: string; onOpen: (p: str
       if (phase === "ChampSelect") {
         const s = await lcu<any>("/lol-champ-select/v1/session").catch(() => null);
         if (!s) return;
-        const slot = (m: any): Slot => ({ puuid: m.puuid ?? "", championId: m.championId || m.championPickIntent, position: m.assignedPosition, name: m.gameName });
-        setTeams([s.myTeam.map(slot), s.theirTeam.map(slot)]);
-      } else if (["InProgress", "Reconnect", "GameStart"].includes(phase)) {
-        const s = await lcu<any>("/lol-gameflow/v1/session").catch(() => null);
-        const slot = (m: any): Slot => ({ puuid: m.puuid ?? "", championId: m.championId, position: m.selectedPosition?.toLowerCase(), name: m.gameName ?? m.summonerName });
-        if (s) setTeams([s.gameData.teamOne.map(slot), s.gameData.teamTwo.map(slot)]);
+        const slot = (m: any): Slot => ({
+          puuid: m.puuid ?? "", championId: m.championId || m.championPickIntent, position: m.assignedPosition, name: m.gameName, me: m.cellId === s.localPlayerCellId,
+        });
+        const t: [Slot[], Slot[]] = [s.myTeam.map(slot), s.theirTeam.map(slot)];
+        setTeams(t);
+        const self = t[0].find((x) => x.me);
+        if (self?.championId) setMine({ champ: self.championId, role: POSITIONS[self.position ?? ""] ?? "NONE" });
+      } else if (LIVE.includes(phase)) {
+        const [s, self] = await Promise.all([lcu<any>("/lol-gameflow/v1/session").catch(() => null), lcu<any>("/lol-summoner/v1/current-summoner").catch(() => null)]);
+        const slot = (m: any): Slot => ({ puuid: m.puuid ?? "", championId: m.championId, position: m.selectedPosition?.toLowerCase(), me: m.puuid === self?.puuid });
+        if (s) {
+          const a: Slot[] = s.gameData.teamOne.map(slot), b: Slot[] = s.gameData.teamTwo.map(slot);
+          setTeams(b.some((x) => x.me) ? [b, a] : [a, b]);
+        }
       }
     };
     load();
@@ -71,25 +115,40 @@ export default function Live({ phase, onOpen }: { phase: string; onOpen: (p: str
     return () => clearInterval(id);
   }, [phase]);
 
-  if (!["ChampSelect", "InProgress", "Reconnect", "GameStart"].includes(phase))
+  if (!LIVE.includes(phase))
     return (
       <div className="empty">
         <h2>Pas de partie en cours</h2>
-        <p>Dès que tu entres en sélection des champions, Ethra affiche les rangs, winrates et mains de chaque joueur, et importe tes runes automatiquement.</p>
+        <p>Dès que tu entres en sélection des champions, Ethra affiche ton build, la composition des équipes et le rang de chaque joueur.</p>
+        <button className="primary" onClick={() => go({ page: "champions" })}>Préparer un champion</button>
       </div>
     );
   if (!d) return null;
+
   return (
     <div className="live">
-      <h2>{phase === "ChampSelect" ? "Sélection des champions" : "Partie en cours"}</h2>
-      <div className="lteams">
-        {teams.map((t, i) => (
-          <div key={i}>
-            <h3 className={i ? "bad" : "good"}>{i ? "Ennemis" : "Ton équipe"}</h3>
-            {t.map((s, j) => <PlayerCard key={s.puuid || `${i}-${j}`} s={s} d={d} onOpen={onOpen} />)}
-          </div>
-        ))}
+      <div className="pagehead">
+        <h1>{phase === "ChampSelect" ? "Sélection des champions" : "Partie en cours"}</h1>
       </div>
+      {phase === "ChampSelect" && (
+        mine.champ ? (
+          <section className="card"><Builds key={`${mine.champ}-${mine.role}`} champ={mine.champ} role={mine.role} compact go={go} /></section>
+        ) : (
+          <section className="card muted">Survole ou choisis un champion pour voir son build ici.</section>
+        )
+      )}
+      <div className="dmgs">
+        <Damage team={teams[0]} d={d} label="Dégâts de ton équipe (estimés)" />
+        {teams[1].some((x) => x.championId) && <Damage team={teams[1]} d={d} label="Dégâts adverses (estimés)" />}
+      </div>
+      {teams.map((t, i) =>
+        t.length ? (
+          <div key={i}>
+            <h3 className={i ? "bad" : "good"}>{i ? "Équipe adverse" : "Ton équipe"}</h3>
+            <div className="prow">{t.map((s, j) => <PlayerCard key={s.puuid || `${i}-${j}`} s={s} d={d} go={go} />)}</div>
+          </div>
+        ) : null,
+      )}
     </div>
   );
 }

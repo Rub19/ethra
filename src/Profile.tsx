@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   ago, cs, DD, ddragon, Game, gameDetails, history, img, kda, me, mmss, n, Queue, queueNames, rankLabel, ranked, rankScore, summoner, Summoner,
 } from "./lcu";
+import type { Go } from "./main";
 
 const QUEUES: [string, string][] = [["RANKED_SOLO_5x5", "Classé Solo/Duo"], ["RANKED_FLEX_SR", "Classé Flex"], ["CHERRY", "Arena"]];
 
@@ -121,7 +122,8 @@ function Scoreboard({ g, d, puuid, onOpen }: { g: Game; d: DD; puuid: string; on
   );
 }
 
-export default function Profile({ puuid, onOpen }: { puuid: string | null; onOpen: (p: string) => void }) {
+export default function Profile({ puuid, go }: { puuid: string | null; go: Go }) {
+  const onOpen = (p: string) => go({ page: "profil", puuid: p });
   const [sum, setSum] = useState<Summoner | null>(null);
   const [ranks, setRanks] = useState<Record<string, Queue>>({});
   const [games, setGames] = useState<Game[] | null>(null);
@@ -192,7 +194,7 @@ export default function Profile({ puuid, onOpen }: { puuid: string | null; onOpe
             <div className="wr"><i style={{ width: `${games?.length ? (wins / games.length) * 100 : 0}%` }} /></div>
             <small className="muted">{wins}V - {(games?.length ?? 0) - wins}D</small>
             {champs.slice(0, 6).map(([c, x]) => (
-              <div key={c} className="perf">
+              <div key={c} className="perf link" onClick={() => go({ page: "champion", champ: c })}>
                 <img src={img.champ(d, c)} />
                 <div><b>{d.champs[c]?.name}</b><small>{(x.k / x.g).toFixed(1)} KDA</small></div>
                 <div className="r"><b className={x.w / x.g >= 0.5 ? "good" : "bad"}>{Math.round((x.w / x.g) * 100)}%</b><small>{x.g} parties</small></div>
@@ -208,7 +210,7 @@ export default function Profile({ puuid, onOpen }: { puuid: string | null; onOpe
               <thead><tr><th>Champion</th><th>Parties</th><th>Winrate</th><th>KDA</th><th>CS/min</th></tr></thead>
               <tbody>
                 {champs.map(([c, x]) => (
-                  <tr key={c}>
+                  <tr key={c} className="link" onClick={() => go({ page: "champion", champ: c })}>
                     <td><img src={img.champ(d, c)} /> {d.champs[c]?.name}</td>
                     <td>{x.g}</td>
                     <td className={x.w / x.g >= 0.5 ? "good" : "bad"}>{Math.round((x.w / x.g) * 100)}%</td>
