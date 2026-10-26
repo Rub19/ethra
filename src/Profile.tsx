@@ -4,6 +4,7 @@ import {
 } from "./lcu";
 import type { Go } from "./main";
 import { useAvatar } from "./Account";
+import Skeleton from "./Skeleton";
 
 const QUEUES: [string, string][] = [["RANKED_SOLO_5x5", "Classé Solo/Duo"], ["RANKED_FLEX_SR", "Classé Flex"], ["CHERRY", "Arena"]];
 
@@ -82,7 +83,7 @@ function MatchRow({ g, puuid, d, queues, onOpen, onMatch }: { g: Game; puuid: st
         <img src={img.champ(d, p.championId)} />
         <span>{n(s, "champLevel")}</span>
       </div>
-      <div className="micons">{icons.map((u, i) => (u ? <img key={i} src={u} /> : <span key={i} />))}</div>
+      <div className="micons">{icons.filter(Boolean).map((u, i) => <img key={i} src={u as string} />)}</div>
       <div className="mkda">
         <b>{n(s, "kills")} <i>/</i> <em>{n(s, "deaths")}</em> <i>/</i> {n(s, "assists")}</b>
         <small><span className={kda(s) >= 3 ? "good" : ""}>{kda(s).toFixed(2)} KDA</span>{kp !== null && ` · ${kp}% KP`}</small>
@@ -160,7 +161,7 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
   }, [puuid]);
 
   if (err) return <div className="empty"><p>{err}</p></div>;
-  if (!sum || !d) return <div className="empty"><p>Chargement…</p></div>;
+  if (!sum || !d) return <div className="profile"><div className="skel"><div style={{ height: 150 }} /></div><Skeleton rows={6} /></div>;
 
   const lp = lpHistory(sum.puuid, ranks.RANKED_SOLO_5x5);
   const pool = new Map<number, { g: number; w: number; k: number; cs: number }>();
@@ -174,9 +175,19 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
 
   return (
     <div className="profile">
-      <div className="phead">
+      <div className="phero" style={champs[0] ? { backgroundImage: `linear-gradient(90deg, var(--bg) 18%, #0b0f17cc 50%, #0b0f1755), url(https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${d.champs[champs[0][0]]?.id}_0.jpg)` } : undefined}>
         <div className="avatar"><img src={(!puuid && avatar) || img.icon(d, sum.profileIconId)} /><span>{sum.summonerLevel}</span></div>
-        <h1>{sum.gameName} <span>#{sum.tagLine}</span></h1>
+        <div className="pid">
+          <h1>{sum.gameName} <span>#{sum.tagLine}</span></h1>
+          {games && games.length > 0 && (
+            <div className="pquick">
+              <div><b className={wins / games.length >= 0.5 ? "good" : "bad"}>{Math.round((wins / games.length) * 100)}%</b><small>Winrate récent</small></div>
+              <div><b>{(games.reduce((a, g) => a + kda(g.participants[0].stats), 0) / games.length).toFixed(2)}</b><small>KDA moyen</small></div>
+              <div><b>{games.length}</b><small>Parties analysées</small></div>
+              {champs[0] && <div><b>{d.champs[champs[0][0]]?.name}</b><small>Champion favori</small></div>}
+            </div>
+          )}
+        </div>
       </div>
       <div className="subtabs">
         <button className={sub === "apercu" ? "on" : ""} onClick={() => setSub("apercu")}>Aperçu</button>
@@ -189,9 +200,12 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
               const q = ranks[k];
               return (
                 <div key={k} className="rank">
-                  <span>{l}</span>
-                  <b>{rankLabel(q)}</b>
-                  {q && q.wins + q.losses > 0 && <small>{q.wins}V - {q.losses}D · {Math.round((q.wins / (q.wins + q.losses)) * 100)}%</small>}
+                  {q?.tier && q.tier !== "NONE" && q.tier !== "UNRANKED" ? <img className="emblem" src={img.emblem(q.tier)} /> : <div className="emblem none" />}
+                  <div>
+                    <span>{l}</span>
+                    <b className={q?.tier ? `t-${q.tier.toLowerCase()}` : ""}>{rankLabel(q)}</b>
+                    {q && q.wins + q.losses > 0 && <small>{q.wins}V - {q.losses}D · {Math.round((q.wins / (q.wins + q.losses)) * 100)}%</small>}
+                  </div>
                 </div>
               );
             })}
@@ -216,7 +230,7 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
           </section>
         </aside>
         <div className="list">
-          {!games ? <p className="muted">Chargement de l'historique…</p> : sub === "apercu" ? (
+          {!games ? <Skeleton rows={8} /> : sub === "apercu" ? (
             games.map((g) => <MatchRow key={g.gameId} g={g} puuid={sum.puuid} d={d} queues={queues} onOpen={onOpen} onMatch={() => go({ page: "match", gameId: g.gameId, puuid: sum.puuid })} />)
           ) : (
             <table className="pool">

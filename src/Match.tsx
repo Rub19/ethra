@@ -4,6 +4,7 @@ import { writeImage } from "@tauri-apps/plugin-clipboard-manager";
 import { cs, DD, ddragon, Game, gameDetails, img, kda, lcu, mmss, n, Participant, queueNames } from "./lcu";
 import { badges, Scoreboard } from "./Profile";
 import type { Go } from "./main";
+import Skeleton from "./Skeleton";
 
 type Frame = { participantFrames: Record<string, { minionsKilled: number; jungleMinionsKilled: number; totalGold: number; xp: number; level: number }> };
 type Metric = "cs" | "gold" | "xp";
@@ -31,7 +32,15 @@ const grade = (s: number) => (s >= 80 ? "Excellent" : s >= 60 ? "Bon" : s >= 40 
 
 function Chart({ series, unit }: { series: { name: string; color: string; pts: number[] }[]; unit: string }) {
   const [hover, setHover] = useState<number | null>(null);
-  const w = 640, h = 240, l = 44, r = 90, t = 12, b = 26;
+  const box = useRef<HTMLDivElement>(null);
+  const [w, setW] = useState(800);
+  useEffect(() => {
+    if (!box.current) return;
+    const ro = new ResizeObserver(([e]) => setW(Math.max(320, e.contentRect.width)));
+    ro.observe(box.current);
+    return () => ro.disconnect();
+  }, []);
+  const h = 260, l = 44, r = 80, t = 12, b = 26;
   const len = Math.max(...series.map((s) => s.pts.length));
   const max = Math.max(1, ...series.flatMap((s) => s.pts));
   const x = (i: number) => l + (i / Math.max(1, len - 1)) * (w - l - r);
@@ -39,9 +48,11 @@ function Chart({ series, unit }: { series: { name: string; color: string; pts: n
   const ticks = [0, 0.5, 1].map((k) => Math.round(max * k));
   const fmt = (v: number) => (unit === "or" ? v.toLocaleString("fr") : String(v));
   return (
-    <div className="chart">
+    <div className="chart" ref={box}>
       <div className="legend">{series.map((s) => <span key={s.name}><i style={{ background: s.color }} />{s.name}</span>)}</div>
       <svg
+        width={w}
+        height={h}
         viewBox={`0 0 ${w} ${h}`}
         onMouseMove={(e) => {
           const box = e.currentTarget.getBoundingClientRect();
@@ -152,7 +163,7 @@ export default function Match({ gameId, puuid, go }: { gameId: number; puuid: st
   }, [gameId]);
 
   if (err) return <div className="empty"><p>{err}</p></div>;
-  if (!d || !g) return <div className="empty"><p>Chargement…</p></div>;
+  if (!d || !g) return <Skeleton rows={4} height={180} />;
 
   const id = g.participantIdentities.find((x) => x.player.puuid === puuid)?.participantId;
   const p = g.participants.find((x) => x.participantId === id);

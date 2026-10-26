@@ -98,7 +98,7 @@ export default function Champions({ go }: { go: Go }) {
             {rows.map((r, i) => (
               <tr key={r.id} onClick={() => go({ page: "champion", champ: r.id })}>
                 <td className="muted">{i + 1}</td>
-                <td className="cname"><img src={img.champ(d, r.id)} />{r.name}</td>
+                <td><div className="cname"><img src={img.champ(d, r.id)} />{r.name}</div></td>
                 <td className="muted">{CLASSES.find(([k]) => k === d.champs[r.id].tags[0])?.[1] ?? ""}</td>
                 <td>{r.g}<div className="mini"><i style={{ width: `${(r.g / Math.max(...rows.map((x) => x.g))) * 100}%` }} /></div></td>
                 <td className={r.w / r.g >= 0.5 ? "good" : "bad"}>{Math.round((r.w / r.g) * 100)}%</td>

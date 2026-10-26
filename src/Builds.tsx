@@ -3,6 +3,7 @@ import { applyBuild, Build, myBuild, riotBuild } from "./buildData";
 import { DD, ddragon, img, lcu } from "./lcu";
 import { OPGG_POS, opggBuild, OpggBuild, POS_LABEL, TIER_LABEL, Counter, mainPosition } from "./opgg";
 import type { Go } from "./main";
+import Skeleton from "./Skeleton";
 
 type Src = "opgg" | "toi" | "riot";
 const RIOT_POS: Record<string, string> = { top: "TOP", jungle: "JUNGLE", mid: "MIDDLE", adc: "BOTTOM", support: "UTILITY" };
@@ -108,7 +109,7 @@ export default function Builds({ champ, go, role: initialRole = "", compact = fa
         </div>
         {src !== "toi" && mode === "ranked" && (
           <div className="seg">
-            {Object.entries(POS_LABEL).map(([k, l]) => <button key={k} className={role === k ? "on" : ""} onClick={() => setRole(k)}>{l}</button>)}
+            {Object.entries(POS_LABEL).map(([k, l]) => <button key={k} className={`rolebtn ${role === k ? "on" : ""}`} onClick={() => setRole(k)} title={l}><img src={img.role(k)} />{l}</button>)}
           </div>
         )}
         <span className="grow" />
@@ -116,7 +117,7 @@ export default function Builds({ champ, go, role: initialRole = "", compact = fa
         <button className="primary" disabled={!b} onClick={apply}>Importer dans le client</button>
       </div>
       {b === undefined ? (
-        <p className="muted">Analyse…</p>
+        <Skeleton rows={2} height={220} />
       ) : b === null ? (
         <div className="empty"><p>Aucun build disponible pour ce champion.</p></div>
       ) : (
@@ -143,6 +144,11 @@ export default function Builds({ champ, go, role: initialRole = "", compact = fa
                 );
               })}
             </div>
+            {b.perks.length >= 9 && (
+              <div className="shards">
+                {b.perks.slice(6, 9).map((id, i) => <img key={i} src={img.rune(d, id)} title={String(id)} />)}
+              </div>
+            )}
           </section>
           <section className="card">
             <h3>Sorts d'invocateur</h3>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { DD, ddragon, img } from "./lcu";
 import { meta, MetaRow, POS_LABEL, TIER_LABEL } from "./opgg";
 import type { Go } from "./main";
+import Skeleton from "./Skeleton";
 
 type Key = "tier" | "winRate" | "pickRate" | "banRate" | "play" | "kda";
 const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
@@ -22,7 +23,7 @@ export default function TierList({ go }: { go: Go }) {
   }, []);
 
   if (err) return <div className="empty"><h2>OP.GG ne répond pas</h2><p>{err}</p></div>;
-  if (!d || !rows) return <div className="empty"><p>Chargement de la méta…</p></div>;
+  if (!d || !rows) return <div className="tierlist"><div className="pagehead"><h1>Tier list</h1></div><Skeleton rows={10} height={56} /></div>;
 
   const list = rows
     .filter((r) => (pos === "all" || r.position === pos) && r.name.toLowerCase().includes(q.trim().toLowerCase()))
@@ -46,7 +47,7 @@ export default function TierList({ go }: { go: Go }) {
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher un champion" />
         <div className="seg">
           {[["all", "Tous"], ...Object.entries(POS_LABEL)].map(([k, l]) => (
-            <button key={k} className={pos === k ? "on" : ""} onClick={() => setPos(k)}>{l}</button>
+            <button key={k} className={`rolebtn ${pos === k ? "on" : ""}`} onClick={() => setPos(k)}>{k !== "all" && <img src={img.role(k)} />}{l}</button>
           ))}
         </div>
       </div>
@@ -71,8 +72,8 @@ export default function TierList({ go }: { go: Go }) {
             return (
               <tr key={`${r.position}-${r.name}`} onClick={() => r.champ && go({ page: "champion", champ: r.champ, role: r.position })}>
                 <td className="muted">{i + 1}</td>
-                <td className="muted">{POS_LABEL[r.position]}</td>
-                <td className="cname">{r.champ ? <img src={img.champ(d, r.champ)} /> : null}{d.champs[r.champ]?.name ?? r.name}</td>
+                <td><span className="role"><img src={img.role(r.position)} />{POS_LABEL[r.position]}</span></td>
+                <td><div className="cname">{r.champ ? <img src={img.champ(d, r.champ)} /> : null}{d.champs[r.champ]?.name ?? r.name}</div></td>
                 <td><span className={`tier t${r.tier}`}>{TIER_LABEL[r.tier] ?? r.tier}</span></td>
                 <td className={r.winRate >= 0.5 ? "good" : "bad"}>{pct(r.winRate)}</td>
                 <td>{pct(r.pickRate)}</td>
