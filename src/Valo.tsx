@@ -66,7 +66,7 @@ function VRow({ id, puuid, d, go }: { id: string; puuid: string; d: VD; go: Go }
       </div>
       <div className="mbadges">
         {place === 1 ? <span className="gold">MVP</span> : teamBest && <span className="gold">MVP équipe</span>}
-        <span>{place}e / {m.players.length}</span>
+        <span>{place}{place === 1 ? "er" : "e"} / {m.players.length}</span>
         {s.fk >= 4 && <span>Entry {s.fk} FK</span>}
       </div>
     </div>

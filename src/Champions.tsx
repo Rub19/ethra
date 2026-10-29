@@ -54,7 +54,7 @@ export default function Champions({ go }: { go: Go }) {
       <div className="pagehead">
         <h1>Champions</h1>
         <p className="muted">
-          {games === null ? "Analyse de tes 100 dernières parties…" : `Tes stats sur tes ${games.length} dernières parties. Clique sur un champion pour voir et importer son build.`}
+          {games === null ? "Analyse de tes 100 dernières parties…" : games.length ? `Tes stats sur tes ${games.length} dernières parties. Clique sur un champion pour voir et importer son build.` : "Clique sur un champion pour voir son build méta. Lance le client League pour ajouter tes stats personnelles."}
         </p>
       </div>
       <div className="filters">

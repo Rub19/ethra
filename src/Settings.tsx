@@ -28,7 +28,7 @@ export default function Settings(_: { only?: string }) {
     <div className="settings">
       <div className="pagehead center">
         <h1>Réglages</h1>
-        <p className="muted">Tout est gratuit. Ethra ne parle qu'à ton client League, à OP.GG pour la méta et à Data Dragon pour les images.</p>
+        <p className="muted">Tout est gratuit. Ethra ne parle qu'à tes clients League et VALORANT, à OP.GG pour la méta, et à Data Dragon et valorant-api.com pour les images.</p>
       </div>
       <div className="setgrid">
         <section className="card">
@@ -53,7 +53,7 @@ export default function Settings(_: { only?: string }) {
             <h3>À propos</h3>
             <div className="aboutrow"><span>Version</span><b>{pkg.version}</b></div>
             <div className="aboutrow"><span>Code source</span><b>github.com/Rub19/ethra</b></div>
-            <div className="aboutrow"><span>Données</span><b>Client LoL · OP.GG · Data Dragon</b></div>
+            <div className="aboutrow"><span>Données</span><b>Clients Riot · OP.GG · Data Dragon · valorant-api.com</b></div>
             <small className="muted">Ethra n'est pas approuvé par Riot Games.</small>
           </section>
         </div>

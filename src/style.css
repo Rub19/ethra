@@ -578,3 +578,10 @@ nav .games button.on::after { display: none; }
 .vlr img { width: 34px; height: 34px; object-fit: contain; }
 .vlr .emblem.none { width: 30px; height: 30px; margin: 2px; display: block; }
 .vlr small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ltiles > button { display: grid; align-content: start; gap: 6px; padding: 18px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); text-align: left; transition: border-color .15s, transform .15s; }
+.ltiles > button:hover { border-color: #e8b53e66; transform: translateY(-2px); }
+.ltiles > button:focus-visible { outline: 2px solid var(--accent); }
+.ltiles > button b { font-size: 15px; }
+.ltiles > button small { font-size: 13px; line-height: 1.45; }
+.pulse.off { background: var(--loss); animation: none; box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .ltiles > button { transition: none; } .ltiles > button:hover { transform: none; } }

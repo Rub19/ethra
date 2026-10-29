@@ -31,6 +31,7 @@ export default function TierList({ go }: { go: Go }) {
       const c = sort.k === "tier" ? a.tier - b.tier || a.rank - b.rank : a[sort.k] - b[sort.k];
       return sort.desc ? -c : c;
     });
+  const moves = rows.some((r) => r.rankPrev && r.rankPrev !== r.rank);
   const th = (k: Key, l: string) => (
     <th className={sort.k === k ? "sorted" : ""} onClick={() => setSort({ k, desc: sort.k === k ? !sort.desc : k !== "tier" })}>
       {l} {sort.k === k ? (sort.desc ? "▾" : "▴") : ""}
@@ -63,7 +64,7 @@ export default function TierList({ go }: { go: Go }) {
             {th("banRate", "Ban")}
             {th("kda", "KDA")}
             {th("play", "Parties")}
-            <th>Évolution</th>
+            {moves && <th>Évolution</th>}
           </tr>
         </thead>
         <tbody>
@@ -80,7 +81,7 @@ export default function TierList({ go }: { go: Go }) {
                 <td>{pct(r.banRate)}</td>
                 <td>{r.kda.toFixed(2)}</td>
                 <td>{r.play.toLocaleString("fr")}</td>
-                <td className={delta > 0 ? "good" : delta < 0 ? "bad" : "muted"}>{delta > 0 ? `▲ ${delta}` : delta < 0 ? `▼ ${-delta}` : "–"}</td>
+                {moves && <td className={delta > 0 ? "good" : delta < 0 ? "bad" : "muted"}>{delta > 0 ? `▲ ${delta}` : delta < 0 ? `▼ ${-delta}` : "–"}</td>}
               </tr>
             );
           })}

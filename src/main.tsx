@@ -279,10 +279,15 @@ function App() {
         ) : route.page === "v-partie" ? (
           <ValoLive phase={vph} self={vSelf!} go={go} />
         ) : needsClient ? (
-          <div className="empty">
-            <h2>Lance le client League of Legends</h2>
-            <p>Ethra lit tes données directement depuis le client, aucune clé ni compte requis.</p>
-            <button className="primary" onClick={() => go({ page: "champions" })}>Voir les champions en attendant</button>
+          <div className="liveempty">
+            <span className="pulse off" />
+            <h1>Lance le client League of Legends</h1>
+            <p className="muted">Ethra lit ton profil, ton historique et ta partie directement depuis le client, aucune clé ni compte requis. En attendant, tout ça marche déjà :</p>
+            <div className="ltiles">
+              <button onClick={() => go({ page: "tierlist" })}><b>Tier list</b><small>Les meilleurs champions du patch par rôle, d'après OP.GG.</small></button>
+              <button onClick={() => go({ page: "champions" })}><b>Builds méta</b><small>Runes, objets, ordre des compétences et matchups de chaque champion.</small></button>
+              <button onClick={() => go({ page: "overlays" })}><b>Overlays</b><small>Timers d'objectifs, benchmark de lane et stats affichés en jeu.</small></button>
+            </div>
           </div>
         ) : route.page === "profil" ? (
           <Profile key={route.puuid ?? "me"} puuid={route.puuid ?? null} go={go} />
