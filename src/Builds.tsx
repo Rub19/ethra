@@ -1,11 +1,28 @@
 import { useEffect, useState } from "react";
-import { applyBuild, Build, myBuild, riotBuild } from "./buildData";
-import { DD, ddragon, img, lcu } from "./lcu";
+import { applyBuild, Build, myBuild, pageName, riotBuild } from "./buildData";
+import { DD, ddragon, img, lcu, settings, Settings as S } from "./lcu";
 import { OPGG_POS, opggBuild, OpggBuild, POS_LABEL, TIER_LABEL, Counter, mainPosition } from "./opgg";
 import type { Go } from "./main";
 import Skeleton from "./Skeleton";
 
 type Src = "opgg" | "toi" | "riot";
+
+function Auto({ k, label = "Import auto" }: { k: "autoRunes" | "autoSpells" | "autoItems"; label?: string }) {
+  const [on, setOn] = useState(() => settings()[k]);
+  const flip = () => {
+    const next: S = { ...settings(), [k]: !on };
+    try {
+      localStorage.setItem("rw-settings", JSON.stringify(next));
+    } catch {}
+    setOn(!on);
+  };
+  return (
+    <button className={`auto ${on ? "on" : ""}`} onClick={flip} role="switch" aria-checked={on}>
+      <span>{label}</span>
+      <i />
+    </button>
+  );
+}
 const RIOT_POS: Record<string, string> = { top: "TOP", jungle: "JUNGLE", mid: "MIDDLE", adc: "BOTTOM", support: "UTILITY" };
 const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
 
@@ -41,7 +58,7 @@ export default function Builds({ champ, go, role: initialRole = "", compact = fa
   const apply = async () => {
     if (!b) return;
     const inCs = await lcu<string>("/lol-gameflow/v1/gameflow-phase").catch(() => "");
-    applyBuild(d, champ, b, { runes: true, spells: inCs === "ChampSelect", items: true }).then(
+    applyBuild(d, champ, b, { runes: true, spells: inCs === "ChampSelect", items: true, role, aram: mode === "aram" }).then(
       (done) => setMsg(`Importé : ${done.join(", ")}`),
       (e) => setMsg(`Erreur : ${e}`),
     );
@@ -123,11 +140,25 @@ export default function Builds({ champ, go, role: initialRole = "", compact = fa
       ) : (
         <div className="bgrid">
           <section className="card">
-            <h3>
-              Runes{" "}
-              {o ? <small className="muted">{pct(o.runeWin)} WR · {o.runePlay.toLocaleString("fr")} parties</small>
-                : b.games > 0 && <small className="muted">{b.games} parties · {Math.round((b.wins / b.games) * 100)}% WR</small>}
-            </h3>
+            <div className="shead">
+              <h3>Runes</h3>
+              <Auto k="autoRunes" />
+            </div>
+            <div className="chips">
+              {o ? (
+                <>
+                  <span className={o.runeWin >= 0.5 ? "good" : "bad"}><b>{pct(o.runeWin)}</b> victoires</span>
+                  <span><b>{pct(o.runePick)}</b> des joueurs</span>
+                  <span><b>{o.runePlay.toLocaleString("fr")}</b> parties</span>
+                </>
+              ) : b.games > 0 ? (
+                <>
+                  <span className={b.wins / b.games >= 0.5 ? "good" : "bad"}><b>{Math.round((b.wins / b.games) * 100)}%</b> victoires</span>
+                  <span><b>{b.games}</b> de tes parties</span>
+                </>
+              ) : <span>Recommandation Riot</span>}
+              <span className="pname">Page « {pageName(d, champ, b, role, mode === "aram")} »</span>
+            </div>
             <div className="trees">
               {[b.primary, b.sub].map((sid, i) => {
                 const st = d.styles.find((s) => s.id === sid);
@@ -151,8 +182,24 @@ export default function Builds({ champ, go, role: initialRole = "", compact = fa
             )}
           </section>
           <section className="card">
-            <h3>Sorts d'invocateur</h3>
-            <div className="row">{b.spells.map((s) => <img key={s} className="ic" src={img.spell(d, s)} title={d.spells[s]?.name} />)}</div>
+            <div className="shead">
+              <h3>Sorts d'invocateur</h3>
+              <Auto k="autoSpells" />
+            </div>
+            <div className="spellrow">
+              <div className="row">{b.spells.map((s) => <img key={s} className="ic" src={img.spell(d, s)} title={d.spells[s]?.name} />)}</div>
+              {o && o.spellPlay > 0 && (
+                <div className="chips">
+                  <span className={o.spellWin >= 0.5 ? "good" : "bad"}><b>{pct(o.spellWin)}</b> victoires</span>
+                  <span><b>{pct(o.spellPick)}</b> des joueurs</span>
+                  <span><b>{o.spellPlay.toLocaleString("fr")}</b> parties</span>
+                </div>
+              )}
+            </div>
+            <div className="shead sep">
+              <h3>Objets</h3>
+              <Auto k="autoItems" label="Item set auto" />
+            </div>
             {b.start.length > 0 && (<><h3>Objets de départ</h3>{items(b.start)}</>)}
             {b.order.length > 0 && (<><h3>{o ? "Build principal" : "Ordre d'achat"}</h3>{items(b.order, true)}</>)}
             {o && o.boots.length > 0 && (<><h3>Bottes</h3>{items(o.boots)}</>)}

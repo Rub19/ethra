@@ -89,8 +89,15 @@ export async function bestBuild(d: DD, champ: number, position: string, map: num
   return (await opgg()) ?? (await mine()) ?? riot;
 }
 
-export async function applyBuild(d: DD, champ: number, b: Build, opts: { runes: boolean; spells: boolean; items: boolean }) {
-  const name = `Ethra ${d.champs[champ]?.name ?? champ}`;
+const ROLE_LABEL: Record<string, string> = { top: "Top", jungle: "Jungle", mid: "Mid", adc: "ADC", support: "Support", TOP: "Top", JUNGLE: "Jungle", MIDDLE: "Mid", BOTTOM: "ADC", UTILITY: "Support" };
+
+export function pageName(d: DD, champ: number, b: Build, role = "", aram = false) {
+  const pos = aram ? "ARAM" : ROLE_LABEL[(b as any).position ?? ""] ?? ROLE_LABEL[role] ?? "";
+  return `Ethra : ${d.champs[champ]?.name ?? champ}${pos ? ` ${pos}` : ""}`;
+}
+
+export async function applyBuild(d: DD, champ: number, b: Build, opts: { runes: boolean; spells: boolean; items: boolean; role?: string; aram?: boolean }) {
+  const name = pageName(d, champ, b, opts.role, opts.aram);
   const done: string[] = [];
   if (opts.runes && b.perks.length >= 9) {
     const pages = await lcu<any[]>("/lol-perks/v1/pages");

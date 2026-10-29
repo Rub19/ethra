@@ -160,7 +160,7 @@ function App() {
         const map = flow?.map?.id ?? flow?.gameData?.queue?.mapId ?? 11;
         const b = await bestBuild(dd, champ, POSITIONS[mine?.assignedPosition] ?? "NONE", map, s.source);
         if (!b) return setToast(`Pas de build trouvé pour ${dd.champs[champ]?.name}`);
-        const done = await applyBuild(dd, champ, b, { runes: s.autoRunes, spells: s.autoSpells, items: s.autoItems });
+        const done = await applyBuild(dd, champ, b, { runes: s.autoRunes, spells: s.autoSpells, items: s.autoItems, role: POSITIONS[mine?.assignedPosition] ?? "", aram: map === 12 });
         setToast(`${dd.champs[champ]?.name} : ${done.join(", ")} importés (${b.source === "toi" ? `tes ${b.games} parties` : b.source === "opgg" ? "méta OP.GG" : "reco Riot"})`);
       } catch (e) {
         setToast(`Import impossible : ${e}`);

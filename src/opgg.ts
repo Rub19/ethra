@@ -56,6 +56,10 @@ export type OpggBuild = Build & {
   maxOrder: string[];
   runeWin: number;
   runePlay: number;
+  runePick: number;
+  spellWin: number;
+  spellPlay: number;
+  spellPick: number;
   weak: Counter[];
   strong: Counter[];
 };
@@ -91,7 +95,8 @@ export async function opggBuild(d: DD, champ: number, position?: string, mode: "
     boots: x.boots?.ids ?? [],
     situational: [],
     maxOrder: x.skill_masteries?.ids ?? [],
-    runeWin: x.runes.win / Math.max(1, x.runes.play), runePlay: x.runes.play,
+    runeWin: x.runes.win / Math.max(1, x.runes.play), runePlay: x.runes.play, runePick: x.runes.pick_rate ?? 0,
+    spellWin: (x.summoner_spells?.win ?? 0) / Math.max(1, x.summoner_spells?.play ?? 0), spellPlay: x.summoner_spells?.play ?? 0, spellPick: x.summoner_spells?.pick_rate ?? 0,
     weak: (x.weak_counters ?? []).map(counter).slice(0, 6),
     strong: (x.strong_counters ?? []).map(counter).slice(0, 6),
   };
