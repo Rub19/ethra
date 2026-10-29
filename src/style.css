@@ -523,19 +523,6 @@ tbody:first-of-type .bhead th { padding-top: 4px; }
 .vboard .bc { border-radius: 8px; background: var(--panel2); }
 .vboard .dbar2 i { background: var(--accent); }
 
-.vteams { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; }
-.vlive { display: grid; grid-template-columns: 48px minmax(0, 1fr) 210px; align-items: center; gap: 12px; padding: 8px; border-radius: 10px; cursor: pointer; }
-.vlive:hover { background: var(--panel2); }
-.vlive.me { background: color-mix(in srgb, var(--accent) 8%, transparent); }
-.vlag { width: 48px; height: 48px; border-radius: 10px; background: var(--panel2); }
-.vlag.hover { opacity: .45; filter: grayscale(.6); }
-.vlid { min-width: 0; }
-.vlid b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.vlid b small { display: inline; margin-left: 2px; }
-.vlr { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; }
-.vlr img { width: 34px; height: 34px; object-fit: contain; }
-.vlr .emblem.none { width: 30px; height: 30px; margin: 2px; display: block; }
-.vlr small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ltiles > button { display: grid; align-content: start; gap: 6px; padding: 18px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); text-align: left; transition: border-color .15s, transform .15s; }
 .ltiles > button:hover { border-color: color-mix(in srgb, var(--accent) 40%, transparent); transform: translateY(-2px); }
 .ltiles > button:focus-visible { outline: 2px solid var(--accent); }
@@ -700,3 +687,48 @@ main { max-width: 1560px; padding: 22px 20px 40px; }
 .vw > span b { font-family: var(--num); font-size: 16px; color: var(--text); }
 .vw > small { font-family: var(--num); font-size: 14px; text-align: right; }
 .vwicon.agent img { width: 30px; height: 30px; border-radius: 8px; filter: none; }
+
+.vteams { display: grid; grid-template-columns: repeat(auto-fit, minmax(560px, 1fr)); gap: 16px; }
+.vteam { padding: 16px 16px 10px; }
+.vteam.mine { box-shadow: inset 3px 0 0 var(--win); }
+.vteam.enemy { box-shadow: inset 3px 0 0 var(--loss); }
+.vthead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.vthead h3 { margin: 0; font-size: 17px; }
+.vtavg { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.vtavg img { width: 24px; height: 24px; object-fit: contain; }
+.vtavg b { font-family: var(--num); font-size: 14px; }
+.vlcols, .vlive { display: grid; grid-template-columns: 58px minmax(0, 1fr) 190px 74px 92px; align-items: center; gap: 12px; }
+.vlcols { padding: 0 10px 6px; font-size: 12px; color: var(--muted); border-bottom: 1px solid rgba(255, 255, 255, .05); }
+.vlcols span:nth-child(n+4) { text-align: center; }
+.vlive { padding: 8px 10px; border-radius: 12px; cursor: pointer; transition: background .15s; }
+.vlive:hover { background: rgba(255, 255, 255, .04); }
+.vlive:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.vlive.me { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.vlive.hidden { cursor: default; }
+.vlive > * { min-width: 0; }
+.vlface { position: relative; width: 52px; height: 52px; }
+.vlface > img:first-child, .vlface > span { display: block; width: 52px; height: 52px; border-radius: 12px; background: var(--panel2); }
+.vlface > img.hover { opacity: .4; filter: grayscale(.7); }
+.vlrole { position: absolute; right: -5px; bottom: -5px; width: 20px; height: 20px; padding: 3px; border-radius: 50%; background: var(--bg); box-shadow: 0 0 0 1px rgba(255, 255, 255, .1); }
+.vlid b { display: block; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vlid b small { display: inline; margin-left: 2px; font-weight: 400; }
+.vlid > small { display: flex; align-items: center; gap: 8px; margin-top: 2px; font-size: 13px; }
+.vlock { font-style: normal; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 99px; color: var(--win); background: color-mix(in srgb, var(--win) 14%, transparent); }
+.vlvl { color: var(--muted); }
+.vlr { display: flex; align-items: center; gap: 9px; font-size: 13px; }
+.vlr img { width: 36px; height: 36px; object-fit: contain; flex: none; }
+.vlr .emblem.none { width: 32px; height: 32px; margin: 2px; display: block; flex: none; }
+.vlr b { font-family: var(--num); font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.vlr small { white-space: nowrap; }
+.vlwr, .vlform { display: grid; justify-items: center; gap: 2px; text-align: center; }
+.vlwr b { font-family: var(--num); font-size: 17px; }
+.vlform > div { display: flex; gap: 3px; }
+.vlform i { width: 10px; height: 10px; border-radius: 3px; background: var(--panel2); }
+.vlform i.fw { background: var(--win); }
+.vlform i.fl { background: var(--loss); }
+.vlform small { font-family: var(--num); font-size: 13px; font-weight: 600; }
+.vphase { display: inline-flex; align-items: center; gap: 7px; width: fit-content; padding: 4px 11px 4px 9px; border-radius: 99px; font-size: 12.5px; font-weight: 700; background: rgba(255, 255, 255, .08); }
+.vphase i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: pulse 1.6s infinite; }
+.vphase.in i { background: var(--win); }
+@media (prefers-reduced-motion: reduce) { .vphase i { animation: none; } }
+@media (max-width: 720px) { .vlcols { display: none; } .vlcols, .vlive { grid-template-columns: 52px minmax(0, 1fr) 150px; } .vlwr, .vlform { display: none; } }

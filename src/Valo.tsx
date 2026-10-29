@@ -434,30 +434,58 @@ export function ValoMatch({ id, puuid, go }: { id: string; puuid: string; go: Go
 }
 
 type LiveP = { puuid: string; agent: string; team: string; incognito: boolean; level: number; locked?: boolean };
+type Form = number[];
 
-function LiveCard({ p, d, name, self, go }: { p: LiveP; d: VD; name?: VName; self: string; go: Go }) {
-  const [r, setR] = useState<VRank | null>(null);
-  useEffect(() => {
-    vRank(p.puuid).then(setR);
-  }, [p.puuid]);
+function LiveCard({ p, d, name, r, form, self, go }: { p: LiveP; d: VD; name?: VName; r?: VRank; form?: Form; self: string; go: Go }) {
   const a = d.agents[p.agent.toLowerCase()];
   const hidden = p.incognito && p.puuid !== self;
+  const net = form?.reduce((x, y) => x + y, 0) ?? 0;
+  const tier = r && r.tier > 2 ? d.tiers[r.tier] : undefined;
+  const open = () => !hidden && go({ page: "v-profil", puuid: p.puuid });
   return (
-    <div className={`vlive ${p.puuid === self ? "me" : ""}`} onClick={() => !hidden && go({ page: "v-profil", puuid: p.puuid })} role="button" tabIndex={0}>
-      {a ? <img className={`vlag ${p.locked === false ? "hover" : ""}`} src={a.icon} title={a.name} /> : <div className="vlag none" />}
+    <div
+      className={`vlive ${p.puuid === self ? "me" : ""} ${hidden ? "hidden" : ""}`}
+      onClick={open}
+      role={hidden ? undefined : "button"}
+      tabIndex={hidden ? -1 : 0}
+      onKeyDown={(e) => e.key === "Enter" && open()}
+    >
+      <div className="vlface">
+        {a ? <img className={p.locked === false ? "hover" : ""} src={a.icon} alt={a.name} /> : <span />}
+        {a?.roleIcon && <img className="vlrole" src={a.roleIcon} alt="" title={a.role} />}
+      </div>
       <div className="vlid">
         <b>{hidden ? "Joueur masqué" : name ? name.GameName : "…"}{!hidden && name && <small>#{name.TagLine}</small>}</b>
-        <small>{a?.name ?? "Pas encore choisi"}{p.level > 0 ? ` · niv. ${p.level}` : ""}</small>
+        <small>
+          {a ? a.name : "Pas encore choisi"}
+          {p.locked === true && <em className="vlock">Verrouillé</em>}
+          {p.level > 0 && <span className="vlvl">niv. {p.level}</span>}
+        </small>
       </div>
-      {r ? (
-        <div className="vlr">
-          {r.tier > 2 && d.tiers[r.tier] ? <img src={d.tiers[r.tier].icon} title={d.tiers[r.tier].name} /> : <span className="emblem none" />}
-          <div>
-            <b style={{ color: d.tiers[r.tier]?.color }}>{r.tier > 2 ? `${d.tiers[r.tier]?.name} · ${r.rr} RR` : "Non classé"}</b>
-            <small>{r.games ? `${pct(r.wins / r.games)} sur ${r.games} parties` : "Aucune partie classée"}{r.peak > 2 ? ` · max ${d.tiers[r.peak]?.name}` : ""}</small>
-          </div>
-        </div>
-      ) : <div className="vlr muted">…</div>}
+      <div className="vlr">
+        {!r ? <span className="muted">…</span> : (
+          <>
+            {tier ? <img src={tier.icon} alt="" /> : <span className="emblem none" />}
+            <div>
+              <b style={tier ? { color: tier.color } : undefined}>{tier ? `${tier.name}, ${r.rr} RR` : "Non classé"}</b>
+              <small>{r.peak > 2 ? `Max ${d.tiers[r.peak]?.name}` : "Pas de rang max"}</small>
+            </div>
+          </>
+        )}
+      </div>
+      <div className="vlwr">
+        {r && r.games > 0 ? (
+          <><b className={r.wins / r.games >= 0.5 ? "good" : "bad"}>{pct(r.wins / r.games)}</b><small>{r.games} parties</small></>
+        ) : <small>–</small>}
+      </div>
+      <div className="vlform" title="5 dernières parties classées">
+        {form && form.length > 0 ? (
+          <>
+            <div>{[...form].reverse().map((x, i) => <i key={i} className={x > 0 ? "fw" : x < 0 ? "fl" : ""} />)}</div>
+            <small className={net >= 0 ? "good" : "bad"}>{net > 0 ? "+" : ""}{net} RR</small>
+          </>
+        ) : <small>–</small>}
+      </div>
     </div>
   );
 }
@@ -466,6 +494,8 @@ export function ValoLive({ phase, self, go }: { phase: VPhase; self: string; go:
   const [d, setD] = useState<VD | null>(null);
   const [game, setGame] = useState<{ map: string; queue: string; players: LiveP[] } | null>(null);
   const [names, setNames] = useState<Record<string, VName>>({});
+  const [ranks, setRanks] = useState<Record<string, VRank>>({});
+  const [forms, setForms] = useState<Record<string, Form>>({});
 
   useEffect(() => {
     vdata().then(setD, () => {});
@@ -487,6 +517,10 @@ export function ValoLive({ phase, self, go }: { phase: VPhase; self: string; go:
       setGame({ map: m.MapID, queue: m.QueueID ?? m.MatchmakingData?.QueueID ?? "", players });
       const missing = players.map((p) => p.puuid).filter((p) => !names[p]);
       if (missing.length) vNames(missing).then((list) => !stop && setNames((o) => ({ ...o, ...Object.fromEntries(list.map((n) => [n.Subject, n])) })), () => {});
+      for (const p of players) {
+        vRank(p.puuid).then((r) => !stop && setRanks((o) => (o[p.puuid] ? o : { ...o, [p.puuid]: r })));
+        vRRUpdates(p.puuid).then((u) => !stop && setForms((o) => (o[p.puuid] ? o : { ...o, [p.puuid]: Object.values(u).slice(0, 5).map((x) => x.earned) })));
+      }
     };
     load().catch(() => {});
     const id = setInterval(() => load().catch(() => {}), phase === "PREGAME" ? 3000 : 15000);
@@ -500,8 +534,8 @@ export function ValoLive({ phase, self, go }: { phase: VPhase; self: string; go:
     return (
       <div className="liveempty">
         <span className="pulse" />
-        <h2>{phase === "PREGAME" || phase === "INGAME" ? "Chargement de la partie…" : "Aucune partie en cours"}</h2>
-        <p className="muted">Lance une file dans VALORANT : Ethra affiche les rangs de ton équipe dès la sélection des agents, puis ceux des adversaires en partie.</p>
+        <h1>{phase === "PREGAME" || phase === "INGAME" ? "Chargement de la partie…" : "Aucune partie en cours"}</h1>
+        <p className="muted">Lance une file dans VALORANT : Ethra affiche les rangs et la forme de ton équipe dès la sélection des agents, puis ceux des adversaires en partie.</p>
         <div className="lbtns"><button className="primary" onClick={() => go({ page: "v-profil" })}>Voir mon profil</button></div>
       </div>
     );
@@ -509,21 +543,38 @@ export function ValoLive({ phase, self, go }: { phase: VPhase; self: string; go:
   const me = game.players.find((p) => p.puuid === self);
   const teams = [...new Set([me?.team ?? "", ...game.players.map((p) => p.team)])].filter((t, i, a) => t || a.length === 1);
   const map = d.maps[game.map];
+  const pre = phase === "PREGAME";
+  const locked = game.players.filter((p) => p.locked).length;
+  const avg = (list: LiveP[]) => {
+    const tiers = list.map((p) => ranks[p.puuid]?.tier ?? 0).filter((t) => t > 2);
+    return tiers.length ? Math.round(tiers.reduce((a, t) => a + t, 0) / tiers.length) : 0;
+  };
   return (
-    <div className="live">
-      <div className="phero vmhead" style={map ? { backgroundImage: `linear-gradient(90deg, var(--bg) 25%, #0b0f17aa 60%, #0b0f1733), url(${map.splash})` } : undefined}>
+    <div className="live vlivepage">
+      <div className="phero vmhead" style={map ? { backgroundImage: `linear-gradient(90deg, var(--bg) 25%, color-mix(in srgb, var(--bg) 65%, transparent) 60%, transparent), url(${map.splash})` } : undefined}>
         <div className="pid">
+          <span className={`vphase ${pre ? "pre" : "in"}`}><i />{pre ? "Sélection des agents" : "En partie"}</span>
           <h1>{map?.name ?? "Carte"} <span>{queueLabel(game.queue)}</span></h1>
-          <small>{phase === "PREGAME" ? "Sélection des agents : les adversaires apparaîtront au lancement de la partie." : "Partie en cours"}</small>
+          <small>{pre ? `${locked} agent${locked > 1 ? "s" : ""} verrouillé${locked > 1 ? "s" : ""} sur ${game.players.length}. Les adversaires apparaîtront au lancement de la partie.` : "Clique sur un joueur pour ouvrir son profil."}</small>
         </div>
       </div>
       <div className="vteams">
-        {teams.map((t) => (
-          <section key={t} className="card">
-            <h3>{t === me?.team ? "Ton équipe" : "Adversaires"}</h3>
-            {game.players.filter((p) => p.team === t).map((p) => <LiveCard key={p.puuid} p={p} d={d} name={names[p.puuid]} self={self} go={go} />)}
-          </section>
-        ))}
+        {teams.map((t) => {
+          const list = game.players.filter((p) => p.team === t);
+          const at = avg(list);
+          return (
+            <section key={t} className={`card vteam ${t === me?.team ? "mine" : "enemy"}`}>
+              <div className="vthead">
+                <h3>{t === me?.team ? "Ton équipe" : "Adversaires"}</h3>
+                {at > 0 && d.tiers[at] && (
+                  <span className="vtavg"><img src={d.tiers[at].icon} alt="" />Rang moyen <b style={{ color: d.tiers[at].color }}>{d.tiers[at].name}</b></span>
+                )}
+              </div>
+              <div className="vlcols"><span /><span>Joueur</span><span>Rang</span><span>Winrate</span><span>Forme</span></div>
+              {list.map((p) => <LiveCard key={p.puuid} p={p} d={d} name={names[p.puuid]} r={ranks[p.puuid]} form={forms[p.puuid]} self={self} go={go} />)}
+            </section>
+          );
+        })}
       </div>
     </div>
   );
