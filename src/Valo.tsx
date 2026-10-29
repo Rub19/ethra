@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Go } from "./main";
 import Skeleton from "./Skeleton";
 import { ago, mmss } from "./lcu";
 import {
-  queueLabel, valo, vdata, VD, vHistory, vMatch, VMatch, vName, VName, vNames, VPhase, VPlayer, vRank, VRank, VRR, vRRUpdates, vScore, vStats, vTeamWon, mkLabel, vWeaponKills, vEconomy, vParties, PARTY_LABEL,
+  queueLabel, valo, vdata, VD, vHistory, vMatch, VMatch, vName, VName, vNames, VPhase, VPlayer, vRank, VRank, VRR, vRRUpdates, vScore, vStats, vTeamWon, mkLabel, vWeaponKills, vEconomy, vParties, PARTY_LABEL, seenPlayers, Seen,
 } from "./valoApi";
 
 const FILTERS: [string, string][] = [["", "Toutes"], ["competitive", "Compétition"], ["unrated", "Non classé"], ["swiftplay", "Vélocité"], ["deathmatch", "Combat à mort"], ["premier", "Premier"]];
@@ -41,11 +41,19 @@ function Rank({ d, tier, rr, label, sub }: { d: VD; tier: number; rr?: number; l
 function VRow({ id, puuid, d, go, rr }: { id: string; puuid: string; d: VD; go: Go; rr?: VRR }) {
   const [m, setM] = useState<VMatch | null>(null);
   const [err, setErr] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
+    setErr(false);
     vMatch(id).then(setM, () => setErr(true));
-  }, [id]);
+  }, [id, attempt]);
   const nameOf = useNames(m?.players);
-  if (err) return null;
+  if (err)
+    return (
+      <div className="vmatch vfail">
+        <span>Impossible de charger cette partie pour l'instant.</span>
+        <button className="ghostbtn" onClick={() => setAttempt((a) => a + 1)}>Réessayer</button>
+      </div>
+    );
   if (!m) return <div className="skel"><div style={{ height: 76 }} /></div>;
   const p = m.players.find((x) => x.subject === puuid);
   if (!p?.stats) return null;
@@ -340,6 +348,73 @@ export function ValoProfile({ puuid, self, go }: { puuid?: string; self: string;
   );
 }
 
+export function ValoSearch({ go }: { go: Go }) {
+  const [q, setQ] = useState("");
+  const [open, setOpen] = useState(false);
+  const [sel, setSel] = useState(0);
+  const ref = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        ref.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const t = q.trim().toLowerCase();
+  const all = open ? seenPlayers() : [];
+  const rank = (p: Seen) => (p.name.toLowerCase().startsWith(t) ? 0 : p.name.toLowerCase().includes(t) ? 1 : 2);
+  const opts = (t ? all.filter((p) => `${p.name}#${p.tag}`.toLowerCase().includes(t)).sort((a, b) => rank(a) - rank(b)) : all).slice(0, 8);
+  const pick = (p?: Seen) => {
+    if (!p) return;
+    go({ page: "v-profil", puuid: p.puuid });
+    setQ("");
+    setOpen(false);
+    ref.current?.blur();
+  };
+
+  return (
+    <div className="search">
+      <svg className="sicon" width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" strokeWidth="1.7" /><path d="m11 11 3.5 3.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>
+      <input
+        ref={ref}
+        value={q}
+        aria-label="Rechercher un joueur croisé"
+        placeholder="Joueur croisé"
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        onChange={(e) => (setQ(e.target.value), setSel(0), setOpen(true))}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowDown") (e.preventDefault(), setSel((s) => Math.min(opts.length - 1, s + 1)));
+          if (e.key === "ArrowUp") (e.preventDefault(), setSel((s) => Math.max(0, s - 1)));
+          if (e.key === "Enter") pick(opts[sel]);
+          if (e.key === "Escape") ref.current?.blur();
+        }}
+      />
+      <kbd>Ctrl K</kbd>
+      {open && (
+        <div className="sresults">
+          {opts.map((p, i) => (
+            <button key={p.puuid} className={i === sel ? "on" : ""} onMouseEnter={() => setSel(i)} onMouseDown={() => pick(p)}>
+              <span className="ph">{p.name[0]?.toUpperCase()}</span>
+              <b>{p.name}<span className="muted">#{p.tag}</span></b>
+              <small>Croisé {ago(p.t)}</small>
+            </button>
+          ))}
+          {opts.length === 0 && (
+            <p className="sempty">{t ? "Aucun joueur croisé avec ce nom." : "Les joueurs de tes parties apparaîtront ici."} Riot ne permet pas de chercher un joueur que tu n'as jamais croisé.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const RESULT_FR: Record<string, string> = { Eliminated: "Élimination", "Bomb detonated": "Spike explosé", "Bomb defused": "Spike désamorcé", "Round timer expired": "Temps écoulé", Surrendered: "Abandon" };
 const RESULT: Record<string, string> = { Eliminated: "É", "Bomb detonated": "S", "Bomb defused": "D", "Round timer expired": "T", Surrendered: "F" };
 
 export function ValoMatch({ id, puuid, go }: { id: string; puuid: string; go: Go }) {
@@ -350,6 +425,7 @@ export function ValoMatch({ id, puuid, go }: { id: string; puuid: string; go: Go
     Promise.all([vMatch(id), vdata()]).then(([m, d]) => (setM(m), setD(d)), (e) => setErr(String(e)));
   }, [id]);
   const nameOf = useNames(m?.players);
+  const [round, setRound] = useState<number | null>(null);
   if (err) return <div className="empty"><p>{err}</p></div>;
   if (!m || !d) return <Skeleton rows={10} />;
   const st = vStats(m);
@@ -378,7 +454,14 @@ export function ValoMatch({ id, puuid, go }: { id: string; puuid: string; go: Go
           <div>
             {m.roundResults.map((r) => (
               <div key={r.roundNum} className={`vround ${r.roundNum === 11 ? "half" : ""}`}>
-                <span className={r.winningTeam === myTeam ? "rw" : "rl"} title={`Manche ${r.roundNum + 1} : ${r.roundResult}`}>{RESULT[r.roundResult] ?? "·"}</span>
+                <button
+                  className={`${r.winningTeam === myTeam ? "rw" : "rl"} ${round === r.roundNum ? "sel" : ""}`}
+                  title={`Manche ${r.roundNum + 1} : ${RESULT_FR[r.roundResult] ?? r.roundResult}`}
+                  aria-pressed={round === r.roundNum}
+                  onClick={() => setRound(round === r.roundNum ? null : r.roundNum)}
+                >
+                  {RESULT[r.roundResult] ?? "·"}
+                </button>
                 {eco[r.roundNum]?.value > 0 && (
                   <small className={`eco e${eco[r.roundNum].kind.replace(/[^A-Za-z]/g, "")}`} title={`Équipement de ton équipe : ${eco[r.roundNum].value.toLocaleString("fr")} crédits, adversaires : ${ecoEnemy[r.roundNum]?.value.toLocaleString("fr")}`}>
                     {eco[r.roundNum].kind}
@@ -387,6 +470,56 @@ export function ValoMatch({ id, puuid, go }: { id: string; puuid: string; go: Go
               </div>
             ))}
           </div>
+          {round === null ? (
+            <p className="muted vrhint">Clique sur une manche pour voir ses éliminations.</p>
+          ) : (() => {
+            const r = m.roundResults![round];
+            const who = (id?: string) => m.players.find((x) => x.subject === id);
+            const label = (id?: string) => {
+              const x = who(id);
+              return x ? nameOf(x).name || d.agents[x.characterId.toLowerCase()]?.name || "?" : "?";
+            };
+            const face = (id?: string) => {
+              const x = who(id);
+              return x ? <img src={d.agents[x.characterId.toLowerCase()]?.icon} alt="" /> : <span />;
+            };
+            const side = (id?: string) => (who(id)?.teamId === myTeam ? "ally" : "foe");
+            const kills = r.playerStats.flatMap((p) => p.kills ?? []).sort((a, b) => a.roundTime - b.roundTime);
+            const weapon = (k: (typeof kills)[0]) => {
+              const f = k.finishingDamage;
+              if (!f) return null;
+              if (f.damageType === "Weapon") {
+                const w = d.weapons[f.damageItem.toLowerCase()];
+                return w ? <img className="vkw" src={w.icon} alt={w.name} title={w.name} /> : <small>Arme d'agent</small>;
+              }
+              return <small>{f.damageType === "Melee" ? "Couteau" : f.damageType === "Bomb" ? "Spike" : "Compétence"}</small>;
+            };
+            return (
+              <div className="vround-detail">
+                <div className="vrdhead">
+                  <b className={r.winningTeam === myTeam ? "good" : "bad"}>Manche {round + 1} : {r.winningTeam === myTeam ? "gagnée" : "perdue"}</b>
+                  <span className="muted">{RESULT_FR[r.roundResult] ?? r.roundResult}</span>
+                  {eco[round] && <span className="muted">Équipement : {eco[round].value.toLocaleString("fr")} contre {ecoEnemy[round]?.value.toLocaleString("fr")} crédits</span>}
+                </div>
+                {r.bombPlanter && (
+                  <p className="vspike">Spike posé{r.plantSite ? ` sur le site ${r.plantSite}` : ""} à {mmss((r.plantRoundTime ?? 0) / 1000)} par <b className={side(r.bombPlanter)}>{label(r.bombPlanter)}</b>
+                    {r.bombDefuser && <>, désamorcé à {mmss((r.defuseRoundTime ?? 0) / 1000)} par <b className={side(r.bombDefuser)}>{label(r.bombDefuser)}</b></>}
+                  </p>
+                )}
+                <ol className="vkills">
+                  {kills.map((k, i) => (
+                    <li key={i}>
+                      <span className="vkt">{mmss(k.roundTime / 1000)}</span>
+                      <span className={`vkp ${side(k.killer)}`}>{face(k.killer)}{label(k.killer)}</span>
+                      <span className="vkweap">{weapon(k)}</span>
+                      <span className={`vkp ${side(k.victim)}`}>{face(k.victim)}{label(k.victim)}</span>
+                    </li>
+                  ))}
+                  {kills.length === 0 && <li className="muted">Aucune élimination dans cette manche.</li>}
+                </ol>
+              </div>
+            );
+          })()}
         </section>
       )}
       <section className="card">

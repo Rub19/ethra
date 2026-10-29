@@ -131,7 +131,7 @@ export const cs = (s: Stats) => n(s, "totalMinionsKilled") + n(s, "neutralMinion
 export const mmss = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, "0")}`;
 export const ago = (t: number) => {
   const m = Math.round((Date.now() - t) / 60000);
-  return m < 60 ? `il y a ${m} min` : m < 1440 ? `il y a ${Math.round(m / 60)} h` : `il y a ${Math.round(m / 1440)} j`;
+  return m < 1 ? "à l'instant" : m < 60 ? `il y a ${m} min` : m < 1440 ? `il y a ${Math.round(m / 60)} h` : `il y a ${Math.round(m / 1440)} j`;
 };
 
 export function settings() {

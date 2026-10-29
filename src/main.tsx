@@ -12,7 +12,7 @@ import TierList from "./TierList";
 import Match from "./Match";
 import AccountMenu from "./Account";
 import Overlays from "./Overlays";
-import { ValoLive, ValoMatch, ValoProfile } from "./Valo";
+import { ValoLive, ValoMatch, ValoProfile, ValoSearch } from "./Valo";
 import { VPhase, vPhase, vSession } from "./valoApi";
 import GamePicker, { GameKey } from "./GamePicker";
 export type Route =
@@ -256,7 +256,7 @@ function App() {
               </button>
             ))}
           </nav>
-          {!valoGame && <Search d={d} go={go} toast={setToast} />}
+          {valoGame ? <ValoSearch go={go} /> : <Search d={d} go={go} toast={setToast} />}
           <div className={`client ${connected ? "" : "off"}`} title={connected ? "Client connecté" : "Client fermé"}>
             {!valoGame && self && d ? (
               <AccountMenu self={self} d={d} go={go} />

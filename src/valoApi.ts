@@ -64,7 +64,24 @@ export const vRank = (puuid: string) => {
 };
 
 export type VName = { Subject: string; GameName: string; TagLine: string };
-export const vNames = (puuids: string[]) => valo<VName[]>("pd", "/name-service/v2/players", "PUT", puuids);
+export type Seen = { puuid: string; name: string; tag: string; t: number };
+export function seenPlayers(): Seen[] {
+  try {
+    return JSON.parse(localStorage.getItem("rw-vseen") || "[]");
+  } catch {
+    return [];
+  }
+}
+function remember(list: VName[]) {
+  const fresh = list.filter((n) => n.GameName).map((n) => ({ puuid: n.Subject, name: n.GameName, tag: n.TagLine, t: Date.now() }));
+  if (!fresh.length) return;
+  const ids = new Set(fresh.map((x) => x.puuid));
+  try {
+    localStorage.setItem("rw-vseen", JSON.stringify([...fresh, ...seenPlayers().filter((x) => !ids.has(x.puuid))].slice(0, 400)));
+  } catch {}
+}
+export const vNames = (puuids: string[]) =>
+  valo<VName[]>("pd", "/name-service/v2/players", "PUT", puuids).then((list) => (remember(list), list));
 
 const nameCache = new Map<string, Promise<VName | undefined>>();
 const waiters = new Map<string, (n?: VName) => void>();
@@ -101,6 +118,7 @@ export type VMatch = {
   teams: { teamId: string; won: boolean; roundsWon: number; roundsPlayed: number }[] | null;
   roundResults: {
     roundNum: number; winningTeam: string; roundResult: string;
+    plantRoundTime?: number; bombPlanter?: string; plantSite?: string; defuseRoundTime?: number; bombDefuser?: string;
     playerStats: {
       subject: string;
       kills: { killer: string; victim: string; roundTime: number; finishingDamage?: { damageType: string; damageItem: string } }[];
@@ -142,7 +160,18 @@ let chain: Promise<unknown> = Promise.resolve();
 // ponytail: one match-details call at a time to stay under Riot's PD rate limit, parallelize with a small pool if history feels slow
 export const vMatch = (id: string) => {
   if (!matchCache.has(id)) {
-    const p = chain.then(() => valo<VMatch>("pd", `/match-details/v1/matches/${id}`));
+    const get = async (tries: number): Promise<VMatch> => {
+      try {
+        return await valo<VMatch>("pd", `/match-details/v1/matches/${id}`);
+      } catch (e) {
+        if (tries > 0 && /429|Too Many|rate/i.test(String(e))) {
+          await new Promise((r) => setTimeout(r, (4 - tries) * 2500));
+          return get(tries - 1);
+        }
+        throw e;
+      }
+    };
+    const p = chain.then(() => get(3));
     chain = p.catch(() => {});
     matchCache.set(id, p);
     p.catch(() => matchCache.delete(id));

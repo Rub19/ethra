@@ -517,9 +517,9 @@ tbody:first-of-type .bhead th { padding-top: 4px; }
 .vmhead { background-size: cover; margin-bottom: 16px; }
 .vrounds { margin-bottom: 16px; }
 .vrounds > div { display: flex; flex-wrap: wrap; gap: 4px; }
-.vrounds span { position: relative; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; font-size: 11px; font-weight: 700; }
-.vrounds span.rw { background: color-mix(in srgb, var(--win) 20%, transparent); color: var(--teal); }
-.vrounds span.rl { background: color-mix(in srgb, var(--loss) 18%, transparent); color: #ff6b7d; }
+.vround > button { position: relative; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+.vround > button.rw { background: color-mix(in srgb, var(--win) 20%, transparent); color: var(--teal); }
+.vround > button.rl { background: color-mix(in srgb, var(--loss) 18%, transparent); color: #ff6b7d; }
 .vboard .bc { border-radius: 8px; background: var(--panel2); }
 .vboard .dbar2 i { background: var(--accent); }
 
@@ -600,7 +600,7 @@ main { max-width: 1560px; padding: 22px 20px 40px; }
 .primary:active:not(:disabled), .ghostbtn:active, .seg button:active { transform: scale(.97); }
 .seg { background: rgba(255, 255, 255, .04); border-color: rgba(255, 255, 255, .06); border-radius: 12px; }
 .seg button.on { background: var(--text); color: var(--bg); font-weight: 600; }
-.mkda b, .mnums b, .pquick b, .sess b, .rank b, .perf .r b, .perf b, .chips b, .table td, .board td, .board th, .tier, .vstats b, .vmapstat small, .srow span, .mres b, .vrounds span { font-family: var(--num); font-variant-numeric: tabular-nums; }
+.mkda b, .mnums b, .pquick b, .sess b, .rank b, .perf .r b, .perf b, .chips b, .table td, .board td, .board th, .tier, .vstats b, .vmapstat small, .srow span, .mres b, .vround > button { font-family: var(--num); font-variant-numeric: tabular-nums; }
 .pquick b { font-size: 22px; }
 .phero h1 { font-size: 40px; }
 .table { border-color: rgba(255, 255, 255, .06); border-radius: 16px; }
@@ -745,3 +745,32 @@ main { max-width: 1560px; padding: 22px 20px 40px; }
 .vtparties { display: flex; gap: 6px; margin-right: auto; }
 .vlid > small { white-space: nowrap; overflow: hidden; }
 .vlid > small .vlvl { overflow: hidden; text-overflow: ellipsis; }
+
+.vround > button { cursor: pointer; transition: transform .12s, box-shadow .12s; }
+.vround > button:hover { box-shadow: 0 0 0 1px rgba(255, 255, 255, .25); }
+.vround > button.sel { box-shadow: 0 0 0 2px var(--accent); }
+.vround > button:active { transform: scale(.94); }
+.vround > button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.vrhint { margin: 12px 0 0; font-size: 13px; }
+.vround-detail { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, .07); }
+.vrdhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin-bottom: 8px; }
+.vrdhead b { font-family: var(--num); font-size: 17px; }
+.vrdhead span { font-size: 13.5px; }
+.vspike { margin: 0 0 10px; font-size: 14px; color: var(--muted); }
+.vspike b { color: var(--text); }
+.vkills { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.vkills li { display: grid; grid-template-columns: 52px minmax(0, 1fr) 120px minmax(0, 1fr); align-items: center; gap: 12px; padding: 5px 8px; border-radius: 9px; background: rgba(255, 255, 255, .025); }
+.vkt { font-family: var(--num); font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.vkp { display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vkp img, .vkp > span { width: 26px; height: 26px; border-radius: 7px; flex: none; background: var(--panel2); }
+.vkp.ally, .vspike .ally { color: var(--win); }
+.vkp.foe, .vspike .foe { color: var(--loss); }
+.vkweap { display: grid; place-items: center; color: var(--muted); }
+.vkw { max-height: 22px; max-width: 110px; object-fit: contain; filter: brightness(1.2); }
+.sempty { margin: 0; padding: 10px 12px; font-size: 13px; line-height: 1.45; color: var(--muted); }
+.sresults b .muted { font-weight: 400; margin-left: 1px; }
+
+.vmatch.vfail { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: default; color: var(--muted); font-size: 14px; }
+.vmatch.vfail .ghostbtn { margin: 0; }
+.vrounds > .vround-detail { display: block; }
+.vkills { max-width: 880px; }
