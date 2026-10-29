@@ -520,8 +520,6 @@ tbody:first-of-type .bhead th { padding-top: 4px; }
 .vrounds span { position: relative; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; font-size: 11px; font-weight: 700; }
 .vrounds span.rw { background: color-mix(in srgb, var(--win) 20%, transparent); color: var(--teal); }
 .vrounds span.rl { background: color-mix(in srgb, var(--loss) 18%, transparent); color: #ff6b7d; }
-.vrounds span i { position: absolute; right: -4px; top: 3px; bottom: 3px; width: 1px; background: var(--line); }
-.vrounds span:has(i) { margin-right: 6px; }
 .vboard .bc { border-radius: 8px; background: var(--panel2); }
 .vboard .dbar2 i { background: var(--accent); }
 
@@ -680,3 +678,25 @@ main { max-width: 1560px; padding: 22px 20px 40px; }
 .vpool td:first-child { font-family: "Barlow", system-ui, sans-serif; font-weight: 600; }
 .vpool tr:last-child td { border-bottom: 0; }
 .vpool td img.vmapimg { width: 64px; height: 30px; object-fit: cover; border-radius: 6px; }
+
+.vrounds > div { gap: 6px 4px; }
+.vround { display: grid; justify-items: center; gap: 4px; }
+.vround.half { margin-right: 10px; padding-right: 10px; border-right: 1px solid rgba(255, 255, 255, .08); }
+.eco { font-size: 10.5px; font-weight: 600; line-height: 1; color: var(--muted); white-space: nowrap; }
+.eco.eFull { color: var(--text); }
+.eco.eSemi { color: #c9a95b; }
+.vmk { font-style: normal; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 99px; color: #f6c867; background: rgba(246, 200, 103, .14); align-self: center; }
+.vmulti { font-family: var(--num); color: #f6c867; font-weight: 600; }
+.vweapons { display: grid; gap: 4px; padding: 10px 14px; }
+.vw { display: grid; grid-template-columns: 120px 150px minmax(0, 1fr) 130px 52px; align-items: center; gap: 14px; padding: 8px 4px; border-bottom: 1px solid rgba(255, 255, 255, .05); }
+.vw:last-child { border-bottom: 0; }
+.vwicon { height: 34px; display: grid; place-items: center start; }
+.vwicon img { max-height: 30px; max-width: 120px; object-fit: contain; filter: brightness(1.15); }
+.vwicon span { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; background: var(--panel2); color: var(--muted); font-weight: 700; }
+.vw > b { font-size: 15px; }
+.vwbar { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .06); overflow: hidden; }
+.vwbar i { display: block; height: 100%; border-radius: 3px; background: var(--accent); }
+.vw > span { font-size: 13.5px; color: var(--muted); }
+.vw > span b { font-family: var(--num); font-size: 16px; color: var(--text); }
+.vw > small { font-family: var(--num); font-size: 14px; text-align: right; }
+.vwicon.agent img { width: 30px; height: 30px; border-radius: 8px; filter: none; }

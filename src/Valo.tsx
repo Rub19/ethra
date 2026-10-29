@@ -3,7 +3,7 @@ import type { Go } from "./main";
 import Skeleton from "./Skeleton";
 import { ago, mmss } from "./lcu";
 import {
-  queueLabel, valo, vdata, VD, vHistory, vMatch, VMatch, vName, VName, vNames, VPhase, VPlayer, vRank, VRank, VRR, vRRUpdates, vScore, vStats, vTeamWon,
+  queueLabel, valo, vdata, VD, vHistory, vMatch, VMatch, vName, VName, vNames, VPhase, VPlayer, vRank, VRank, VRR, vRRUpdates, vScore, vStats, vTeamWon, mkLabel, vWeaponKills, vEconomy,
 } from "./valoApi";
 
 const FILTERS: [string, string][] = [["", "Toutes"], ["competitive", "Compétition"], ["unrated", "Non classé"], ["swiftplay", "Vélocité"], ["deathmatch", "Combat à mort"], ["premier", "Premier"]];
@@ -75,6 +75,7 @@ function VRow({ id, puuid, d, go, rr }: { id: string; puuid: string; d: VD; go: 
           <span>{ago(m.matchInfo.gameStartMillis)}</span>
           <span>{mmss(m.matchInfo.gameLengthMillis / 1000)}</span>
           {place === 1 ? <em className="vmvp">MVP</em> : teamBest && <em className="vmvp">MVP équipe</em>}
+          {mkLabel(s.mk).slice(0, 1).map((l) => <em key={l} className="vmk">{l}</em>)}
           {rr && !rr.placement && <em className={`vrr ${rr.earned >= 0 ? "up" : "down"}`}>{rr.earned > 0 ? "+" : ""}{rr.earned} RR</em>}
           {rr && rr.tierAfter > rr.tierBefore && <em className="vrr up">Promu {d.tiers[rr.tierAfter]?.name}</em>}
           {rr && rr.tierAfter < rr.tierBefore && <em className="vrr down">Rétrogradé</em>}
@@ -122,7 +123,7 @@ export function ValoProfile({ puuid, self, go }: { puuid?: string; self: string;
   const [ids, setIds] = useState<string[] | null>(null);
   const [more, setMore] = useState<"idle" | "loading" | "end">("idle");
   const [byId, setById] = useState<Record<string, VMatch>>({});
-  const [tab, setTab] = useState<"parties" | "agents" | "cartes">("parties");
+  const [tab, setTab] = useState<"parties" | "agents" | "cartes" | "armes">("parties");
   const [err, setErr] = useState("");
 
   useEffect(() => {
@@ -222,7 +223,7 @@ export function ValoProfile({ puuid, self, go }: { puuid?: string; self: string;
         )}
       </div>
       <div className="subtabs">
-        {([["parties", "Parties"], ["agents", "Agents"], ["cartes", "Cartes"]] as const).map(([k, l]) => (
+        {([["parties", "Parties"], ["agents", "Agents"], ["cartes", "Cartes"], ["armes", "Armes"]] as const).map(([k, l]) => (
           <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>
         ))}
         <div className="seg vfilter">
@@ -281,6 +282,34 @@ export function ValoProfile({ puuid, self, go }: { puuid?: string; self: string;
                 <button className="ghostbtn vmore" onClick={loadMore} disabled={more === "loading"}>{more === "loading" ? "Chargement…" : `Charger ${PAGE} parties de plus`}</button>
               )}
             </>
+          ) : tab === "armes" ? (
+            (() => {
+              const kills: Record<string, number> = {};
+              for (const x of mine)
+                for (const [w, c] of Object.entries(vWeaponKills(x.m, who))) {
+                  const key = w === "ability" || w === "melee" || d.weapons[w] ? w : `agent:${x.p.characterId.toLowerCase()}`;
+                  kills[key] = (kills[key] ?? 0) + c;
+                }
+              const total = Math.max(1, Object.values(kills).reduce((a, c) => a + c, 0));
+              const rows = Object.entries(kills).sort((a, b) => b[1] - a[1]);
+              const label = (w: string) =>
+                w === "ability" ? "Compétences" : w === "melee" ? "Couteau" : w.startsWith("agent:") ? `Arme de ${d.agents[w.slice(6)]?.name ?? "l'agent"}` : d.weapons[w]?.name ?? "Arme";
+              const icon = (w: string) => (w.startsWith("agent:") ? d.agents[w.slice(6)]?.icon : d.weapons[w]?.icon);
+              return (
+                <div className="card vweapons">
+                  {rows.map(([w, c]) => (
+                    <div key={w} className="vw">
+                      <div className={`vwicon ${w.startsWith("agent:") ? "agent" : ""}`}>{icon(w) ? <img src={icon(w)} alt="" /> : <span>{label(w)[0]}</span>}</div>
+                      <b>{label(w)}</b>
+                      <div className="vwbar"><i style={{ width: `${(c / rows[0][1]) * 100}%` }} /></div>
+                      <span><b>{c}</b> {c > 1 ? "éliminations" : "élimination"}</span>
+                      <small>{pct(c / total)}</small>
+                    </div>
+                  ))}
+                  {rows.length === 0 && <p className="muted">Aucune élimination sur ces parties.</p>}
+                </div>
+              );
+            })()
           ) : (
             <table className="pool vpool">
               <thead>
@@ -329,6 +358,8 @@ export function ValoMatch({ id, puuid, go }: { id: string; puuid: string; go: Go
   const teams = [...new Set([myTeam, ...m.players.map((x) => x.teamId)])];
   const map = d.maps[m.matchInfo.mapId];
   const maxAcs = Math.max(1, ...Object.values(st).map((s) => s.acs));
+  const eco = vEconomy(m, myTeam);
+  const ecoEnemy = vEconomy(m, teams.find((t) => t !== myTeam) ?? myTeam);
   return (
     <div className="vmatchpage">
       <div className="phero vmhead" style={map ? { backgroundImage: `linear-gradient(90deg, var(--bg) 25%, #0b0f17aa 60%, #0b0f1733), url(${map.splash})` } : undefined}>
@@ -346,10 +377,14 @@ export function ValoMatch({ id, puuid, go }: { id: string; puuid: string; go: Go
           <h3>Manches</h3>
           <div>
             {m.roundResults.map((r) => (
-              <span key={r.roundNum} className={r.winningTeam === myTeam ? "rw" : "rl"} title={`Manche ${r.roundNum + 1} · ${r.roundResult}`}>
-                {RESULT[r.roundResult] ?? "·"}
-                {r.roundNum === 11 && <i />}
-              </span>
+              <div key={r.roundNum} className={`vround ${r.roundNum === 11 ? "half" : ""}`}>
+                <span className={r.winningTeam === myTeam ? "rw" : "rl"} title={`Manche ${r.roundNum + 1} : ${r.roundResult}`}>{RESULT[r.roundResult] ?? "·"}</span>
+                {eco[r.roundNum]?.value > 0 && (
+                  <small className={`eco e${eco[r.roundNum].kind.replace(/[^A-Za-z]/g, "")}`} title={`Équipement de ton équipe : ${eco[r.roundNum].value.toLocaleString("fr")} crédits, adversaires : ${ecoEnemy[r.roundNum]?.value.toLocaleString("fr")}`}>
+                    {eco[r.roundNum].kind}
+                  </small>
+                )}
+              </div>
             ))}
           </div>
         </section>
@@ -358,7 +393,7 @@ export function ValoMatch({ id, puuid, go }: { id: string; puuid: string; go: Go
         <table className="board vboard">
           <colgroup>
             <col style={{ width: 52 }} /><col /><col style={{ width: 54 }} /><col style={{ width: 130 }} /><col style={{ width: 120 }} />
-            <col style={{ width: 60 }} /><col style={{ width: 70 }} /><col style={{ width: 70 }} /><col style={{ width: 54 }} /><col style={{ width: 54 }} />
+            <col style={{ width: 60 }} /><col style={{ width: 70 }} /><col style={{ width: 70 }} /><col style={{ width: 54 }} /><col style={{ width: 54 }} /><col style={{ width: 96 }} />
           </colgroup>
           {teams.map((t) => {
             const list = m.players.filter((x) => x.teamId === t).sort((a, b) => st[b.subject].acs - st[a.subject].acs);
@@ -367,7 +402,7 @@ export function ValoMatch({ id, puuid, go }: { id: string; puuid: string; go: Go
               <tbody key={t}>
                 <tr className="bhead">
                   <th colSpan={2}>{teams.length > 1 && <><b className={win ? "good" : "bad"}>{win ? "Victoire" : "Défaite"}</b> · {t === myTeam ? "Ton équipe" : "Adversaires"}</>}</th>
-                  <th>Rang</th><th>ACS</th><th>K / D / A</th><th>+/-</th><th>ADR</th><th>HS</th><th>FK</th><th>FD</th>
+                  <th>Rang</th><th>ACS</th><th>K / D / A</th><th>+/-</th><th>ADR</th><th>HS</th><th>FK</th><th>FD</th><th>Multi</th>
                 </tr>
                 {list.map((x) => {
                   const s = st[x.subject];
@@ -385,6 +420,7 @@ export function ValoMatch({ id, puuid, go }: { id: string; puuid: string; go: Go
                       <td className="c">{pct(s.hs)}</td>
                       <td className="c">{s.fk}</td>
                       <td className="c">{s.fd}</td>
+                      <td className="c vmulti">{mkLabel(s.mk).join(", ") || "–"}</td>
                     </tr>
                   );
                 })}

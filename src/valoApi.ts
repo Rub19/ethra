@@ -12,6 +12,7 @@ export type VD = {
   agents: Record<string, Agent>;
   maps: Record<string, { name: string; icon: string; splash: string }>;
   tiers: Record<number, { name: string; icon: string; color: string }>;
+  weapons: Record<string, { name: string; icon: string; category: string }>;
 };
 
 const API = "https://valorant-api.com/v1";
@@ -21,14 +22,18 @@ let vd: Promise<VD> | undefined;
 
 export function vdata(): Promise<VD> {
   return (vd ??= (async () => {
-    const [a, m, t] = await Promise.all([get("agents?isPlayableCharacter=true&language=fr-FR"), get("maps?language=fr-FR"), get("competitivetiers?language=fr-FR")]);
+    const [a, m, t, w] = await Promise.all([
+      get("agents?isPlayableCharacter=true&language=fr-FR"), get("maps?language=fr-FR"), get("competitivetiers?language=fr-FR"), get("weapons?language=fr-FR").catch(() => []),
+    ]);
     const agents: VD["agents"] = {};
     for (const x of a) agents[x.uuid.toLowerCase()] = { name: x.displayName, icon: x.displayIcon, portrait: x.fullPortrait, bg: x.background, role: x.role?.displayName ?? "", roleIcon: x.role?.displayIcon ?? "" };
     const maps: VD["maps"] = {};
     for (const x of m) maps[x.mapUrl] = { name: x.displayName, icon: x.listViewIcon, splash: x.splash };
     const tiers: VD["tiers"] = {};
     for (const x of t.at(-1).tiers) tiers[x.tier] = { name: title(x.tierName), icon: x.smallIcon ?? x.largeIcon, color: `#${x.color.slice(0, 6)}` };
-    return { agents, maps, tiers };
+    const weapons: VD["weapons"] = {};
+    for (const x of w) weapons[x.uuid.toLowerCase()] = { name: x.displayName, icon: x.killStreamIcon ?? x.displayIcon, category: String(x.category ?? "").split("::").pop() ?? "" };
+    return { agents, maps, tiers, weapons };
   })());
 }
 
@@ -96,7 +101,13 @@ export type VMatch = {
   teams: { teamId: string; won: boolean; roundsWon: number; roundsPlayed: number }[] | null;
   roundResults: {
     roundNum: number; winningTeam: string; roundResult: string;
-    playerStats: { subject: string; kills: { killer: string; victim: string; roundTime: number }[]; damage: { damage: number; headshots: number; bodyshots: number; legshots: number }[] }[];
+    playerStats: {
+      subject: string;
+      kills: { killer: string; victim: string; roundTime: number; finishingDamage?: { damageType: string; damageItem: string } }[];
+      damage: { damage: number; headshots: number; bodyshots: number; legshots: number }[];
+      economy?: { loadoutValue: number; spent: number; remaining: number };
+    }[];
+    playerEconomies?: { subject: string; loadoutValue: number; spent: number; remaining: number }[];
   }[] | null;
 };
 
@@ -139,13 +150,17 @@ export const vMatch = (id: string) => {
   return matchCache.get(id)!;
 };
 
-export type VStat = { acs: number; adr: number; hs: number; fk: number; fd: number; kd: number };
+export type VStat = { acs: number; adr: number; hs: number; fk: number; fd: number; kd: number; mk: number[] };
 export function vStats(m: VMatch): Record<string, VStat> {
-  const acc: Record<string, { dmg: number; head: number; shots: number; fk: number; fd: number }> = {};
-  const at = (s: string) => (acc[s] ??= { dmg: 0, head: 0, shots: 0, fk: 0, fd: 0 });
+  const acc: Record<string, { dmg: number; head: number; shots: number; fk: number; fd: number; mk: number[] }> = {};
+  const at = (s: string) => (acc[s] ??= { dmg: 0, head: 0, shots: 0, fk: 0, fd: 0, mk: [0, 0, 0, 0, 0, 0] });
   for (const r of m.roundResults ?? []) {
-    const first = r.playerStats.flatMap((p) => p.kills ?? []).sort((a, b) => a.roundTime - b.roundTime)[0];
+    const kills = r.playerStats.flatMap((p) => p.kills ?? []);
+    const first = [...kills].sort((a, b) => a.roundTime - b.roundTime)[0];
     if (first) (at(first.killer).fk++, at(first.victim).fd++);
+    const per: Record<string, number> = {};
+    for (const k of kills) per[k.killer] = (per[k.killer] ?? 0) + 1;
+    for (const [who, c] of Object.entries(per)) if (c >= 3) at(who).mk[Math.min(c, 5)]++;
     for (const p of r.playerStats)
       for (const d of p.damage ?? []) {
         const a = at(p.subject);
@@ -159,7 +174,7 @@ export function vStats(m: VMatch): Record<string, VStat> {
     const a = at(p.subject);
     const rounds = Math.max(1, p.stats?.roundsPlayed ?? 0);
     out[p.subject] = {
-      acs: (p.stats?.score ?? 0) / rounds, adr: a.dmg / rounds, hs: a.shots ? a.head / a.shots : 0, fk: a.fk, fd: a.fd,
+      acs: (p.stats?.score ?? 0) / rounds, adr: a.dmg / rounds, hs: a.shots ? a.head / a.shots : 0, fk: a.fk, fd: a.fd, mk: a.mk,
       kd: (p.stats?.kills ?? 0) / Math.max(1, p.stats?.deaths ?? 0),
     };
   }
@@ -184,4 +199,29 @@ export async function vPhase(puuid: string): Promise<VPhase> {
   } catch {
     return "MENUS";
   }
+}
+
+export const mkLabel = (mk: number[]) =>
+  [[5, "ACE"], [4, "4K"], [3, "3K"]].filter(([n]) => mk[n as number] > 0).map(([n, l]) => (mk[n as number] > 1 ? `${l} ×${mk[n as number]}` : String(l)));
+
+export function vWeaponKills(m: VMatch, puuid: string) {
+  const out: Record<string, number> = {};
+  for (const r of m.roundResults ?? [])
+    for (const p of r.playerStats)
+      for (const k of p.kills ?? []) {
+        if (k.killer !== puuid) continue;
+        const key = k.finishingDamage?.damageType === "Weapon" ? k.finishingDamage.damageItem.toLowerCase() : k.finishingDamage?.damageType === "Melee" ? "melee" : "ability";
+        out[key] = (out[key] ?? 0) + 1;
+      }
+  return out;
+}
+
+export function vEconomy(m: VMatch, team: string) {
+  const members = new Set(m.players.filter((p) => p.teamId === team).map((p) => p.subject));
+  return (m.roundResults ?? []).map((r) => {
+    const eco = r.playerEconomies ?? r.playerStats.map((p) => ({ subject: p.subject, ...(p.economy ?? { loadoutValue: 0, spent: 0, remaining: 0 }) }));
+    const v = eco.filter((e) => members.has(e.subject)).reduce((a, e) => a + (e.loadoutValue ?? 0), 0);
+    const pistol = r.roundNum === 0 || r.roundNum === 12;
+    return { value: v, kind: pistol ? "Pistolet" : v < 5000 ? "Éco" : v < 10000 ? "Semi-éco" : v < 20000 ? "Semi" : "Full" };
+  });
 }
