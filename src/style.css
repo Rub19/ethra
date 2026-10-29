@@ -732,3 +732,16 @@ main { max-width: 1560px; padding: 22px 20px 40px; }
 .vphase.in i { background: var(--win); }
 @media (prefers-reduced-motion: reduce) { .vphase i { animation: none; } }
 @media (max-width: 720px) { .vlcols { display: none; } .vlcols, .vlive { grid-template-columns: 52px minmax(0, 1fr) 150px; } .vlwr, .vlform { display: none; } }
+
+.vlive { position: relative; }
+.vlive.inparty::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 2px; background: var(--pc); }
+.vparty { font-style: normal; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 99px; color: var(--pc); background: color-mix(in srgb, var(--pc) 16%, transparent); }
+.p0 { --pc: #f6c867; }
+.p1 { --pc: #6fa8ff; }
+.p2 { --pc: #c58cff; }
+.p3 { --pc: #ff9a62; }
+.p4 { --pc: #5fe0c8; }
+.vthead { justify-content: flex-start; }
+.vtparties { display: flex; gap: 6px; margin-right: auto; }
+.vlid > small { white-space: nowrap; overflow: hidden; }
+.vlid > small .vlvl { overflow: hidden; text-overflow: ellipsis; }

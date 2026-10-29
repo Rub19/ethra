@@ -3,7 +3,7 @@ import type { Go } from "./main";
 import Skeleton from "./Skeleton";
 import { ago, mmss } from "./lcu";
 import {
-  queueLabel, valo, vdata, VD, vHistory, vMatch, VMatch, vName, VName, vNames, VPhase, VPlayer, vRank, VRank, VRR, vRRUpdates, vScore, vStats, vTeamWon, mkLabel, vWeaponKills, vEconomy,
+  queueLabel, valo, vdata, VD, vHistory, vMatch, VMatch, vName, VName, vNames, VPhase, VPlayer, vRank, VRank, VRR, vRRUpdates, vScore, vStats, vTeamWon, mkLabel, vWeaponKills, vEconomy, vParties, PARTY_LABEL,
 } from "./valoApi";
 
 const FILTERS: [string, string][] = [["", "Toutes"], ["competitive", "Compétition"], ["unrated", "Non classé"], ["swiftplay", "Vélocité"], ["deathmatch", "Combat à mort"], ["premier", "Premier"]];
@@ -435,8 +435,9 @@ export function ValoMatch({ id, puuid, go }: { id: string; puuid: string; go: Go
 
 type LiveP = { puuid: string; agent: string; team: string; incognito: boolean; level: number; locked?: boolean };
 type Form = number[];
+type Party = { label: string; c: number };
 
-function LiveCard({ p, d, name, r, form, self, go }: { p: LiveP; d: VD; name?: VName; r?: VRank; form?: Form; self: string; go: Go }) {
+function LiveCard({ p, d, name, r, form, party, self, go }: { p: LiveP; d: VD; name?: VName; r?: VRank; form?: Form; party?: Party; self: string; go: Go }) {
   const a = d.agents[p.agent.toLowerCase()];
   const hidden = p.incognito && p.puuid !== self;
   const net = form?.reduce((x, y) => x + y, 0) ?? 0;
@@ -444,7 +445,7 @@ function LiveCard({ p, d, name, r, form, self, go }: { p: LiveP; d: VD; name?: V
   const open = () => !hidden && go({ page: "v-profil", puuid: p.puuid });
   return (
     <div
-      className={`vlive ${p.puuid === self ? "me" : ""} ${hidden ? "hidden" : ""}`}
+      className={`vlive ${p.puuid === self ? "me" : ""} ${hidden ? "hidden" : ""} ${party ? `inparty p${party.c}` : ""}`}
       onClick={open}
       role={hidden ? undefined : "button"}
       tabIndex={hidden ? -1 : 0}
@@ -458,6 +459,7 @@ function LiveCard({ p, d, name, r, form, self, go }: { p: LiveP; d: VD; name?: V
         <b>{hidden ? "Joueur masqué" : name ? name.GameName : "…"}{!hidden && name && <small>#{name.TagLine}</small>}</b>
         <small>
           {a ? a.name : "Pas encore choisi"}
+          {party && <em className={`vparty p${party.c}`}>{party.label}</em>}
           {p.locked === true && <em className="vlock">Verrouillé</em>}
           {p.level > 0 && <span className="vlvl">niv. {p.level}</span>}
         </small>
@@ -496,6 +498,7 @@ export function ValoLive({ phase, self, go }: { phase: VPhase; self: string; go:
   const [names, setNames] = useState<Record<string, VName>>({});
   const [ranks, setRanks] = useState<Record<string, VRank>>({});
   const [forms, setForms] = useState<Record<string, Form>>({});
+  const [parties, setParties] = useState<Record<string, string>>({});
 
   useEffect(() => {
     vdata().then(setD, () => {});
@@ -515,6 +518,7 @@ export function ValoLive({ phase, self, go }: { phase: VPhase; self: string; go:
       }));
       if (stop) return;
       setGame({ map: m.MapID, queue: m.QueueID ?? m.MatchmakingData?.QueueID ?? "", players });
+      vParties(players.map((p) => p.puuid), self).then((x) => !stop && setParties(x));
       const missing = players.map((p) => p.puuid).filter((p) => !names[p]);
       if (missing.length) vNames(missing).then((list) => !stop && setNames((o) => ({ ...o, ...Object.fromEntries(list.map((n) => [n.Subject, n])) })), () => {});
       for (const p of players) {
@@ -545,6 +549,10 @@ export function ValoLive({ phase, self, go }: { phase: VPhase; self: string; go:
   const map = d.maps[game.map];
   const pre = phase === "PREGAME";
   const locked = game.players.filter((p) => p.locked).length;
+  const groups = new Map<string, string[]>();
+  for (const p of game.players) if (parties[p.puuid]) groups.set(parties[p.puuid], [...(groups.get(parties[p.puuid]) ?? []), p.puuid]);
+  const partyOf: Record<string, Party> = {};
+  [...groups.values()].filter((g) => g.length > 1).forEach((g, i) => g.forEach((id) => (partyOf[id] = { label: PARTY_LABEL[Math.min(g.length, 5)], c: i % 5 })));
   const avg = (list: LiveP[]) => {
     const tiers = list.map((p) => ranks[p.puuid]?.tier ?? 0).filter((t) => t > 2);
     return tiers.length ? Math.round(tiers.reduce((a, t) => a + t, 0) / tiers.length) : 0;
@@ -566,12 +574,17 @@ export function ValoLive({ phase, self, go }: { phase: VPhase; self: string; go:
             <section key={t} className={`card vteam ${t === me?.team ? "mine" : "enemy"}`}>
               <div className="vthead">
                 <h3>{t === me?.team ? "Ton équipe" : "Adversaires"}</h3>
+                <span className="vtparties">
+                  {[...new Map(list.filter((p) => partyOf[p.puuid]).map((p) => [partyOf[p.puuid].c, partyOf[p.puuid]])).values()].map((x) => (
+                    <em key={x.c} className={`vparty p${x.c}`}>{x.label}</em>
+                  ))}
+                </span>
                 {at > 0 && d.tiers[at] && (
                   <span className="vtavg"><img src={d.tiers[at].icon} alt="" />Rang moyen <b style={{ color: d.tiers[at].color }}>{d.tiers[at].name}</b></span>
                 )}
               </div>
               <div className="vlcols"><span /><span>Joueur</span><span>Rang</span><span>Winrate</span><span>Forme</span></div>
-              {list.map((p) => <LiveCard key={p.puuid} p={p} d={d} name={names[p.puuid]} r={ranks[p.puuid]} form={forms[p.puuid]} self={self} go={go} />)}
+              {list.map((p) => <LiveCard key={p.puuid} p={p} d={d} name={names[p.puuid]} r={ranks[p.puuid]} form={forms[p.puuid]} party={partyOf[p.puuid]} self={self} go={go} />)}
             </section>
           );
         })}

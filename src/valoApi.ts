@@ -188,6 +188,34 @@ export const vScore = (m: VMatch, team: string) => {
   return mine && other ? `${mine.roundsWon} - ${other.roundsWon}` : "";
 };
 
+const decode = (b64: string) => {
+  try {
+    return JSON.parse(atob(b64));
+  } catch {
+    return null;
+  }
+};
+
+export async function vParties(puuids: string[], self: string): Promise<Record<string, string>> {
+  const out: Record<string, string> = {};
+  const inMatch = new Set(puuids);
+  const pres = await valo<{ presences: { puuid: string; product: string; private: string }[] }>("local", "/chat/v4/presences").catch(() => ({ presences: [] }));
+  for (const p of pres.presences) {
+    if (p.product !== "valorant" || !inMatch.has(p.puuid) || !p.private) continue;
+    const j = decode(p.private);
+    const id = j?.partyPresenceData?.partyId ?? j?.partyId;
+    if (id) out[p.puuid] = id;
+  }
+  const mine = await valo<{ CurrentPartyID: string }>("glz", `/parties/v1/players/${self}`).catch(() => null);
+  if (mine?.CurrentPartyID) {
+    const party = await valo<{ Members: { Subject: string }[] }>("glz", `/parties/v1/parties/${mine.CurrentPartyID}`).catch(() => null);
+    for (const m of party?.Members ?? []) if (inMatch.has(m.Subject)) out[m.Subject] = mine.CurrentPartyID;
+  }
+  return out;
+}
+
+export const PARTY_LABEL = ["", "", "Duo", "Trio", "Quatuor", "Five stack"];
+
 export type VPhase = "MENUS" | "PREGAME" | "INGAME" | null;
 export async function vPhase(puuid: string): Promise<VPhase> {
   const r = await valo<{ presences: { puuid: string; product: string; private: string }[] }>("local", "/chat/v4/presences");
