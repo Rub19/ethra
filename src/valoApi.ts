@@ -61,6 +61,31 @@ export const vRank = (puuid: string) => {
 export type VName = { Subject: string; GameName: string; TagLine: string };
 export const vNames = (puuids: string[]) => valo<VName[]>("pd", "/name-service/v2/players", "PUT", puuids);
 
+const nameCache = new Map<string, Promise<VName | undefined>>();
+const waiters = new Map<string, (n?: VName) => void>();
+let queue: string[] = [];
+let flushT: number | undefined;
+function flush() {
+  const batch = queue;
+  queue = [];
+  flushT = undefined;
+  vNames(batch).then(
+    (list) => {
+      const by = new Map(list.map((n) => [n.Subject, n]));
+      batch.forEach((p) => waiters.get(p)?.(by.get(p)));
+    },
+    () => batch.forEach((p) => (waiters.get(p)?.(undefined), nameCache.delete(p))),
+  );
+}
+export function vName(puuid: string) {
+  if (!nameCache.has(puuid)) {
+    nameCache.set(puuid, new Promise((r) => waiters.set(puuid, r)));
+    queue.push(puuid);
+    flushT ??= window.setTimeout(flush, 60);
+  }
+  return nameCache.get(puuid)!;
+}
+
 export type VPlayer = {
   subject: string; gameName: string; tagLine: string; teamId: string; characterId: string; competitiveTier: number; accountLevel: number;
   stats: { score: number; roundsPlayed: number; kills: number; deaths: number; assists: number } | null;

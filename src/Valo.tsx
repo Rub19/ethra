@@ -3,10 +3,23 @@ import type { Go } from "./main";
 import Skeleton from "./Skeleton";
 import { ago, mmss } from "./lcu";
 import {
-  queueLabel, valo, vdata, VD, vHistory, vMatch, VMatch, VName, vNames, VPhase, VPlayer, vRank, VRank, vScore, vStats, vTeamWon,
+  queueLabel, valo, vdata, VD, vHistory, vMatch, VMatch, vName, VName, vNames, VPhase, VPlayer, vRank, VRank, vScore, vStats, vTeamWon,
 } from "./valoApi";
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
+
+function useNames(players: VPlayer[] | undefined) {
+  const [names, setNames] = useState<Record<string, VName>>({});
+  const key = players?.map((p) => p.subject).join() ?? "";
+  useEffect(() => {
+    let live = true;
+    players?.filter((p) => !p.gameName).forEach((p) => vName(p.subject).then((n) => live && n && setNames((o) => ({ ...o, [p.subject]: n }))));
+    return () => {
+      live = false;
+    };
+  }, [key]);
+  return (p: VPlayer) => ({ name: p.gameName || names[p.subject]?.GameName || "", tag: p.tagLine || names[p.subject]?.TagLine || "" });
+}
 
 function Rank({ d, tier, rr, label, sub }: { d: VD; tier: number; rr?: number; label: string; sub?: string }) {
   const t = d.tiers[tier];
@@ -28,6 +41,7 @@ function VRow({ id, puuid, d, go }: { id: string; puuid: string; d: VD; go: Go }
   useEffect(() => {
     vMatch(id).then(setM, () => setErr(true));
   }, [id]);
+  const nameOf = useNames(m?.players);
   if (err) return null;
   if (!m) return <div className="skel"><div style={{ height: 76 }} /></div>;
   const p = m.players.find((x) => x.subject === puuid);
@@ -43,31 +57,50 @@ function VRow({ id, puuid, d, go }: { id: string; puuid: string; d: VD; go: Go }
   const map = d.maps[m.matchInfo.mapId];
   const agent = d.agents[p.characterId.toLowerCase()];
   const open = () => go({ page: "v-match", id, puuid });
+  const res = draw ? "remake" : win ? "win" : "loss";
+  const teams = dm ? [m.players] : [m.players.filter((x) => x.teamId === p.teamId), m.players.filter((x) => x.teamId !== p.teamId)];
   return (
-    <div className={`vmatch ${draw ? "remake" : win ? "win" : "loss"}`} onClick={open} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && open()}>
-      <div className="mres">
-        <b>{draw ? "Égalité" : win ? "Victoire" : "Défaite"}</b>
-        <small>{queueLabel(m.matchInfo.queueID)}</small>
-        <small>{mmss(m.matchInfo.gameLengthMillis / 1000)} · {ago(m.matchInfo.gameStartMillis)}</small>
+    <div className={`vmatch ${res}`} onClick={open} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && open()}>
+      <div className="vface">
+        {agent ? <img src={agent.icon} alt={agent.name} /> : <span />}
+        {p.competitiveTier > 2 && d.tiers[p.competitiveTier] && <img className="vtier" src={d.tiers[p.competitiveTier].icon} title={d.tiers[p.competitiveTier].name} alt="" />}
       </div>
-      <div className="vagent">{agent && <img src={agent.icon} title={agent.name} />}{p.competitiveTier > 2 && d.tiers[p.competitiveTier] && <img className="vtier" src={d.tiers[p.competitiveTier].icon} title={d.tiers[p.competitiveTier].name} />}</div>
-      <div className="vmap" style={map ? { backgroundImage: `linear-gradient(90deg, #0b0f17dd, #0b0f1766), url(${map.icon})` } : undefined}>
-        <b>{map?.name ?? "?"}</b>
-        <small>{vScore(m, p.teamId) || `${p.stats.kills} éliminations`}</small>
+      <div className="vbody">
+        <div className="vhead">
+          <b className="vres">{draw ? "Égalité" : win ? "Victoire" : "Défaite"}</b>
+          <span>{queueLabel(m.matchInfo.queueID)}</span>
+          <span>{ago(m.matchInfo.gameStartMillis)}</span>
+          <span>{mmss(m.matchInfo.gameLengthMillis / 1000)}</span>
+          {place === 1 ? <em className="vmvp">MVP</em> : teamBest && <em className="vmvp">MVP équipe</em>}
+        </div>
+        <div className="vstats">
+          <div className="vmapstat" style={map ? { backgroundImage: `url(${map.icon})` } : undefined}>
+            <b>{vScore(m, p.teamId) || `${place}${place === 1 ? "er" : "e"}`}</b>
+            <small>{map?.name ?? "Carte"}</small>
+          </div>
+          <div><b>{p.stats.kills} / <span className="bad">{p.stats.deaths}</span> / {p.stats.assists}</b><small><span className={s.kd >= 1 ? "good" : ""}>{s.kd.toFixed(2)}</span> K/D</small></div>
+          <div><b>{(p.stats.kills / Math.max(1, p.stats.roundsPlayed)).toFixed(2)}</b><small>KPR</small></div>
+          <div><b>{Math.round(s.adr)}</b><small>ADR</small></div>
+          <div><b>{Math.round(s.acs)}</b><small>ACS</small></div>
+          <div><b>{pct(s.hs)}</b><small>HS%</small></div>
+        </div>
       </div>
-      <div className="mkda">
-        <b>{p.stats.kills} <i>/</i> <em>{p.stats.deaths}</em> <i>/</i> {p.stats.assists}</b>
-        <small><span className={s.kd >= 1 ? "good" : ""}>{s.kd.toFixed(2)} K/D</span></small>
-      </div>
-      <div className="mnums">
-        <span><b>{Math.round(s.acs)}</b> ACS</span>
-        <span><b>{Math.round(s.adr)}</b> ADR</span>
-        <span><b>{pct(s.hs)}</b> HS</span>
-      </div>
-      <div className="mbadges">
-        {place === 1 ? <span className="gold">MVP</span> : teamBest && <span className="gold">MVP équipe</span>}
-        <span>{place}{place === 1 ? "er" : "e"} / {m.players.length}</span>
-        {s.fk >= 4 && <span>Entry {s.fk} FK</span>}
+      <div className={`vplayers ${dm ? "dm" : ""}`}>
+        {teams.map((t, i) => (
+          <div key={i}>
+            {t.slice(0, dm ? 14 : 5).map((x) => (
+              <button
+                key={x.subject}
+                className={x.subject === puuid ? "me" : ""}
+                onClick={(e) => (e.stopPropagation(), go({ page: "v-profil", puuid: x.subject }))}
+                title={nameOf(x).name ? `${nameOf(x).name}#${nameOf(x).tag}` : undefined}
+              >
+                <img src={d.agents[x.characterId.toLowerCase()]?.icon} alt="" />
+                <span>{nameOf(x).name || "…"}</span>
+              </button>
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -175,6 +208,7 @@ export function ValoMatch({ id, puuid, go }: { id: string; puuid: string; go: Go
   useEffect(() => {
     Promise.all([vMatch(id), vdata()]).then(([m, d]) => (setM(m), setD(d)), (e) => setErr(String(e)));
   }, [id]);
+  const nameOf = useNames(m?.players);
   if (err) return <div className="empty"><p>{err}</p></div>;
   if (!m || !d) return <Skeleton rows={10} />;
   const st = vStats(m);
@@ -230,7 +264,7 @@ export function ValoMatch({ id, puuid, go }: { id: string; puuid: string; go: Go
                   return (
                     <tr key={x.subject} className={x.subject === puuid ? "me" : ""}>
                       <td><img className="bc" src={d.agents[x.characterId.toLowerCase()]?.icon} title={d.agents[x.characterId.toLowerCase()]?.name} /></td>
-                      <td className="name" onClick={() => go({ page: "v-profil", puuid: x.subject })}>{x.gameName || "?"}<small>#{x.tagLine}</small></td>
+                      <td className="name" onClick={() => go({ page: "v-profil", puuid: x.subject })}>{nameOf(x).name || "…"}{nameOf(x).tag && <small>#{nameOf(x).tag}</small>}</td>
                       <td className="c">{x.competitiveTier > 2 && tier ? <img className="vtier" src={tier.icon} title={tier.name} /> : "–"}</td>
                       <td className="c"><b>{Math.round(s.acs)}</b><i className="dbar2"><i style={{ width: `${(s.acs / maxAcs) * 100}%` }} /></i></td>
                       <td className="c"><b>{x.stats?.kills} / <span className="bad">{x.stats?.deaths}</span> / {x.stats?.assists}</b></td>

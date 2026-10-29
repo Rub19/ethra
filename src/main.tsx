@@ -14,8 +14,7 @@ import AccountMenu from "./Account";
 import Overlays from "./Overlays";
 import { ValoLive, ValoMatch, ValoProfile } from "./Valo";
 import { VPhase, vPhase, vSession } from "./valoApi";
-
-type GameKey = "lol" | "valo";
+import GamePicker, { GameKey } from "./GamePicker";
 export type Route =
   | { page: "v-profil"; puuid?: string }
   | { page: "v-match"; id: string; puuid: string }
@@ -100,11 +99,12 @@ function Search({ d, go, toast }: { d: DD | null; go: Go; toast: (s: string) => 
 
   return (
     <div className="search">
-      <span className="sicon">⌕</span>
+      <svg className="sicon" width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" strokeWidth="1.7" /><path d="m11 11 3.5 3.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>
       <input
         ref={ref}
         value={q}
-        placeholder="Rechercher un joueur (Nom#TAG) ou un champion"
+        aria-label="Rechercher un joueur ou un champion"
+        placeholder="Joueur#TAG ou champion"
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         onChange={(e) => (setQ(e.target.value), setSel(0), setOpen(true))}
@@ -159,6 +159,10 @@ function App() {
   useEffect(() => {
     if (game === "valo" && route.page === "profil" && !route.puuid) go({ page: "v-profil" });
   }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.game = game;
+  }, [game]);
 
   useEffect(() => {
     ddragon().then(setD, () => {});
@@ -237,34 +241,30 @@ function App() {
   return (
     <div className="app">
       <header>
-        <div className="top">
-          <div className="brand">ETHRA</div>
+        <div className="bar">
+          <GamePicker game={game} onPick={switchGame} />
+          <div className="brand">Ethra</div>
           <div className="hist">
-            <button disabled={!canBack} onClick={back} title="Retour">‹</button>
-            <button disabled={!canFwd} onClick={fwd} title="Suivant">›</button>
+            <button disabled={!canBack} onClick={back} aria-label="Retour"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M9 2.5 4.5 7 9 11.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
+            <button disabled={!canFwd} onClick={fwd} aria-label="Suivant"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2.5 9.5 7 5 11.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
           </div>
-          {valoGame ? <div className="search vsearch" /> : <Search d={d} go={go} toast={setToast} />}
+          <nav aria-label="Pages">
+            {tabs.map(([k, l]) => (
+              <button key={k} className={active === k ? "on" : ""} aria-current={active === k ? "page" : undefined} onClick={() => go({ page: k } as Route)}>
+                {l}
+                {k === liveRoute && inGame && <i className="dot" />}
+              </button>
+            ))}
+          </nav>
+          {!valoGame && <Search d={d} go={go} toast={setToast} />}
           <div className={`client ${connected ? "" : "off"}`} title={connected ? "Client connecté" : "Client fermé"}>
-            <i />
             {!valoGame && self && d ? (
               <AccountMenu self={self} d={d} go={go} />
             ) : (
-              <span>{valoGame ? (vSelf ? "VALORANT connecté" : "VALORANT fermé") : phase === null ? "Client fermé" : "Connexion…"}</span>
+              <span><i />{valoGame ? (vSelf ? "VALORANT connecté" : "VALORANT fermé") : phase === null ? "Client fermé" : "Connexion…"}</span>
             )}
           </div>
         </div>
-        <nav>
-          <div className="games">
-            <button className={!valoGame ? "on" : ""} onClick={() => switchGame("lol")}>League of Legends</button>
-            <button className={valoGame ? "on valo" : ""} onClick={() => switchGame("valo")}>VALORANT</button>
-          </div>
-          {tabs.map(([k, l]) => (
-            <button key={k} className={active === k ? "on" : ""} onClick={() => go({ page: k } as Route)}>
-              {l}
-              {k === liveRoute && inGame && <i className="dot" />}
-            </button>
-          ))}
-        </nav>
       </header>
       <main>
         {needsValo ? (
