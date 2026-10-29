@@ -660,3 +660,23 @@ main { max-width: 1560px; padding: 22px 20px 40px; }
 .vplayers span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @container (max-width: 880px) { .vmatch { grid-template-columns: 76px minmax(0, 1fr); } .vplayers { display: none; } }
 @container (max-width: 720px) { .vstats { grid-template-columns: 112px repeat(3, auto); gap: 18px; } .vstats > div:nth-child(n+5) { display: none; } }
+
+.vrr { font-style: normal; font-family: var(--num); font-size: 13px; font-weight: 700; padding: 2px 8px; border-radius: 99px; align-self: center; }
+.vrr.up { color: var(--win); background: color-mix(in srgb, var(--win) 14%, transparent); }
+.vrr.down { color: var(--loss); background: color-mix(in srgb, var(--loss) 14%, transparent); }
+.vhero { justify-content: space-between; }
+.vherorank { display: grid; justify-items: center; gap: 2px; margin-right: 18%; text-align: center; }
+.vherorank img { width: 84px; height: 84px; object-fit: contain; filter: drop-shadow(0 6px 18px rgba(0, 0, 0, .5)); }
+.vherorank b { font-family: var(--num); font-size: 20px; margin-top: 4px; }
+.subtabs { align-items: center; gap: 22px; border-bottom-color: rgba(255, 255, 255, .07); }
+.subtabs > button { font-weight: 600; font-size: 15px; padding: 10px 0; }
+.vfilter { margin: 0 0 6px auto; }
+.vfilter button { padding: 5px 11px; font-size: 13.5px; }
+.vmore { margin: 6px auto 0; padding: 10px 18px; }
+.vmore:disabled { opacity: .6; cursor: default; }
+.vpool { border: 1px solid rgba(255, 255, 255, .06); border-radius: 16px; }
+.vpool th { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.vpool td { font-family: var(--num); font-size: 15px; font-variant-numeric: tabular-nums; border-bottom-color: rgba(255, 255, 255, .05); }
+.vpool td:first-child { font-family: "Barlow", system-ui, sans-serif; font-weight: 600; }
+.vpool tr:last-child td { border-bottom: 0; }
+.vpool td img.vmapimg { width: 64px; height: 30px; object-fit: cover; border-radius: 6px; }

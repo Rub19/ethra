@@ -3,8 +3,11 @@ import type { Go } from "./main";
 import Skeleton from "./Skeleton";
 import { ago, mmss } from "./lcu";
 import {
-  queueLabel, valo, vdata, VD, vHistory, vMatch, VMatch, vName, VName, vNames, VPhase, VPlayer, vRank, VRank, vScore, vStats, vTeamWon,
+  queueLabel, valo, vdata, VD, vHistory, vMatch, VMatch, vName, VName, vNames, VPhase, VPlayer, vRank, VRank, VRR, vRRUpdates, vScore, vStats, vTeamWon,
 } from "./valoApi";
+
+const FILTERS: [string, string][] = [["", "Toutes"], ["competitive", "Compétition"], ["unrated", "Non classé"], ["swiftplay", "Vélocité"], ["deathmatch", "Combat à mort"], ["premier", "Premier"]];
+const PAGE = 20;
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
@@ -35,7 +38,7 @@ function Rank({ d, tier, rr, label, sub }: { d: VD; tier: number; rr?: number; l
   );
 }
 
-function VRow({ id, puuid, d, go }: { id: string; puuid: string; d: VD; go: Go }) {
+function VRow({ id, puuid, d, go, rr }: { id: string; puuid: string; d: VD; go: Go; rr?: VRR }) {
   const [m, setM] = useState<VMatch | null>(null);
   const [err, setErr] = useState(false);
   useEffect(() => {
@@ -72,6 +75,9 @@ function VRow({ id, puuid, d, go }: { id: string; puuid: string; d: VD; go: Go }
           <span>{ago(m.matchInfo.gameStartMillis)}</span>
           <span>{mmss(m.matchInfo.gameLengthMillis / 1000)}</span>
           {place === 1 ? <em className="vmvp">MVP</em> : teamBest && <em className="vmvp">MVP équipe</em>}
+          {rr && !rr.placement && <em className={`vrr ${rr.earned >= 0 ? "up" : "down"}`}>{rr.earned > 0 ? "+" : ""}{rr.earned} RR</em>}
+          {rr && rr.tierAfter > rr.tierBefore && <em className="vrr up">Promu {d.tiers[rr.tierAfter]?.name}</em>}
+          {rr && rr.tierAfter < rr.tierBefore && <em className="vrr down">Rétrogradé</em>}
         </div>
         <div className="vstats">
           <div className="vmapstat" style={map ? { backgroundImage: `url(${map.icon})` } : undefined}>
@@ -111,88 +117,194 @@ export function ValoProfile({ puuid, self, go }: { puuid?: string; self: string;
   const [d, setD] = useState<VD | null>(null);
   const [name, setName] = useState<VName | null>(null);
   const [rank, setRank] = useState<VRank | null>(null);
+  const [rr, setRR] = useState<Record<string, VRR>>({});
+  const [queue, setQueue] = useState("");
   const [ids, setIds] = useState<string[] | null>(null);
-  const [matches, setMatches] = useState<VMatch[]>([]);
+  const [more, setMore] = useState<"idle" | "loading" | "end">("idle");
+  const [byId, setById] = useState<Record<string, VMatch>>({});
+  const [tab, setTab] = useState<"parties" | "agents" | "cartes">("parties");
   const [err, setErr] = useState("");
 
   useEffect(() => {
-    setIds(null);
-    setMatches([]);
     setErr("");
     vdata().then(setD, (e) => setErr(String(e)));
     vNames([who]).then((n) => setName(n[0] ?? null), () => {});
     vRank(who).then(setRank);
-    vHistory(who, 20).then((h) => {
+    vRRUpdates(who).then(setRR);
+  }, [who]);
+
+  const track = (list: string[]) =>
+    list.forEach((id) => vMatch(id).then((m) => setById((o) => (o[id] ? o : { ...o, [id]: m })), () => {}));
+
+  useEffect(() => {
+    let live = true;
+    setIds(null);
+    setMore("idle");
+    vHistory(who, PAGE, queue).then((h) => {
+      if (!live) return;
       const list = h.map((x) => x.MatchID);
       setIds(list);
-      list.forEach((id) => vMatch(id).then((m) => setMatches((old) => (old.some((x) => x.matchInfo.matchId === id) ? old : [...old, m])), () => {}));
-    }, (e) => setErr(String(e)));
-  }, [who]);
+      if (list.length < PAGE) setMore("end");
+      track(list);
+    }, (e) => live && setErr(String(e)));
+    return () => {
+      live = false;
+    };
+  }, [who, queue]);
+
+  const loadMore = () => {
+    if (!ids || more !== "idle") return;
+    setMore("loading");
+    vHistory(who, PAGE, queue, ids.length).then((h) => {
+      const list = h.map((x) => x.MatchID).filter((id) => !ids.includes(id));
+      setIds([...ids, ...list]);
+      setMore(list.length < PAGE ? "end" : "idle");
+      track(list);
+    }, () => setMore("idle"));
+  };
 
   if (err) return <div className="empty"><p>{err}</p></div>;
   if (!d) return <div className="profile"><div className="skel"><div style={{ height: 150 }} /></div><Skeleton rows={6} /></div>;
 
-  const mine = matches.map((m) => ({ m, p: m.players.find((x) => x.subject === who) })).filter((x) => x.p?.stats) as { m: VMatch; p: VPlayer }[];
+  const mine = (ids ?? []).map((id) => byId[id]).filter(Boolean).map((m) => ({ m, p: m.players.find((x) => x.subject === who)! })).filter((x) => x.p?.stats);
   const won = (m: VMatch, p: VPlayer) => vTeamWon(m, p.teamId);
   const wins = mine.filter((x) => won(x.m, x.p)).length;
-  const agg = mine.reduce(
-    (a, { m, p }) => {
-      const s = vStats(m)[who];
-      return { k: a.k + p.stats!.kills, d: a.d + p.stats!.deaths, acs: a.acs + s.acs, hs: a.hs + s.hs, adr: a.adr + s.adr };
-    },
-    { k: 0, d: 0, acs: 0, hs: 0, adr: 0 },
-  );
-  const n = Math.max(1, mine.length);
-  const pool = new Map<string, { g: number; w: number; k: number; d: number; acs: number }>();
-  for (const { m, p } of mine) {
-    const c = pool.get(p.characterId.toLowerCase()) ?? { g: 0, w: 0, k: 0, d: 0, acs: 0 };
-    pool.set(p.characterId.toLowerCase(), { g: c.g + 1, w: c.w + (won(m, p) ? 1 : 0), k: c.k + p.stats!.kills, d: c.d + p.stats!.deaths, acs: c.acs + vStats(m)[who].acs });
-  }
-  const agents = [...pool.entries()].sort((a, b) => b[1].g - a[1].g);
+  const sum = (list: typeof mine) =>
+    list.reduce(
+      (a, { m, p }) => {
+        const s = vStats(m)[who];
+        return {
+          g: a.g + 1, w: a.w + (won(m, p) ? 1 : 0), k: a.k + p.stats!.kills, d: a.d + p.stats!.deaths, acs: a.acs + s.acs, hs: a.hs + s.hs, adr: a.adr + s.adr,
+          r: a.r + p.stats!.roundsPlayed, rw: a.rw + (m.teams?.find((t) => t.teamId === p.teamId)?.roundsWon ?? 0),
+        };
+      },
+      { g: 0, w: 0, k: 0, d: 0, acs: 0, hs: 0, adr: 0, r: 0, rw: 0 },
+    );
+  const agg = sum(mine);
+  const n = Math.max(1, agg.g);
+  const group = (key: (m: VMatch, p: VPlayer) => string) => {
+    const g = new Map<string, typeof mine>();
+    for (const x of mine) g.set(key(x.m, x.p), [...(g.get(key(x.m, x.p)) ?? []), x]);
+    return [...g.entries()].map(([k, list]) => [k, sum(list)] as const).sort((a, b) => b[1].g - a[1].g);
+  };
+  const agents = group((_, p) => p.characterId.toLowerCase());
+  const maps = group((m) => m.matchInfo.mapId);
   const fav = agents[0] && d.agents[agents[0][0]];
-  const sorted = ids ?? [];
+  const midnight = new Date().setHours(0, 0, 0, 0);
+  const today = mine.filter((x) => x.m.matchInfo.gameStartMillis >= midnight);
+  const todayAgg = sum(today);
+  const todayRR = today.reduce((a, x) => a + (rr[x.m.matchInfo.matchId]?.earned ?? 0), 0);
+  const hasRR = today.some((x) => rr[x.m.matchInfo.matchId]);
+  const kd = (x: { k: number; d: number }) => (x.k / Math.max(1, x.d)).toFixed(2);
 
   return (
     <div className="profile">
-      <div className="phero vhero" style={fav ? { backgroundImage: `linear-gradient(90deg, var(--bg) 30%, #0b0f17cc 55%, #0b0f1700), url(${fav.portrait})` } : undefined}>
+      <div className="phero vhero" style={fav ? { backgroundImage: `linear-gradient(90deg, var(--bg) 30%, color-mix(in srgb, var(--bg) 80%, transparent) 55%, transparent), url(${fav.portrait})` } : undefined}>
         <div className="pid">
           <h1>{name?.GameName ?? "…"} <span>#{name?.TagLine}</span></h1>
           {mine.length > 0 && (
             <div className="pquick">
-              <div><b className={wins / n >= 0.5 ? "good" : "bad"}>{pct(wins / n)}</b><small>Winrate récent</small></div>
-              <div><b>{(agg.k / Math.max(1, agg.d)).toFixed(2)}</b><small>K/D</small></div>
+              <div><b className={wins / n >= 0.5 ? "good" : "bad"}>{pct(wins / n)}</b><small>Winrate</small></div>
+              <div><b>{kd(agg)}</b><small>K/D</small></div>
               <div><b>{Math.round(agg.acs / n)}</b><small>ACS moyen</small></div>
+              <div><b>{Math.round(agg.adr / n)}</b><small>ADR moyen</small></div>
               <div><b>{pct(agg.hs / n)}</b><small>Headshots</small></div>
               {fav && <div><b>{fav.name}</b><small>Agent favori</small></div>}
             </div>
           )}
         </div>
+        {rank && rank.tier > 2 && d.tiers[rank.tier] && (
+          <div className="vherorank">
+            <img src={d.tiers[rank.tier].icon} alt="" />
+            <b style={{ color: d.tiers[rank.tier].color }}>{d.tiers[rank.tier].name}</b>
+            <small>{rank.rr} RR</small>
+          </div>
+        )}
+      </div>
+      <div className="subtabs">
+        {([["parties", "Parties"], ["agents", "Agents"], ["cartes", "Cartes"]] as const).map(([k, l]) => (
+          <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>
+        ))}
+        <div className="seg vfilter">
+          {FILTERS.map(([k, l]) => <button key={k} className={queue === k ? "on" : ""} onClick={() => setQueue(k)}>{l}</button>)}
+        </div>
       </div>
       <div className="cols">
         <aside>
+          {who === self && (
+            <section className="card session">
+              <h3>Session du jour</h3>
+              {today.length === 0 ? (
+                <p className="muted">Aucune partie aujourd'hui{queue ? " dans ce mode" : ""}.</p>
+              ) : (
+                <>
+                  <div className="sess">
+                    <div><b><span className="good">{todayAgg.w}V</span> <span className="bad">{todayAgg.g - todayAgg.w}D</span></b><small>{pct(todayAgg.w / todayAgg.g)} de victoires</small></div>
+                    <div><b>{kd(todayAgg)}</b><small>K/D</small></div>
+                    {hasRR && <div><b className={todayRR >= 0 ? "good" : "bad"}>{todayRR >= 0 ? "+" : ""}{todayRR} RR</b><small>Compétition</small></div>}
+                  </div>
+                  <div className="streak">{today.slice(0, 14).reverse().map((x) => <i key={x.m.matchInfo.matchId} className={won(x.m, x.p) ? "sw" : "sl"} />)}</div>
+                </>
+              )}
+            </section>
+          )}
           <section className="card">
             {rank ? (
               <>
-                <Rank d={d} tier={rank.tier} rr={rank.tier > 2 ? rank.rr : undefined} label="Compétition · acte en cours" sub={rank.games ? `${rank.wins}V sur ${rank.games} parties · ${pct(rank.wins / rank.games)}` : undefined} />
+                <Rank d={d} tier={rank.tier} rr={rank.tier > 2 ? rank.rr : undefined} label="Compétition, acte en cours" sub={rank.games ? `${rank.wins}V sur ${rank.games} parties (${pct(rank.wins / rank.games)})` : undefined} />
                 <Rank d={d} tier={rank.peak} label="Meilleur rang" />
               </>
             ) : <Skeleton rows={2} />}
           </section>
           <section className="card">
-            <h3>{mine.length} dernières parties</h3>
+            <h3>{agg.g} parties analysées</h3>
             <div className="wr"><i style={{ width: `${(wins / n) * 100}%` }} /></div>
-            <small className="muted">{wins}V - {mine.length - wins}D · {Math.round(agg.adr / n)} ADR moyen</small>
-            {agents.slice(0, 6).map(([a, x]) => (
+            <small className="muted">{wins}V, {agg.g - wins}D, {agg.r ? pct(agg.rw / agg.r) : "0%"} de manches gagnées</small>
+            {agents.slice(0, 5).map(([a, x]) => (
               <div key={a} className="perf">
-                <img src={d.agents[a]?.icon} />
-                <div><b>{d.agents[a]?.name ?? "?"}</b><small>{(x.k / Math.max(1, x.d)).toFixed(2)} K/D · {Math.round(x.acs / x.g)} ACS</small></div>
-                <div className="r"><b className={x.w / x.g >= 0.5 ? "good" : "bad"}>{pct(x.w / x.g)}</b><small>{x.g} parties</small></div>
+                <img src={d.agents[a]?.icon} alt="" />
+                <div><b>{d.agents[a]?.name ?? "?"}</b><small>{kd(x)} K/D, {Math.round(x.acs / x.g)} ACS</small></div>
+                <div className="r"><b className={x.w / x.g >= 0.5 ? "good" : "bad"}>{pct(x.w / x.g)}</b><small>{x.g} {x.g > 1 ? "parties" : "partie"}</small></div>
               </div>
             ))}
           </section>
         </aside>
         <div className="list">
-          {!ids ? <Skeleton rows={8} /> : sorted.length === 0 ? <div className="card muted">Aucune partie récente.</div> : sorted.map((id) => <VRow key={id} id={id} puuid={who} d={d} go={go} />)}
+          {!ids ? (
+            <Skeleton rows={8} />
+          ) : ids.length === 0 ? (
+            <div className="card muted">Aucune partie récente{queue ? " dans ce mode" : ""}.</div>
+          ) : tab === "parties" ? (
+            <>
+              {ids.map((id) => <VRow key={id} id={id} puuid={who} d={d} go={go} rr={rr[id]} />)}
+              {more !== "end" && (
+                <button className="ghostbtn vmore" onClick={loadMore} disabled={more === "loading"}>{more === "loading" ? "Chargement…" : `Charger ${PAGE} parties de plus`}</button>
+              )}
+            </>
+          ) : (
+            <table className="pool vpool">
+              <thead>
+                <tr><th>{tab === "agents" ? "Agent" : "Carte"}</th><th>Parties</th><th>Winrate</th><th>K/D</th><th>ACS</th><th>ADR</th><th>HS</th><th>Manches</th></tr>
+              </thead>
+              <tbody>
+                {(tab === "agents" ? agents : maps).map(([k, x]) => (
+                  <tr key={k}>
+                    <td>
+                      {tab === "agents" ? <img src={d.agents[k]?.icon} alt="" /> : <img className="vmapimg" src={d.maps[k]?.icon} alt="" />}
+                      {tab === "agents" ? d.agents[k]?.name ?? "?" : d.maps[k]?.name ?? "?"}
+                    </td>
+                    <td>{x.g}</td>
+                    <td className={x.w / x.g >= 0.5 ? "good" : "bad"}>{pct(x.w / x.g)}</td>
+                    <td>{kd(x)}</td>
+                    <td>{Math.round(x.acs / x.g)}</td>
+                    <td>{Math.round(x.adr / x.g)}</td>
+                    <td>{pct(x.hs / x.g)}</td>
+                    <td>{x.r ? pct(x.rw / x.r) : "–"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

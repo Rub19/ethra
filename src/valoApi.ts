@@ -100,8 +100,31 @@ export type VMatch = {
   }[] | null;
 };
 
-export const vHistory = (puuid: string, count = 20) =>
-  valo<{ History: { MatchID: string; GameStartTime: number; QueueID: string }[] }>("pd", `/match-history/v1/history/${puuid}?startIndex=0&endIndex=${count}`).then((r) => r.History);
+export const vHistory = (puuid: string, count = 20, queue = "", start = 0) =>
+  valo<{ History: { MatchID: string; GameStartTime: number; QueueID: string }[] }>(
+    "pd",
+    `/match-history/v1/history/${puuid}?startIndex=${start}&endIndex=${start + count}${queue ? `&queue=${queue}` : ""}`,
+  ).then((r) => r.History);
+
+export type VRR = { earned: number; after: number; tierBefore: number; tierAfter: number; placement: boolean };
+const rrCache = new Map<string, Promise<Record<string, VRR>>>();
+export const vRRUpdates = (puuid: string) => {
+  if (!rrCache.has(puuid))
+    rrCache.set(
+      puuid,
+      valo<{ Matches: any[] }>("pd", `/mmr/v1/players/${puuid}/competitiveupdates?startIndex=0&endIndex=20&queue=competitive`).then(
+        (r) =>
+          Object.fromEntries(
+            r.Matches.map((x) => [
+              x.MatchID,
+              { earned: x.RankedRatingEarned, after: x.RankedRatingAfterUpdate, tierBefore: x.TierBeforeUpdate, tierAfter: x.TierAfterUpdate, placement: x.IsPlacementMatch },
+            ]),
+          ),
+        () => ({}),
+      ),
+    );
+  return rrCache.get(puuid)!;
+};
 
 const matchCache = new Map<string, Promise<VMatch>>();
 let chain: Promise<unknown> = Promise.resolve();
