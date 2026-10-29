@@ -12,8 +12,14 @@ import TierList from "./TierList";
 import Match from "./Match";
 import AccountMenu from "./Account";
 import Overlays from "./Overlays";
+import { ValoLive, ValoMatch, ValoProfile } from "./Valo";
+import { VPhase, vPhase, vSession } from "./valoApi";
 
+type GameKey = "lol" | "valo";
 export type Route =
+  | { page: "v-profil"; puuid?: string }
+  | { page: "v-match"; id: string; puuid: string }
+  | { page: "v-partie" }
   | { page: "profil"; puuid?: string }
   | { page: "champions" }
   | { page: "tierlist" }
@@ -132,10 +138,47 @@ function App() {
   const [d, setD] = useState<DD | null>(null);
   const [toast, setToast] = useState("");
   const imported = useRef(0);
+  const [game, setGame] = useState<GameKey>(() => {
+    try {
+      return localStorage.getItem("rw-game") === "valo" ? "valo" : "lol";
+    } catch {
+      return "lol";
+    }
+  });
+  const [vSelf, setVSelf] = useState<string | null>(null);
+  const [vph, setVph] = useState<VPhase>(null);
+
+  const switchGame = (g: GameKey) => {
+    setGame(g);
+    try {
+      localStorage.setItem("rw-game", g);
+    } catch {}
+    go({ page: g === "valo" ? "v-profil" : "profil" });
+  };
+
+  useEffect(() => {
+    if (game === "valo" && route.page === "profil" && !route.puuid) go({ page: "v-profil" });
+  }, []);
 
   useEffect(() => {
     ddragon().then(setD, () => {});
   }, []);
+
+  useEffect(() => {
+    if (game !== "valo") return;
+    const tick = async () => {
+      const s = await vSession().catch(() => null);
+      setVSelf(s?.puuid || null);
+      const p = s?.puuid ? await vPhase(s.puuid).catch(() => "MENUS" as VPhase) : null;
+      setVph((old) => {
+        if (p === "PREGAME" && old !== "PREGAME") go({ page: "v-partie" });
+        return p;
+      });
+    };
+    tick();
+    const id = setInterval(tick, 3000);
+    return () => clearInterval(id);
+  }, [game]);
 
   useEffect(() => {
     const tick = async () => {
@@ -177,10 +220,19 @@ function App() {
     return () => clearTimeout(id);
   }, [toast]);
 
-  const inGame = !!phase && LIVE.includes(phase);
-  const tabs: [Route["page"], string][] = [["profil", "Profil"], ["tierlist", "Tier list"], ["champions", "Champions"], ["partie", "Partie en cours"], ["overlays", "Overlays"], ["reglages", "Réglages"]];
-  const active = route.page === "champion" ? "champions" : route.page === "profil" && route.puuid && route.puuid !== self?.puuid ? "" : route.page;
-  const needsClient = phase === null && !["reglages", "overlays", "champions", "champion", "tierlist"].includes(route.page);
+  const valoGame = game === "valo";
+  const inGame = valoGame ? vph === "PREGAME" || vph === "INGAME" : !!phase && LIVE.includes(phase);
+  const tabs: [Route["page"], string][] = valoGame
+    ? [["v-profil", "Profil"], ["v-partie", "Partie en cours"], ["reglages", "Réglages"]]
+    : [["profil", "Profil"], ["tierlist", "Tier list"], ["champions", "Champions"], ["partie", "Partie en cours"], ["overlays", "Overlays"], ["reglages", "Réglages"]];
+  const active =
+    route.page === "champion" ? "champions"
+    : (route.page === "profil" && route.puuid && route.puuid !== self?.puuid) || (route.page === "v-profil" && route.puuid && route.puuid !== vSelf) ? ""
+    : route.page;
+  const needsClient = phase === null && !["reglages", "overlays", "champions", "champion", "tierlist", "v-profil", "v-match", "v-partie"].includes(route.page);
+  const needsValo = !vSelf && ["v-profil", "v-match", "v-partie"].includes(route.page);
+  const connected = valoGame ? !!vSelf : phase !== null;
+  const liveRoute = valoGame ? "v-partie" : "partie";
 
   return (
     <div className="app">
@@ -191,28 +243,42 @@ function App() {
             <button disabled={!canBack} onClick={back} title="Retour">‹</button>
             <button disabled={!canFwd} onClick={fwd} title="Suivant">›</button>
           </div>
-          <Search d={d} go={go} toast={setToast} />
-          <div className={`client ${phase === null ? "off" : ""}`} title={phase === null ? "Client LoL fermé" : "Client LoL connecté"}>
+          {valoGame ? <div className="search vsearch" /> : <Search d={d} go={go} toast={setToast} />}
+          <div className={`client ${connected ? "" : "off"}`} title={connected ? "Client connecté" : "Client fermé"}>
             <i />
-            {self && d ? (
+            {!valoGame && self && d ? (
               <AccountMenu self={self} d={d} go={go} />
             ) : (
-              <span>{phase === null ? "Client fermé" : "Connexion…"}</span>
+              <span>{valoGame ? (vSelf ? "VALORANT connecté" : "VALORANT fermé") : phase === null ? "Client fermé" : "Connexion…"}</span>
             )}
           </div>
         </div>
         <nav>
-          <span className="game">League of Legends</span>
+          <div className="games">
+            <button className={!valoGame ? "on" : ""} onClick={() => switchGame("lol")}>League of Legends</button>
+            <button className={valoGame ? "on valo" : ""} onClick={() => switchGame("valo")}>VALORANT</button>
+          </div>
           {tabs.map(([k, l]) => (
             <button key={k} className={active === k ? "on" : ""} onClick={() => go({ page: k } as Route)}>
               {l}
-              {k === "partie" && inGame && <i className="dot" />}
+              {k === liveRoute && inGame && <i className="dot" />}
             </button>
           ))}
         </nav>
       </header>
       <main>
-        {needsClient ? (
+        {needsValo ? (
+          <div className="empty">
+            <h2>Lance VALORANT</h2>
+            <p>Ethra lit ton profil, tes parties et les rangs en direct depuis le client Riot, aucune clé ni compte requis.</p>
+          </div>
+        ) : route.page === "v-profil" ? (
+          <ValoProfile key={route.puuid ?? "me"} puuid={route.puuid} self={vSelf!} go={go} />
+        ) : route.page === "v-match" ? (
+          <ValoMatch key={route.id} id={route.id} puuid={route.puuid} go={go} />
+        ) : route.page === "v-partie" ? (
+          <ValoLive phase={vph} self={vSelf!} go={go} />
+        ) : needsClient ? (
           <div className="empty">
             <h2>Lance le client League of Legends</h2>
             <p>Ethra lit tes données directement depuis le client, aucune clé ni compte requis.</p>
@@ -234,12 +300,12 @@ function App() {
           route.page === "overlays" ? <Overlays /> : <Settings only="general" />
         )}
       </main>
-      {inGame && route.page !== "partie" && (
-        <button className="livebanner" onClick={() => go({ page: "partie" })}>
+      {inGame && route.page !== liveRoute && (
+        <button className="livebanner" onClick={() => go({ page: liveRoute })}>
           <i className="dot" />
           <div>
-            <b>{phase === "ChampSelect" ? "Sélection des champions" : "Partie en cours"}</b>
-            <small>Voir les équipes, rangs et builds</small>
+            <b>{valoGame ? (vph === "PREGAME" ? "Sélection des agents" : "Partie en cours") : phase === "ChampSelect" ? "Sélection des champions" : "Partie en cours"}</b>
+            <small>{valoGame ? "Voir les rangs des joueurs" : "Voir les équipes, rangs et builds"}</small>
           </div>
           <span className="primary">Ouvrir</span>
         </button>

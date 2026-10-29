@@ -1,6 +1,6 @@
 # Ethra
 
-Tracker de jeux gratuit et open source, inspiré de Blitz / tracker.gg. App desktop Windows (Tauri). Premier jeu supporté : League of Legends, d'autres suivront.
+Tracker de jeux gratuit et open source, inspiré de Blitz / tracker.gg. App desktop Windows (Tauri). Jeux supportés : League of Legends et VALORANT.
 
 ## Télécharger
 
@@ -15,6 +15,7 @@ Toutes les versions : [Releases](https://github.com/Rub19/ethra/releases). L'ins
 - **Partie en cours** : rang, winrate et mains de chaque joueur dès la sélection des champions.
 - **Import auto** des runes, sorts et item set en sélection.
 - **Overlays en jeu** : timers et alertes d'objectifs, ordre des compétences, benchmark de lane, valeur des objets, stats.
+- **VALORANT** : rang de l'acte et meilleur rang, historique avec ACS / ADR / HS% / first kills, page de match avec manches et tableau des scores, rangs de tous les joueurs dès la sélection des agents (les joueurs masqués restent masqués).
 - **Avatar** au choix parmi la bibliothèque ETHONE ou ta propre photo.
 
 ## Comment ça marche
@@ -25,6 +26,7 @@ Aucune clé API Riot nécessaire : comme Blitz, l'app parle au client League ins
 - **Live Client Data API** (`127.0.0.1:2999`) : overlays en jeu.
 - **OP.GG** : tier list et builds méta.
 - **Data Dragon / CommunityDragon** : images et données statiques.
+- **Client Riot (VALORANT)** : profil, rangs, historique et partie en cours via le client Riot local ; images et données via valorant-api.com.
 
 Overlays : mets le jeu en **mode fenêtré sans bordure**.
 
