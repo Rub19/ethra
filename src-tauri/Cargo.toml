@@ -11,6 +11,8 @@ tauri = { version = "2.12.3", features = ["image-png"] }
 tauri-plugin-clipboard-manager = "2"
 serde_json = "1"
 reqwest = { version = "0.12", features = ["json"] }
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]

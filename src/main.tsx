@@ -16,7 +16,7 @@ import { ValoAgents, ValoLive, ValoMatch, ValoProfile, ValoSearch } from "./Valo
 import { VPhase, vPhase, vSession } from "./valoApi";
 import GamePicker, { GameKey } from "./GamePicker";
 import TftDecks from "./Tft";
-import { checkUpdate, openUrl, Update } from "./util";
+import UpdateCorner from "./Updater";
 export type Route =
   | { page: "v-profil"; puuid?: string }
   | { page: "v-match"; id: string; puuid: string }
@@ -153,7 +153,6 @@ function App() {
   const [vSelf, setVSelf] = useState<string | null>(null);
   const [vph, setVph] = useState<VPhase>(null);
 
-  const [upd, setUpd] = useState<Update>(null);
   const homeOf = (g: GameKey): Route => ({ page: g === "valo" ? "v-profil" : g === "tft" ? "t-decks" : "profil" });
   const savedRoute = (g: GameKey): Route | null => {
     try {
@@ -181,7 +180,6 @@ function App() {
   }, [route, game]);
 
   useEffect(() => {
-    checkUpdate().then(setUpd);
     const onToast = (e: Event) => setToast((e as CustomEvent<string>).detail);
     window.addEventListener("rw-toast", onToast);
     return () => window.removeEventListener("rw-toast", onToast);
@@ -305,11 +303,6 @@ function App() {
             ))}
           </nav>
           {tftGame ? <div className="bar-spacer" /> : valoGame ? <ValoSearch go={go} /> : <Search d={d} go={go} toast={setToast} />}
-          {upd && (
-            <button className="updbtn" onClick={() => openUrl(upd.url)} title="Ouvrir la page de téléchargement">
-              Mise à jour {upd.version}
-            </button>
-          )}
           <div className={`client ${connected ? "" : "off"}`} title={connected ? "Client connecté" : "Client fermé"}>
             {!valoGame && self && d ? (
               <AccountMenu self={self} d={d} go={go} />
@@ -379,6 +372,7 @@ function App() {
         </button>
       )}
       {toast && <div className="toast">{toast}</div>}
+      <UpdateCorner />
     </div>
   );
 }

@@ -202,6 +202,8 @@ fn main() {
     let http = reqwest::Client::builder().danger_accept_invalid_certs(true).build().unwrap();
     tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .manage(AppState { lcu: Mutex::new(None), valo: Mutex::new(None), http })
         .invoke_handler(tauri::generate_handler![lcu, live, opgg, valo, open_url, game_icon])
         .register_asynchronous_uri_scheme_protocol("ethone", |ctx, req, responder| {

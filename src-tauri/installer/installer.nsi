@@ -784,18 +784,13 @@ Section Install
 SectionEnd
 
 Function .onInstSuccess
+  ; Kairo: a single launch after a fresh install or an update (/R from the updater)
+  ${GetOptions} $CMDLINE "/R" $R0
+  ${IfNot} ${Errors}
+    StrCpy $KairoLaunch 1
+  ${EndIf}
   ${If} $KairoLaunch = 1
     Exec '"$INSTDIR\${MAINBINARYNAME}.exe"'
-  ${EndIf}
-  ; Check for `/R` flag only in silent and passive installers because
-  ; GUI installer has a toggle for the user to (re)start the app
-  ${If} $PassiveMode = 1
-  ${OrIf} ${Silent}
-    ${GetOptions} $CMDLINE "/R" $R0
-    ${IfNot} ${Errors}
-      ${GetOptions} $CMDLINE "/ARGS" $R0
-      nsis_tauri_utils::RunAsUser "$INSTDIR\${MAINBINARYNAME}.exe" "$R0"
-    ${EndIf}
   ${EndIf}
 FunctionEnd
 

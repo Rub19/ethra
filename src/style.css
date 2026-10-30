@@ -912,3 +912,24 @@ h3 { letter-spacing: 0; }
 .glegal { grid-column: 1 / -1; margin: 2px 4px 0; font-size: 11.5px; line-height: 1.45; color: var(--muted); }
 .brand { display: flex; align-items: center; gap: 8px; }
 .brand svg { flex: none; }
+
+.updcorner { position: fixed; right: 20px; bottom: 20px; z-index: 40; width: 340px; display: grid; gap: 12px; padding: 16px; border-radius: 12px; background: var(--panel); border: 1px solid rgba(255, 255, 255, .08); box-shadow: 0 18px 50px rgba(0, 0, 0, .5); animation: updin .32s var(--ease); }
+@keyframes updin { from { opacity: 0; transform: translateY(10px); } }
+.updhead { display: flex; gap: 12px; align-items: flex-start; }
+.updmark { flex: none; width: 10px; height: 10px; margin-top: 5px; border-radius: 50%; background: #2fd3b5; box-shadow: 0 0 0 4px rgba(47, 211, 181, .18); }
+.updhead b { display: block; font-size: 15px; font-weight: 600; }
+.updhead small { font-size: 13px; line-height: 1.45; }
+.updnotes { margin: 0; font-size: 13px; line-height: 1.45; color: var(--muted); padding-left: 22px; }
+.updactions { display: flex; gap: 8px; padding-left: 22px; }
+.updactions .ghostbtn { margin: 0; }
+.updbar { display: grid; gap: 6px; padding-left: 22px; }
+.updbar i { display: block; height: 6px; border-radius: 3px; background: #2fd3b5; transition: width .2s; }
+.updbar small { font-family: var(--num); font-size: 12.5px; }
+.updbar::before { content: ""; display: block; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .08); grid-area: 1 / 1; }
+.updbar i { grid-area: 1 / 1; }
+.livebanner ~ .updcorner { bottom: 96px; }
+@media (prefers-reduced-motion: reduce) { .updcorner { animation: none; } }
+.updcorner { width: 372px; }
+.updactions button { white-space: nowrap; }
+.updactions .primary { flex: 1; }
+.updcorner.err .updmark { background: var(--loss); box-shadow: 0 0 0 4px color-mix(in srgb, var(--loss) 18%, transparent); }

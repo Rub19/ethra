@@ -65,6 +65,18 @@
     },
     "publisher": "Rub19",
     "shortDescription": "Kairo, tracker gratuit pour League of Legends, VALORANT et Teamfight Tactics",
-    "copyright": "Kairo n'est pas approuvé par Riot Games."
+    "copyright": "Kairo n'est pas approuvé par Riot Games.",
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI4RjNGOEI2QTNERUU0QjgKUldTNDVONmp0dmp6dUtlMVlXWENNWG9ta0pCZ09FZWFkWUF1YUEyYTR1WW5VTWVhbHQyM08zYTkK",
+      "endpoints": [
+        "https://github.com/Rub19/ethra/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }
