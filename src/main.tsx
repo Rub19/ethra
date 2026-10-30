@@ -291,7 +291,7 @@ function App() {
       <header>
         <div className="bar">
           <GamePicker game={game} onPick={switchGame} />
-          <div className="brand">Ethra</div>
+          <div className="brand"><svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><path d="M25.3 14.5A9.4 9.4 0 1 1 17.5 6.7" fill="none" stroke="#2fd3b5" strokeWidth="3.6" strokeLinecap="round" /><circle cx="22.6" cy="9.4" r="2.2" fill="#f5f7fc" /></svg>Kairo</div>
           <div className="hist">
             <button disabled={!canBack} onClick={back} aria-label="Retour"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M9 2.5 4.5 7 9 11.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
             <button disabled={!canFwd} onClick={fwd} aria-label="Suivant"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2.5 9.5 7 5 11.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></button>

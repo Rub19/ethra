@@ -93,7 +93,7 @@ const ROLE_LABEL: Record<string, string> = { top: "Top", jungle: "Jungle", mid: 
 
 export function pageName(d: DD, champ: number, b: Build, role = "", aram = false) {
   const pos = aram ? "ARAM" : ROLE_LABEL[(b as any).position ?? ""] ?? ROLE_LABEL[role] ?? "";
-  return `Ethra : ${d.champs[champ]?.name ?? champ}${pos ? ` ${pos}` : ""}`;
+  return `Kairo : ${d.champs[champ]?.name ?? champ}${pos ? ` ${pos}` : ""}`;
 }
 
 export async function applyBuild(d: DD, champ: number, b: Build, opts: { runes: boolean; spells: boolean; items: boolean; role?: string; aram?: boolean }) {
@@ -101,7 +101,7 @@ export async function applyBuild(d: DD, champ: number, b: Build, opts: { runes: 
   const done: string[] = [];
   if (opts.runes && b.perks.length >= 9) {
     const pages = await lcu<any[]>("/lol-perks/v1/pages");
-    const old = pages.find((p) => p.name.startsWith("Ethra"));
+    const old = pages.find((p) => p.name.startsWith("Kairo") || p.name.startsWith("Ethra"));
     if (old) await lcu(`/lol-perks/v1/pages/${old.id}`, "DELETE");
     await lcu("/lol-perks/v1/pages", "POST", { name, primaryStyleId: b.primary, subStyleId: b.sub, selectedPerkIds: b.perks, current: true });
     done.push("runes");
@@ -116,7 +116,7 @@ export async function applyBuild(d: DD, champ: number, b: Build, opts: { runes: 
     const path = `/lol-item-sets/v1/item-sets/${self.summonerId}/sets`;
     const sets = await lcu<any>(path);
     const block = (type: string, ids: number[]) => ({ type, items: ids.map((id) => ({ id: String(id), count: 1 })) });
-    sets.itemSets = (sets.itemSets ?? []).filter((s: any) => !s.title.startsWith("Ethra"));
+    sets.itemSets = (sets.itemSets ?? []).filter((s: any) => !s.title.startsWith("Kairo") && !s.title.startsWith("Ethra"));
     sets.itemSets.push({
       title: name, associatedChampions: [champ], associatedMaps: [], map: "any", mode: "any", type: "custom", sortrank: 0,
       uid: crypto.randomUUID(),

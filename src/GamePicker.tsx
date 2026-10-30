@@ -99,7 +99,7 @@ export default function GamePicker({ game, onPick }: { game: GameKey; onPick: (g
             </span>
           </button>
         ))}
-        <p className="glegal">Ethra n'est pas approuvé par Riot Games et ne reflète pas ses opinions. League of Legends, VALORANT et Teamfight Tactics sont des marques de Riot Games, Inc.</p>
+        <p className="glegal">Kairo n'est pas approuvé par Riot Games et ne reflète pas ses opinions. League of Legends, VALORANT et Teamfight Tactics sont des marques de Riot Games, Inc.</p>
       </div>
     </div>
   );

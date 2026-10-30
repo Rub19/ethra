@@ -7,11 +7,11 @@ import { checkUpdate, openUrl, REPO, toast, Update, VERSION } from "./util";
 type Bool = { [K in keyof S]: S[K] extends boolean ? K : never }[keyof S];
 
 const GENERAL: [Bool, string, string][] = [
-  ["autoOpenLive", "Ouvrir la partie en cours automatiquement", "Ethra passe sur la page de la partie dès la sélection des champions ou des agents."],
+  ["autoOpenLive", "Ouvrir la partie en cours automatiquement", "Kairo passe sur la page de la partie dès la sélection des champions ou des agents."],
   ["autoAccept", "Accepter la partie automatiquement", "Clique sur « Accepter » à ta place quand une partie League est trouvée."],
 ];
 const LOL: [Bool, string, string][] = [
-  ["autoRunes", "Importer les runes", "Crée une page « Ethra : Champion Rôle » dès que tu verrouilles ton champion."],
+  ["autoRunes", "Importer les runes", "Crée une page « Kairo : Champion Rôle » dès que tu verrouilles ton champion."],
   ["autoSpells", "Importer les sorts d'invocateur", "Applique les sorts les plus joués avec ce champion."],
   ["autoItems", "Créer l'item set", "Ajoute ton build dans la boutique en jeu."],
 ];
@@ -55,7 +55,7 @@ export default function Settings(_: { only?: string }) {
     <div className="settings">
       <div className="pagehead">
         <h1>Réglages</h1>
-        <p className="muted">Ethra est gratuit. Il lit tes clients Riot sur ce PC, la méta sur OP.GG et les images sur Data Dragon, CommunityDragon et valorant-api.com.</p>
+        <p className="muted">Kairo est gratuit. Il lit tes clients Riot sur ce PC, la méta sur OP.GG et les images sur Data Dragon, CommunityDragon et valorant-api.com.</p>
       </div>
       <div className="setgrid">
         <div className="setcol">
@@ -120,7 +120,7 @@ export default function Settings(_: { only?: string }) {
               <span>Code source</span>
               <button className="linkbtn" onClick={() => openUrl(REPO)}>github.com/Rub19/ethra</button>
             </div>
-            <small className="muted">Ethra n'est pas approuvé par Riot Games.</small>
+            <small className="muted">Kairo n'est pas approuvé par Riot Games.</small>
           </section>
         </div>
       </div>

@@ -156,7 +156,7 @@ export default function AccountMenu({ self, d, go }: { self: Summoner; d: DD; go
           {item("Overlays", () => go({ page: "overlays" }))}
           {item("Réglages", () => go({ page: "reglages" }))}
           <hr />
-          <small className="muted ver">Ethra, gratuit et open source</small>
+          <small className="muted ver">Kairo, gratuit et open source</small>
         </div>
       )}
       {picker && <AvatarPicker current={avatar} fallback={icon} onClose={() => setPicker(false)} onPick={setAvatar} />}

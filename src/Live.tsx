@@ -123,7 +123,7 @@ export default function Live({ phase, go }: { phase: string; go: Go }) {
         <div>
           <span className="wstatus"><i />En attente d'une partie</span>
           <h1>Lance une file dans le client League</h1>
-          <p className="muted">Ethra prend le relais dès la sélection des champions, sans rien à faire de ton côté.</p>
+          <p className="muted">Kairo prend le relais dès la sélection des champions, sans rien à faire de ton côté.</p>
           <div className="lbtns">
             <button className="primary" onClick={() => go({ page: "tierlist" })}>Voir la tier list</button>
             <button className="ghostbtn" onClick={() => go({ page: "overlays" })}>Régler les overlays</button>

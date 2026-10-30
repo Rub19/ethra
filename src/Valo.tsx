@@ -774,7 +774,7 @@ export function ValoLive({ phase, self, go }: { phase: VPhase; self: string; go:
         <div>
           <span className="wstatus"><i />{phase === "PREGAME" || phase === "INGAME" ? "Chargement de la partie" : "En attente d'une partie"}</span>
           <h1>Lance une file dans VALORANT</h1>
-          <p className="muted">Ethra suit la partie depuis le client Riot, de la sélection des agents à la fin du match.</p>
+          <p className="muted">Kairo suit la partie depuis le client Riot, de la sélection des agents à la fin du match.</p>
           <div className="lbtns">
             <button className="primary" onClick={() => go({ page: "v-profil" })}>Voir mon profil</button>
             <button className="ghostbtn" onClick={() => go({ page: "v-agents" })}>Tier list des agents</button>

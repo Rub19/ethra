@@ -126,7 +126,7 @@ function ShareCard({ g, p, d, label, mvp }: { g: Game; p: Participant; d: DD; la
         <span className={remake ? "" : s.win ? "good" : "bad"}>{remake ? "REMAKE" : s.win ? "VICTOIRE" : "DÉFAITE"}</span>
         {mvp && <span className="hl">MVP</span>}
         <span className="muted">{mmss(g.gameDuration)}</span>
-        <span className="shbrand">ETHRA</span>
+        <span className="shbrand">Kairo</span>
       </div>
       <div className="shbig"><b>{n(s, "totalDamageDealtToChampions").toLocaleString("fr")}</b><span>dégâts aux champions</span></div>
       <div className="shstats">
