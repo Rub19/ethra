@@ -667,6 +667,11 @@ Section Install
 
   ; Kairo: remove the previous Ethra install, settings stay because the app identifier is unchanged
   ReadRegStr $R0 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Ethra" "InstallLocation"
+  StrCpy $R1 $R0 1
+  ${If} $R1 == '"'
+    StrCpy $R0 $R0 "" 1
+    StrCpy $R0 $R0 -1
+  ${EndIf}
   ${If} $R0 != ""
   ${AndIf} ${FileExists} "$R0\uninstall.exe"
     nsExec::Exec 'taskkill /F /IM ${MAINBINARYNAME}.exe'
@@ -780,7 +785,7 @@ SectionEnd
 
 Function .onInstSuccess
   ${If} $KairoLaunch = 1
-    nsis_tauri_utils::RunAsUser "$INSTDIR\${MAINBINARYNAME}.exe" ""
+    Exec '"$INSTDIR\${MAINBINARYNAME}.exe"'
   ${EndIf}
   ; Check for `/R` flag only in silent and passive installers because
   ; GUI installer has a toggle for the user to (re)start the app
