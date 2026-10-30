@@ -16,6 +16,7 @@ import { ValoAgents, ValoLive, ValoMatch, ValoProfile, ValoSearch } from "./Valo
 import { VPhase, vPhase, vSession } from "./valoApi";
 import GamePicker, { GameKey } from "./GamePicker";
 import TftDecks from "./Tft";
+import { checkUpdate, openUrl, Update } from "./util";
 export type Route =
   | { page: "v-profil"; puuid?: string }
   | { page: "v-match"; id: string; puuid: string }
@@ -79,7 +80,7 @@ function Search({ d, go, toast }: { d: DD | null; go: Go; toast: (s: string) => 
   type Opt = { key: string; label: string; sub: string; icon?: string; run: () => void };
   const opts: Opt[] = [
     ...(q.includes("#") ? [{ key: "find", label: q.trim(), sub: "Chercher ce joueur", run: () => lookup(q.trim()) }] : []),
-    ...champs.map(([id, c]) => ({ key: `c${id}`, label: c.name, sub: "Champion · build méta", icon: d ? img.champ(d, +id) : undefined, run: () => go({ page: "champion", champ: +id }) })),
+    ...champs.map(([id, c]) => ({ key: `c${id}`, label: c.name, sub: "Build méta du champion", icon: d ? img.champ(d, +id) : undefined, run: () => go({ page: "champion", champ: +id }) })),
     ...players.map((p) => ({ key: p.puuid, label: p.name, sub: "Joueur récent", run: () => go({ page: "profil", puuid: p.puuid }) })),
   ];
 
@@ -152,13 +153,52 @@ function App() {
   const [vSelf, setVSelf] = useState<string | null>(null);
   const [vph, setVph] = useState<VPhase>(null);
 
+  const [upd, setUpd] = useState<Update>(null);
+  const homeOf = (g: GameKey): Route => ({ page: g === "valo" ? "v-profil" : g === "tft" ? "t-decks" : "profil" });
+  const savedRoute = (g: GameKey): Route | null => {
+    try {
+      const r = JSON.parse(localStorage.getItem(`rw-route-${g}`) || "null");
+      return r?.page ? r : null;
+    } catch {
+      return null;
+    }
+  };
   const switchGame = (g: GameKey) => {
+    if (g === game) return;
     setGame(g);
     try {
       localStorage.setItem("rw-game", g);
     } catch {}
-    go({ page: g === "valo" ? "v-profil" : g === "tft" ? "t-decks" : "profil" });
+    go(savedRoute(g) ?? homeOf(g));
   };
+
+  useEffect(() => {
+    const owner: GameKey | null = route.page.startsWith("v-") ? "valo" : route.page.startsWith("t-") ? "tft" : route.page === "reglages" ? null : "lol";
+    if (owner !== game) return;
+    try {
+      localStorage.setItem(`rw-route-${game}`, JSON.stringify(route));
+    } catch {}
+  }, [route, game]);
+
+  useEffect(() => {
+    checkUpdate().then(setUpd);
+    const onToast = (e: Event) => setToast((e as CustomEvent<string>).detail);
+    window.addEventListener("rw-toast", onToast);
+    return () => window.removeEventListener("rw-toast", onToast);
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey && ["1", "2", "3"].includes(e.key)) {
+        e.preventDefault();
+        switchGame((["lol", "valo", "tft"] as GameKey[])[+e.key - 1]);
+      }
+      if (e.altKey && e.key === "ArrowLeft") (e.preventDefault(), back());
+      if (e.altKey && e.key === "ArrowRight") (e.preventDefault(), fwd());
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   useEffect(() => {
     if (game === "valo" && route.page === "profil" && !route.puuid) go({ page: "v-profil" });
@@ -180,7 +220,7 @@ function App() {
       setVSelf(s?.puuid || null);
       const p = s?.puuid ? await vPhase(s.puuid).catch(() => "MENUS" as VPhase) : null;
       setVph((old) => {
-        if (p === "PREGAME" && old !== "PREGAME") go({ page: "v-partie" });
+        if (p === "PREGAME" && old !== "PREGAME" && settings().autoOpenLive) go({ page: "v-partie" });
         return p;
       });
     };
@@ -193,7 +233,7 @@ function App() {
     const tick = async () => {
       const p = await lcu<string>("/lol-gameflow/v1/gameflow-phase").catch(() => null);
       setPhase((old) => {
-        if (p === "ChampSelect" && old !== "ChampSelect") go({ page: "partie" });
+        if (p === "ChampSelect" && old !== "ChampSelect" && settings().autoOpenLive) go({ page: "partie" });
         return p;
       });
       if (p !== null && !self) me().then(setSelf, () => {});
@@ -265,6 +305,11 @@ function App() {
             ))}
           </nav>
           {tftGame ? <div className="bar-spacer" /> : valoGame ? <ValoSearch go={go} /> : <Search d={d} go={go} toast={setToast} />}
+          {upd && (
+            <button className="updbtn" onClick={() => openUrl(upd.url)} title="Ouvrir la page de téléchargement">
+              Mise à jour {upd.version}
+            </button>
+          )}
           <div className={`client ${connected ? "" : "off"}`} title={connected ? "Client connecté" : "Client fermé"}>
             {!valoGame && self && d ? (
               <AccountMenu self={self} d={d} go={go} />

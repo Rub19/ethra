@@ -41,7 +41,7 @@ function OptRow({ label, opts, d, arrows = false }: { label: string; opts: Opt[]
             </div>
             <div className="iostat">
               <b className={o.win >= 0.5 ? "good" : "bad"}>{pct(o.win)}</b>
-              <small>{pct(o.pick)} · {o.play.toLocaleString("fr")}</small>
+              <small>{pct(o.pick)} des parties</small>
             </div>
           </div>
         ))}
@@ -129,7 +129,7 @@ export default function Builds({ champ, go, role: initialRole = "", compact = fa
           <img src={img.champ(d, champ)} />
           <div>
             <h1>{c?.name}</h1>
-            <small>{c?.tags.join(" · ")}</small>
+            <small>{c?.tags.join(", ")}</small>
           </div>
           {o && (
             <div className="cstats">

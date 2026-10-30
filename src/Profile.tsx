@@ -5,6 +5,7 @@ import {
 import type { Go } from "./main";
 import { useAvatar } from "./Account";
 import Skeleton from "./Skeleton";
+import { copyText } from "./util";
 
 const QUEUES: [string, string][] = [["RANKED_SOLO_5x5", "Classé Solo/Duo"], ["RANKED_FLEX_SR", "Classé Flex"], ["CHERRY", "Arena"]];
 
@@ -77,7 +78,7 @@ function MatchRow({ g, puuid, d, queues, onOpen, onMatch }: { g: Game; puuid: st
       <div className="mres">
         <b>{remake ? "Remake" : s.win ? "Victoire" : "Défaite"}</b>
         <small>{queues[g.queueId] ?? `File ${g.queueId}`}</small>
-        <small>{mmss(g.gameDuration)} · {ago(g.gameCreation)}</small>
+        <small>{mmss(g.gameDuration)}, {ago(g.gameCreation)}</small>
       </div>
       <div className="mchamp">
         <img src={img.champ(d, p.championId)} />
@@ -86,7 +87,7 @@ function MatchRow({ g, puuid, d, queues, onOpen, onMatch }: { g: Game; puuid: st
       <div className="micons">{icons.filter(Boolean).map((u, i) => <img key={i} src={u as string} />)}</div>
       <div className="mkda">
         <b>{n(s, "kills")} <i>/</i> <em>{n(s, "deaths")}</em> <i>/</i> {n(s, "assists")}</b>
-        <small><span className={kda(s) >= 3 ? "good" : ""}>{kda(s).toFixed(2)} KDA</span>{kp !== null && ` · ${kp}% KP`}</small>
+        <small><span className={kda(s) >= 3 ? "good" : ""}>{kda(s).toFixed(2)} KDA</span>{kp !== null && `, ${kp}% KP`}</small>
       </div>
       <div className="mnums">
         <span><b>{(cs(s) / min).toFixed(1)}</b> CS/min</span>
@@ -133,7 +134,7 @@ export function Scoreboard({ g, d, puuid, onOpen }: { g: Game; d: DD; puuid: str
         return (
           <tbody key={t}>
             <tr className="bhead">
-              <th colSpan={2}><b className={win ? "good" : "bad"}>{win ? "Victoire" : "Défaite"}</b> · {t === myTeam ? "Ton équipe" : "Adversaires"}</th>
+              <th colSpan={2}><b className={win ? "good" : "bad"}>{win ? "Victoire" : "Défaite"}</b> <span className="muted">{t === myTeam ? "Ton équipe" : "Adversaires"}</span></th>
               <th>{k} / {de} / {as}</th>
               <th>KP</th>
               <th>CS</th>
@@ -205,7 +206,7 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
       <div className="phero" style={champs[0] ? { backgroundImage: `linear-gradient(90deg, var(--bg) 18%, #0b0f17cc 50%, #0b0f1755), url(https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${d.champs[champs[0][0]]?.id}_0.jpg)` } : undefined}>
         <div className="avatar"><img src={(!puuid && avatar) || img.icon(d, sum.profileIconId)} /><span>{sum.summonerLevel}</span></div>
         <div className="pid">
-          <h1>{sum.gameName} <span>#{sum.tagLine}</span></h1>
+          <h1><button className="copyid" onClick={() => copyText(`${sum.gameName}#${sum.tagLine}`, "Riot ID")} title="Copier le Riot ID">{sum.gameName} <span>#{sum.tagLine}</span></button></h1>
           {games && games.length > 0 && (
             <div className="pquick">
               <div><b className={wins / games.length >= 0.5 ? "good" : "bad"}>{Math.round((wins / games.length) * 100)}%</b><small>Winrate récent</small></div>
@@ -253,7 +254,7 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
                   <div>
                     <span>{l}</span>
                     <b className={q?.tier ? `t-${q.tier.toLowerCase()}` : ""}>{rankLabel(q)}</b>
-                    {q && q.wins + q.losses > 0 && <small>{q.wins}V - {q.losses}D · {Math.round((q.wins / (q.wins + q.losses)) * 100)}%</small>}
+                    {q && q.wins + q.losses > 0 && <small>{q.wins}V {q.losses}D, {Math.round((q.wins / (q.wins + q.losses)) * 100)}%</small>}
                   </div>
                 </div>
               );

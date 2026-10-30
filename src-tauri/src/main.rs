@@ -171,12 +171,25 @@ async fn opgg(state: tauri::State<'_, AppState>, tool: String, args: Value) -> R
     Ok(text)
 }
 
+#[tauri::command]
+fn open_url(url: String) -> Result<(), String> {
+    if !url.starts_with("https://github.com/Rub19/ethra") {
+        return Err("lien refusé".into());
+    }
+    std::process::Command::new("cmd")
+        .args(["/C", "start", "", &url])
+        .creation_flags(0x0800_0000)
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+}
+
 fn main() {
     let http = reqwest::Client::builder().danger_accept_invalid_certs(true).build().unwrap();
     tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
         .manage(AppState { lcu: Mutex::new(None), valo: Mutex::new(None), http })
-        .invoke_handler(tauri::generate_handler![lcu, live, opgg, valo])
+        .invoke_handler(tauri::generate_handler![lcu, live, opgg, valo, open_url])
         .register_asynchronous_uri_scheme_protocol("ethone", |ctx, req, responder| {
             let http = ctx.app_handle().state::<AppState>().http.clone();
             let path = req.uri().path().to_string();

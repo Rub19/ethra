@@ -95,7 +95,7 @@ function Chart({ series, unit }: { series: { name: string; color: string; pts: n
           {series.map((s) => <span key={s.name}><i style={{ background: s.color }} />{s.name} <b>{fmt(s.pts[hover] ?? 0)}</b></span>)}
         </div>
       )}
-      <small className="muted center">Minutes de jeu · ligne pointillée : 14 min (fin de la phase de lane)</small>
+      <small className="muted center">Minutes de jeu. La ligne pointillée marque 14 min, la fin de la phase de lane.</small>
     </div>
   );
 }
@@ -198,7 +198,7 @@ export default function Match({ gameId, puuid, go }: { gameId: number; puuid: st
         <img className="champ" src={img.champ(d, p.championId)} />
         <div>
           <h1>{remake ? "Remake" : s.win ? "Victoire" : "Défaite"}</h1>
-          <small>{queues[g.queueId] ?? `File ${g.queueId}`} · {mmss(g.gameDuration)} · {new Date(g.gameCreation).toLocaleString("fr")}</small>
+          <small>{queues[g.queueId] ?? `File ${g.queueId}`}, {mmss(g.gameDuration)}, le {new Date(g.gameCreation).toLocaleString("fr", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}</small>
         </div>
         <div className="badges">{badges(g, puuid).map((b) => <span key={b} className={b === "MVP" || b === "ACE" ? "gold" : ""}>{b}</span>)}</div>
         <button className="ghostbtn" onClick={() => go({ page: "champion", champ: p.championId })}>Build {d.champs[p.championId]?.name}</button>

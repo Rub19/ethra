@@ -46,13 +46,13 @@ function PlayerCard({ s, d, go }: { s: Slot; d: DD; go: Go }) {
       </div>
       <div className="pbottom">
         <b>{info?.name ?? s.name ?? (s.puuid ? "…" : "Joueur masqué")}</b>
-        <small>{c ? c.name : "Pas encore choisi"}{s.position ? ` · ${POS[s.position] ?? s.position}` : ""}</small>
+        <small>{c ? c.name : "Pas encore choisi"}{s.position ? `, ${POS[s.position] ?? s.position}` : ""}</small>
         {info && g.length > 0 && (
           <div className="pnums">
             <span className={wins / g.length >= 0.5 ? "good" : "bad"}>{Math.round((wins / g.length) * 100)}% récent</span>
             {onChamp.length > 0 && (
               <span>
-                {Math.round((champWins / onChamp.length) * 100)}% · {onChamp.length}p · {(onChamp.reduce((a, x) => a + kda(x.participants[0].stats), 0) / onChamp.length).toFixed(1)} KDA
+                {Math.round((champWins / onChamp.length) * 100)}% en {onChamp.length} parties, {(onChamp.reduce((a, x) => a + kda(x.participants[0].stats), 0) / onChamp.length).toFixed(1)} KDA
               </span>
             )}
           </div>

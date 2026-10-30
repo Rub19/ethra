@@ -77,7 +77,7 @@ export default function Champions({ go }: { go: Go }) {
             <button key={r.id} onClick={() => go({ page: "champion", champ: r.id })}>
               <img src={img.champ(d, r.id)} />
               <span>{r.name}</span>
-              {r.g > 0 && <small>{r.g} parties · {Math.round((r.w / r.g) * 100)}%</small>}
+              {r.g > 0 && <small>{Math.round((r.w / r.g) * 100)}% sur {r.g} parties</small>}
             </button>
           ))}
         </div>

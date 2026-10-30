@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Go } from "./main";
 import Skeleton from "./Skeleton";
 import { call as opggCall } from "./opgg";
+import { copyText } from "./util";
 import { ago, mmss } from "./lcu";
 import {
   queueLabel, valo, vdata, VD, vHistory, vMatch, VMatch, vName, VName, vNames, VPhase, VPlayer, vRank, VRank, VRR, vRRUpdates, vScore, vStats, vTeamWon, mkLabel, vWeaponKills, vEconomy, vParties, PARTY_LABEL, seenPlayers, Seen,
@@ -32,7 +33,7 @@ function Rank({ d, tier, rr, label, sub }: { d: VD; tier: number; rr?: number; l
       {tier > 2 && t ? <img className="emblem" src={t.icon} /> : <div className="emblem none" />}
       <div>
         <span>{label}</span>
-        <b style={tier > 2 && t ? { color: t.color } : undefined}>{tier > 2 && t ? `${t.name}${rr !== undefined ? ` · ${rr} RR` : ""}` : "Non classé"}</b>
+        <b style={tier > 2 && t ? { color: t.color } : undefined}>{tier > 2 && t ? `${t.name}${rr !== undefined ? `, ${rr} RR` : ""}` : "Non classé"}</b>
         {sub && <small>{sub}</small>}
       </div>
     </div>
@@ -211,7 +212,7 @@ export function ValoProfile({ puuid, self, go }: { puuid?: string; self: string;
     <div className="profile">
       <div className="phero vhero" style={fav ? { backgroundImage: `linear-gradient(90deg, var(--bg) 30%, color-mix(in srgb, var(--bg) 80%, transparent) 55%, transparent), url(${fav.portrait})` } : undefined}>
         <div className="pid">
-          <h1>{name?.GameName ?? "…"} <span>#{name?.TagLine}</span></h1>
+          <h1><button className="copyid" disabled={!name} onClick={() => name && copyText(`${name.GameName}#${name.TagLine}`, "Riot ID")} title="Copier le Riot ID">{name?.GameName ?? "…"} <span>#{name?.TagLine}</span></button></h1>
           {mine.length > 0 && (
             <div className="pquick">
               <div><b className={wins / n >= 0.5 ? "good" : "bad"}>{pct(wins / n)}</b><small>Winrate</small></div>
@@ -634,7 +635,7 @@ export function ValoMatch({ id, puuid, go }: { id: string; puuid: string; go: Go
             return (
               <tbody key={t}>
                 <tr className="bhead">
-                  <th colSpan={2}>{teams.length > 1 && <><b className={win ? "good" : "bad"}>{win ? "Victoire" : "Défaite"}</b> · {t === myTeam ? "Ton équipe" : "Adversaires"}</>}</th>
+                  <th colSpan={2}>{teams.length > 1 && <><b className={win ? "good" : "bad"}>{win ? "Victoire" : "Défaite"}</b> <span className="muted">{t === myTeam ? "Ton équipe" : "Adversaires"}</span></>}</th>
                   <th>Rang</th><th>ACS</th><th>K / D / A</th><th>+/-</th><th>ADR</th><th>HS</th><th>FK</th><th>FD</th><th>Multi</th>
                 </tr>
                 {list.map((x) => {

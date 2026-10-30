@@ -75,7 +75,7 @@ function AvatarPicker({ current, fallback, onClose, onPick }: { current: string;
           <img className="pv" src={choice || fallback} />
           <div className="grow">
             <h2>Choisir un avatar</h2>
-            <small>Bibliothèque ETHONE · {COLLECTIONS.reduce((n, c) => n + c.items.length, 0)} avatars</small>
+            <small>Bibliothèque ETHONE, {COLLECTIONS.reduce((n, c) => n + c.items.length, 0)} avatars</small>
           </div>
           <button className="ghostbtn" onClick={() => setChoice("")}>Icône LoL</button>
           <button className="primary" onClick={() => (onPick(choice), onClose())}>Utiliser</button>
@@ -147,7 +147,7 @@ export default function AccountMenu({ self, d, go }: { self: Summoner; d: DD; go
             </button>
             <div>
               <b>{self.gameName}</b>
-              <small>#{self.tagLine} · niveau {self.summonerLevel}</small>
+              <small>#{self.tagLine}, niveau {self.summonerLevel}</small>
             </div>
           </div>
           {item("Mon profil", () => go({ page: "profil" }))}
@@ -156,7 +156,7 @@ export default function AccountMenu({ self, d, go }: { self: Summoner; d: DD; go
           {item("Overlays", () => go({ page: "overlays" }))}
           {item("Réglages", () => go({ page: "reglages" }))}
           <hr />
-          <small className="muted ver">Ethra · gratuit et open source</small>
+          <small className="muted ver">Ethra, gratuit et open source</small>
         </div>
       )}
       {picker && <AvatarPicker current={avatar} fallback={icon} onClose={() => setPicker(false)} onPick={setAvatar} />}
