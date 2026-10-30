@@ -4,7 +4,7 @@ Tracker de jeux gratuit et open source, inspiré de Blitz / tracker.gg. App desk
 
 ## Télécharger
 
-**[⬇ Ethra 0.2.3 pour Windows (installeur)](https://github.com/Rub19/ethra/releases/latest/download/Ethra_0.2.3_x64-setup.exe)**
+**[⬇ Ethra 0.2.4 pour Windows (installeur)](https://github.com/Rub19/ethra/releases/latest/download/Ethra_0.2.4_x64-setup.exe)**
 
 Toutes les versions : [Releases](https://github.com/Rub19/ethra/releases). L'installeur n'est pas signé : Windows SmartScreen peut afficher « Windows a protégé votre ordinateur », clique sur « Informations complémentaires » puis « Exécuter quand même ».
 
