@@ -1,8 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 
-export type GameKey = "lol" | "valo";
+export type GameKey = "lol" | "valo" | "tft";
 
 export function GameMark({ g, size = 30 }: { g: GameKey; size?: number }) {
+  if (g === "tft")
+    return (
+      <svg className="gmark tft" width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="8" />
+        <path d="M16 6 23.5 10.5v11L16 26 8.5 21.5v-11Z" fill="none" strokeWidth="2.2" />
+        <path d="M16 11.2 17.6 14.6l3.6.4-2.7 2.4.8 3.6L16 19.2 12.7 21l.8-3.6-2.7-2.4 3.6-.4Z" />
+      </svg>
+    );
   return g === "lol" ? (
     <svg className="gmark lol" width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
       <rect width="32" height="32" rx="8" />
@@ -21,6 +29,7 @@ export function GameMark({ g, size = 30 }: { g: GameKey; size?: number }) {
 const GAMES: { key: GameKey; name: string; sub: string; art: string }[] = [
   { key: "lol", name: "League of Legends", sub: "Profil, builds, tier list, overlays", art: "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Jinx_0.jpg" },
   { key: "valo", name: "VALORANT", sub: "Profil, matchs, rangs en direct", art: "https://media.valorant-api.com/agents/add6443a-41bd-e414-f6ad-e58d267f4e95/fullportrait.png" },
+  { key: "tft", name: "Teamfight Tactics", sub: "Decks méta du set en cours", art: "https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Teemo_0.jpg" },
 ];
 
 export default function GamePicker({ game, onPick }: { game: GameKey; onPick: (g: GameKey) => void }) {

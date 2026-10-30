@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Go } from "./main";
 import Skeleton from "./Skeleton";
+import { call as opggCall } from "./opgg";
 import { ago, mmss } from "./lcu";
 import {
   queueLabel, valo, vdata, VD, vHistory, vMatch, VMatch, vName, VName, vNames, VPhase, VPlayer, vRank, VRank, VRR, vRRUpdates, vScore, vStats, vTeamWon, mkLabel, vWeaponKills, vEconomy, vParties, PARTY_LABEL, seenPlayers, Seen,
@@ -410,6 +411,105 @@ export function ValoSearch({ go }: { go: Go }) {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+type AgentRow = { id: string; games: number; wr: number; pick: number; kd: number; acs: number; hs: number; fkfd: number; tier: number };
+type AgentKey = "wr" | "pick" | "kd" | "acs" | "hs" | "fkfd" | "games";
+
+export function ValoAgents() {
+  const [d, setD] = useState<VD | null>(null);
+  const [rows, setRows] = useState<AgentRow[] | null>(null);
+  const [patch, setPatch] = useState("");
+  const [err, setErr] = useState("");
+  const [role, setRole] = useState("");
+  const [sort, setSort] = useState<{ k: AgentKey; desc: boolean }>({ k: "wr", desc: true });
+
+  useEffect(() => {
+    vdata().then(setD, (e) => setErr(String(e)));
+    opggCall("valorant_list_agent_statistics", {}).then(
+      (r: any) => {
+        const list: any[] = r.data ?? [];
+        const picks = Math.max(1, list.reduce((a, x) => a + x.gameCount, 0));
+        const out: AgentRow[] = list.map((x) => ({
+          id: String(x.characterId).toLowerCase(), games: x.gameCount, wr: x.wins / Math.max(1, x.gameCount - (x.draws ?? 0)), pick: x.gameCount / picks,
+          kd: x.kills / Math.max(1, x.deaths), acs: x.acs, hs: x.headShots / Math.max(1, x.headShots + x.bodyShots + x.legShots), fkfd: x.firstKills / Math.max(1, x.firstDeaths), tier: 0,
+        }));
+        const byWr = [...out].sort((a, b) => b.wr - a.wr);
+        byWr.forEach((x, i) => (x.tier = i < byWr.length * 0.15 ? 1 : i < byWr.length * 0.4 ? 2 : i < byWr.length * 0.75 ? 3 : 4));
+        setRows(out);
+        setPatch(r.meta?.gameVersion ? String(r.meta.gameVersion) : "");
+      },
+      (e) => setErr(String(e)),
+    );
+  }, []);
+
+  if (err) return <div className="empty"><h2>OP.GG ne répond pas</h2><p>{err}</p></div>;
+  if (!d || !rows) return <div className="tierlist"><div className="pagehead"><h1>Agents</h1></div><Skeleton rows={10} height={56} /></div>;
+
+  const roles = [...new Set(rows.map((x) => d.agents[x.id]?.role).filter(Boolean))].sort();
+  const list = rows
+    .filter((x) => d.agents[x.id] && (!role || d.agents[x.id].role === role))
+    .sort((a, b) => (sort.desc ? b[sort.k] - a[sort.k] : a[sort.k] - b[sort.k]));
+  const th = (k: AgentKey, l: string) => (
+    <th className={sort.k === k ? "sorted" : ""} onClick={() => setSort({ k, desc: sort.k === k ? !sort.desc : true })}>
+      {l} {sort.k === k ? (sort.desc ? "▾" : "▴") : ""}
+    </th>
+  );
+  const pc = (x: number) => `${(x * 100).toFixed(1)}%`;
+
+  return (
+    <div className="tierlist">
+      <div className="pagehead">
+        <h1>Agents <span className="muted">Compétition{patch ? `, patch ${patch}` : ""}</span></h1>
+        <p className="muted">Statistiques mondiales fournies par OP.GG. Le tier est calculé sur le winrate : les 15 % meilleurs agents sont en S. La part des choix indique la proportion de joueurs qui prennent l'agent.</p>
+      </div>
+      <div className="filters">
+        <div className="seg">
+          <button className={!role ? "on" : ""} onClick={() => setRole("")}>Tous</button>
+          {roles.map((r) => (
+            <button key={r} className={`rolebtn ${role === r ? "on" : ""}`} onClick={() => setRole(r)}>
+              <img src={Object.values(d.agents).find((a) => a.role === r)?.roleIcon} alt="" />{r}
+            </button>
+          ))}
+        </div>
+      </div>
+      <table className="table vagents">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Agent</th>
+            <th>Tier</th>
+            {th("wr", "Winrate")}
+            {th("pick", "Part des choix")}
+            {th("kd", "K/D")}
+            {th("acs", "ACS")}
+            {th("hs", "HS")}
+            {th("fkfd", "FK/FD")}
+            {th("games", "Parties")}
+          </tr>
+        </thead>
+        <tbody>
+          {list.map((x, i) => {
+            const a = d.agents[x.id];
+            return (
+              <tr key={x.id}>
+                <td className="muted">{i + 1}</td>
+                <td><div className="cname"><img src={a.icon} alt="" />{a.name}<small className="muted">{a.role}</small></div></td>
+                <td><span className={`tier t${x.tier}`}>{["", "S", "A", "B", "C"][x.tier]}</span></td>
+                <td className={x.wr >= 0.5 ? "good" : "bad"}>{pc(x.wr)}</td>
+                <td>{pc(x.pick)}</td>
+                <td>{x.kd.toFixed(2)}</td>
+                <td>{Math.round(x.acs)}</td>
+                <td>{pc(x.hs)}</td>
+                <td className={x.fkfd >= 1 ? "good" : "bad"}>{x.fkfd.toFixed(2)}</td>
+                <td>{x.games.toLocaleString("fr")}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

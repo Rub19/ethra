@@ -8,10 +8,10 @@ export const POS_LABEL: Record<string, string> = { top: "Top", jungle: "Jungle",
 export const TIER_LABEL = ["", "S", "A", "B", "C", "D"];
 
 const cache = new Map<string, Promise<any>>();
-function call(tool: string, args: object) {
+export function call(tool: string, args: object) {
   const key = tool + JSON.stringify(args);
   if (!cache.has(key)) {
-    const p = invoke<string>("opgg", { tool, args }).then(parseOpgg);
+    const p = invoke<string>("opgg", { tool, args }).then((t) => (/^\s*[[{]/.test(t) ? JSON.parse(t) : parseOpgg(t)));
     p.catch(() => cache.delete(key));
     cache.set(key, p);
   }

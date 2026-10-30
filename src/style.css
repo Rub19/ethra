@@ -809,3 +809,45 @@ main { max-width: 1560px; padding: 22px 20px 40px; }
 .jsteps li small { font-family: var(--num); }
 .jsteps p { margin: 0; font-size: 14px; line-height: 1.5; max-width: 62ch; }
 @media (max-width: 900px) { .jbody { grid-template-columns: 1fr; } }
+
+:root[data-game="tft"] { --accent: #b48cff; --on-accent: #170c2b; }
+.gmark.tft rect { fill: #7d4fd6; }
+.gmark.tft path { stroke: #fff; fill: #fff; }
+.gmark.tft path:first-of-type { fill: none; }
+.gmenu { grid-template-columns: repeat(3, 196px); }
+.gcard.tft .gart { background-position: center 15%; }
+.bar-spacer { flex: 1; }
+
+.vagents .cname small { display: inline; margin-left: 8px; font-weight: 400; font-size: 12.5px; }
+
+.tdecks { display: grid; grid-template-columns: repeat(auto-fill, minmax(620px, 1fr)); gap: 16px; }
+.tdeck { display: grid; gap: 14px; }
+.tdhead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.tdhead h3 { margin: 0; font-size: 18px; font-family: var(--num); }
+.ttier { display: inline-grid; place-items: center; min-width: 34px; height: 26px; padding: 0 8px; border-radius: 8px; font-family: var(--num); font-weight: 800; font-size: 14px; background: var(--panel2); color: var(--muted); }
+.ttier.t-op { background: color-mix(in srgb, #ff5a7a 20%, transparent); color: #ff7b95; }
+.ttier.t-s { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--accent); }
+.ttier.t-a { background: color-mix(in srgb, var(--win) 18%, transparent); color: var(--win); }
+.tdtags { display: flex; gap: 6px; margin-left: auto; }
+.tdtags span { font-size: 12px; padding: 3px 9px; border-radius: 99px; background: rgba(255, 255, 255, .05); color: var(--muted); }
+.tdstats { display: flex; gap: 28px; }
+.tdstats b { display: block; font-family: var(--num); font-size: 20px; font-variant-numeric: tabular-nums; }
+.tdunits { display: flex; flex-wrap: wrap; gap: 10px; }
+.tunit { position: relative; display: grid; justify-items: center; gap: 3px; width: 62px; }
+.tunit > img, .tunit .tph { width: 54px; height: 54px; border-radius: 10px; object-fit: cover; box-shadow: 0 0 0 2px var(--cc); background: var(--panel2); }
+.tunit .tph { display: grid; place-items: center; font-weight: 700; color: var(--muted); }
+.tunit.core > img { box-shadow: 0 0 0 2px var(--cc), 0 0 0 4px color-mix(in srgb, var(--accent) 55%, transparent); }
+.tunit small { font-size: 11px; max-width: 62px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tstars { position: absolute; top: -9px; font-size: 10px; color: #f6c867; letter-spacing: -1px; text-shadow: 0 1px 2px #000; }
+.titems { display: flex; gap: 2px; min-height: 16px; }
+.titems img { width: 16px; height: 16px; border-radius: 3px; }
+.tunit.c1 { --cc: #8f97a8; } .tunit.c2 { --cc: #2fbf71; } .tunit.c3 { --cc: #3d8bff; } .tunit.c4 { --cc: #c158ff; } .tunit.c5 { --cc: #f6c867; }
+.tdtraits { display: flex; flex-wrap: wrap; gap: 6px; }
+.ttrait { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; padding: 3px 9px 3px 4px; border-radius: 99px; background: rgba(255, 255, 255, .05); color: var(--muted); }
+.ttrait img { width: 18px; height: 18px; filter: brightness(0) invert(.85); }
+.ttrait b { font-family: var(--num); color: var(--text); }
+.ttrait.bronze { background: rgba(176, 116, 70, .2); }
+.ttrait.silver { background: rgba(170, 180, 196, .18); }
+.ttrait.gold { background: rgba(230, 180, 60, .2); }
+.ttrait.prism { background: linear-gradient(90deg, rgba(110, 200, 255, .22), rgba(230, 120, 255, .22)); }
+@media (max-width: 720px) { .tdecks { grid-template-columns: 1fr; } }

@@ -12,13 +12,16 @@ import TierList from "./TierList";
 import Match from "./Match";
 import AccountMenu from "./Account";
 import Overlays from "./Overlays";
-import { ValoLive, ValoMatch, ValoProfile, ValoSearch } from "./Valo";
+import { ValoAgents, ValoLive, ValoMatch, ValoProfile, ValoSearch } from "./Valo";
 import { VPhase, vPhase, vSession } from "./valoApi";
 import GamePicker, { GameKey } from "./GamePicker";
+import TftDecks from "./Tft";
 export type Route =
   | { page: "v-profil"; puuid?: string }
   | { page: "v-match"; id: string; puuid: string }
   | { page: "v-partie" }
+  | { page: "v-agents" }
+  | { page: "t-decks" }
   | { page: "profil"; puuid?: string }
   | { page: "champions" }
   | { page: "tierlist" }
@@ -140,7 +143,8 @@ function App() {
   const imported = useRef(0);
   const [game, setGame] = useState<GameKey>(() => {
     try {
-      return localStorage.getItem("rw-game") === "valo" ? "valo" : "lol";
+      const g = localStorage.getItem("rw-game");
+      return g === "valo" || g === "tft" ? g : "lol";
     } catch {
       return "lol";
     }
@@ -153,11 +157,12 @@ function App() {
     try {
       localStorage.setItem("rw-game", g);
     } catch {}
-    go({ page: g === "valo" ? "v-profil" : "profil" });
+    go({ page: g === "valo" ? "v-profil" : g === "tft" ? "t-decks" : "profil" });
   };
 
   useEffect(() => {
     if (game === "valo" && route.page === "profil" && !route.puuid) go({ page: "v-profil" });
+    if (game === "tft" && route.page === "profil" && !route.puuid) go({ page: "t-decks" });
   }, []);
 
   useEffect(() => {
@@ -225,9 +230,12 @@ function App() {
   }, [toast]);
 
   const valoGame = game === "valo";
+  const tftGame = game === "tft";
   const inGame = valoGame ? vph === "PREGAME" || vph === "INGAME" : !!phase && LIVE.includes(phase);
-  const tabs: [Route["page"], string][] = valoGame
-    ? [["v-profil", "Profil"], ["v-partie", "Partie en cours"], ["reglages", "Réglages"]]
+  const tabs: [Route["page"], string][] = tftGame
+    ? [["t-decks", "Decks méta"], ["reglages", "Réglages"]]
+    : valoGame
+    ? [["v-profil", "Profil"], ["v-agents", "Agents"], ["v-partie", "Partie en cours"], ["reglages", "Réglages"]]
     : [["profil", "Profil"], ["tierlist", "Tier list"], ["champions", "Champions"], ["partie", "Partie en cours"], ["overlays", "Overlays"], ["reglages", "Réglages"]];
   const active =
     route.page === "champion" ? "champions"
@@ -235,7 +243,7 @@ function App() {
     : route.page;
   const needsClient = phase === null && !["reglages", "overlays", "champions", "champion", "tierlist", "v-profil", "v-match", "v-partie"].includes(route.page);
   const needsValo = !vSelf && ["v-profil", "v-match", "v-partie"].includes(route.page);
-  const connected = valoGame ? !!vSelf : phase !== null;
+  const connected = tftGame ? true : valoGame ? !!vSelf : phase !== null;
   const liveRoute = valoGame ? "v-partie" : "partie";
 
   return (
@@ -256,18 +264,22 @@ function App() {
               </button>
             ))}
           </nav>
-          {valoGame ? <ValoSearch go={go} /> : <Search d={d} go={go} toast={setToast} />}
+          {tftGame ? <div className="bar-spacer" /> : valoGame ? <ValoSearch go={go} /> : <Search d={d} go={go} toast={setToast} />}
           <div className={`client ${connected ? "" : "off"}`} title={connected ? "Client connecté" : "Client fermé"}>
             {!valoGame && self && d ? (
               <AccountMenu self={self} d={d} go={go} />
             ) : (
-              <span><i />{valoGame ? (vSelf ? "VALORANT connecté" : "VALORANT fermé") : phase === null ? "Client fermé" : "Connexion…"}</span>
+              <span><i />{tftGame ? "Méta OP.GG" : valoGame ? (vSelf ? "VALORANT connecté" : "VALORANT fermé") : phase === null ? "Client fermé" : "Connexion…"}</span>
             )}
           </div>
         </div>
       </header>
       <main>
-        {needsValo ? (
+        {route.page === "t-decks" ? (
+          <TftDecks />
+        ) : route.page === "v-agents" ? (
+          <ValoAgents />
+        ) : needsValo ? (
           <div className="empty">
             <h2>Lance VALORANT</h2>
             <p>Ethra lit ton profil, tes parties et les rangs en direct depuis le client Riot, aucune clé ni compte requis.</p>
