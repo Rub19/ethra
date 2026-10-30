@@ -325,9 +325,15 @@ function App() {
         ) : route.page === "v-agents" ? (
           <ValoAgents />
         ) : needsValo ? (
-          <div className="empty">
-            <h2>Lance VALORANT</h2>
-            <p>Ethra lit ton profil, tes parties et les rangs en direct depuis le client Riot, aucune clé ni compte requis.</p>
+          <div className="liveempty">
+            <span className="pulse off" />
+            <h1>Lance VALORANT</h1>
+            <p className="muted">Ethra lit ton profil, tes parties et les rangs en direct depuis le client Riot, aucune clé ni compte requis. En attendant, ceci marche déjà :</p>
+            <div className="ltiles">
+              <button onClick={() => go({ page: "v-agents" })}><b>Tier list des agents</b><small>Winrate, part des choix et stats de chaque agent en Compétition, d'après OP.GG.</small></button>
+              <button onClick={() => switchGame("tft")}><b>Decks TFT</b><small>Les meilleures compositions du set en cours, avec leurs objets et leurs traits.</small></button>
+              <button onClick={() => switchGame("lol")}><b>League of Legends</b><small>Tier list, builds méta, jungle path et overlays en jeu.</small></button>
+            </div>
           </div>
         ) : route.page === "v-profil" ? (
           <ValoProfile key={route.puuid ?? "me"} puuid={route.puuid} self={vSelf!} go={go} />
