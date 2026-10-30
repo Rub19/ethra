@@ -1,4 +1,4 @@
-import { DD, Participant, history, isCompleted, lcu, me, n } from "./lcu";
+import { DD, Participant, history, isCompleted, lcu, me, n, settings } from "./lcu";
 import { opggBuild } from "./opgg";
 
 export type Build = {
@@ -81,7 +81,7 @@ export async function bestBuild(d: DD, champ: number, position: string, map: num
     if (b && b.perks.length < 9 && riot) b.perks = [...b.perks, ...riot.perks.slice(6)];
     return b;
   };
-  const opgg = () => (map === 11 || map === 12 ? opggBuild(d, champ, position, map === 12 ? "aram" : "ranked").catch(() => null) : Promise.resolve(null));
+  const opgg = () => (map === 11 || map === 12 ? opggBuild(d, champ, position, map === 12 ? "aram" : "ranked", settings().rankFilter).catch(() => null) : Promise.resolve(null));
   const mine = () => myBuild(d, champ, map).catch(() => null).then(fill);
   if (source === "riot") return riot;
   if (source === "toi") return (await mine()) ?? riot;

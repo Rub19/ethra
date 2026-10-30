@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { DD, ddragon, img, live, mmss, settings } from "./lcu";
 import { Alert, ICON, Row, SkillHint, Widget } from "./Widget";
 import { champId, opggBuild } from "./opgg";
+import { route } from "./Jungle";
 import "./style.css";
 
 const DRAGON_FIRST = 300, DRAGON_RESPAWN = 300, BARON_FIRST = 1200, BARON_RESPAWN = 360, INHIB_RESPAWN = 300, ALERT = 30;
@@ -30,7 +31,7 @@ function Overlay() {
     if (!key || !d || !(cfg.ovSkill || cfg.ovItem) || skills?.key === key) return;
     const champ = champId(d, meP.championName);
     const aram = g.gameData.mapNumber === 12;
-    opggBuild(d, champ, aram ? "mid" : meP.position || undefined, aram ? "aram" : "ranked").then(
+    opggBuild(d, champ, aram ? "mid" : meP.position || undefined, aram ? "aram" : "ranked", settings().rankFilter).then(
       (b) => setSkills({ key, order: b?.skills ?? [], items: b ? [...b.order, ...b.boots.slice(0, 1), ...b.core] : [] }),
       () => setSkills({ key, order: [], items: [] }),
     );
@@ -83,6 +84,7 @@ function Overlay() {
   const period = (label: string) => (label.startsWith("Dragon") ? DRAGON_RESPAWN : label.startsWith("Nashor") ? BARON_RESPAWN : INHIB_RESPAWN);
   const all = [...timers, ...inhibs];
   const itemDiff = opp ? worth(meP) - worth(opp) : 0;
+  const jungle = sr && meP.position === "JUNGLE" && t < 240 ? route(meP.team === "CHAOS" ? "red" : "blue", cfg.jungleRoute === "blue" ? "blue" : "red") : null;
 
   return (
     <>
@@ -97,6 +99,13 @@ function Overlay() {
         </div>
       )}
       <div className="ov">
+        {cfg.ovJungle && jungle && (
+          <Widget title={`Jungle path, fin côté ${jungle.side}`}>
+            {jungle.steps.map((x, i) => (
+              <Row key={i} label={`${i === jungle.steps.length - 1 ? "C" : i + 1}. ${x.name}`} value={i === jungle.steps.length - 1 ? (t < 210 ? mmss(210 - t) : "UP") : ""} tone={i === jungle.steps.length - 1 && t >= 210 ? "up" : undefined} />
+            ))}
+          </Widget>
+        )}
         {cfg.ovTimers && all.length > 0 && (
           <Widget title="Objectifs">
             {all.map((x) => (

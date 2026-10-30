@@ -44,6 +44,9 @@ export async function mainPosition(d: DD, champ: number) {
 }
 
 export type Counter = { champ: number; name: string; play: number; myWin: number };
+export type Opt = { ids: number[]; win: number; play: number; pick: number };
+export type SkillBuild = { order: string[]; max: string[]; win: number; play: number; pick: number };
+export const RANK_FILTERS: [string, string][] = [["all", "Tous les rangs"], ["emerald_plus", "Émeraude+"], ["diamond_plus", "Diamant+"], ["master_plus", "Master+"]];
 export type OpggBuild = Build & {
   position: string;
   tier: number;
@@ -62,19 +65,36 @@ export type OpggBuild = Build & {
   spellPick: number;
   weak: Counter[];
   strong: Counter[];
+  startOpt?: Opt;
+  coreOpt?: Opt;
+  bootsOpt?: Opt;
+  fourth: Opt[];
+  fifth: Opt[];
+  sixth: Opt[];
+  skillBuilds: SkillBuild[];
+  rankFilter: string;
 };
 
 const SLOT: Record<string, number> = { Q: 1, W: 2, E: 3, R: 4 };
 
-export async function opggBuild(d: DD, champ: number, position?: string, mode: "ranked" | "aram" = "ranked"): Promise<OpggBuild | null> {
+const opt = (x: any): Opt | undefined => (x?.ids?.length ? { ids: x.ids, win: x.win / Math.max(1, x.play), play: x.play ?? 0, pick: x.pick_rate ?? 0 } : undefined);
+const maxOf = (order: string[]) => {
+  const n: Record<string, number> = { Q: 0, W: 0, E: 0 };
+  const done: string[] = [];
+  for (const k of order) if (k in n && ++n[k] === 5) done.push(k);
+  return [...done, ...["Q", "W", "E"].filter((k) => !done.includes(k)).sort((a, b) => n[b] - n[a])];
+};
+
+export async function opggBuild(d: DD, champ: number, position?: string, mode: "ranked" | "aram" = "ranked", rankFilter = "all"): Promise<OpggBuild | null> {
   const c = d.champs[champ];
   if (!c) return null;
   const pos = mode === "aram" ? "mid" : position && position !== "NONE" ? OPGG_POS[position] ?? position : await mainPosition(d, champ);
   const r = await call("lol_get_champion_analysis", {
-    champion: c.id.toUpperCase(), position: pos, game_mode: mode,
+    champion: c.id.toUpperCase(), position: pos, game_mode: mode, ...(mode === "ranked" && rankFilter !== "all" ? { tier: rankFilter } : {}),
     desired_output_fields: [
       "data.summary.average_stats", "data.runes", "data.summoner_spells", "data.starter_items", "data.core_items", "data.boots",
-      "data.fourth_items", "data.fifth_items", "data.sixth_items", "data.skills", "data.skill_masteries.{ids[]}", "data.weak_counters", "data.strong_counters",
+      "data.fourth_items", "data.fifth_items", "data.sixth_items", "data.skills", "data.skill_masteries.{ids[]}", "data.skill_masteries.builds[].{order[],pick_rate,play,win}",
+      "data.weak_counters", "data.strong_counters",
     ],
   });
   const x = r.data;
@@ -99,5 +119,11 @@ export async function opggBuild(d: DD, champ: number, position?: string, mode: "
     spellWin: (x.summoner_spells?.win ?? 0) / Math.max(1, x.summoner_spells?.play ?? 0), spellPlay: x.summoner_spells?.play ?? 0, spellPick: x.summoner_spells?.pick_rate ?? 0,
     weak: (x.weak_counters ?? []).map(counter).slice(0, 6),
     strong: (x.strong_counters ?? []).map(counter).slice(0, 6),
+    startOpt: opt(x.starter_items), coreOpt: opt(x.core_items), bootsOpt: opt(x.boots),
+    fourth: (x.fourth_items ?? []).map(opt).filter(Boolean).slice(0, 4),
+    fifth: (x.fifth_items ?? []).map(opt).filter(Boolean).slice(0, 4),
+    sixth: (x.sixth_items ?? []).map(opt).filter(Boolean).slice(0, 4),
+    skillBuilds: (x.skill_masteries?.builds ?? []).slice(0, 4).map((k: any) => ({ order: k.order, max: maxOf(k.order), win: k.win / Math.max(1, k.play), play: k.play, pick: k.pick_rate ?? 0 })),
+    rankFilter,
   };
 }

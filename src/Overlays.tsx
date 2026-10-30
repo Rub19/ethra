@@ -62,6 +62,17 @@ const CARDS: Card[] = [
     ),
   },
   {
+    key: "ovJungle", title: "Jungle path", desc: "Ton full clear étape par étape pendant les premières minutes quand tu joues jungle, avec le crabe à 3:30. Le départ se règle sur la page du champion.",
+    preview: (
+      <Widget title="Jungle path, fin côté top">
+        <Row label="1. Buff rouge" value="" />
+        <Row label="2. Krugs" value="" />
+        <Row label="3. Raptors" value="" />
+        <Row label="C. Crabe" value="1:12" />
+      </Widget>
+    ),
+  },
+  {
     key: "ovStats", title: "Tes stats", desc: "KDA, CS par minute et or disponible, toujours visibles.",
     preview: (
       <Widget title="Toi">

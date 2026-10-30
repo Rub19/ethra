@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { applyBuild, Build, myBuild, pageName, riotBuild } from "./buildData";
 import { DD, ddragon, img, lcu, settings, Settings as S } from "./lcu";
-import { OPGG_POS, opggBuild, OpggBuild, POS_LABEL, TIER_LABEL, Counter, mainPosition } from "./opgg";
+import { OPGG_POS, opggBuild, OpggBuild, POS_LABEL, TIER_LABEL, Counter, mainPosition, Opt, RANK_FILTERS } from "./opgg";
 import type { Go } from "./main";
 import Skeleton from "./Skeleton";
+import JunglePath from "./Jungle";
 
 type Src = "opgg" | "toi" | "riot";
 
@@ -23,6 +24,31 @@ function Auto({ k, label = "Import auto" }: { k: "autoRunes" | "autoSpells" | "a
     </button>
   );
 }
+function OptRow({ label, opts, d, arrows = false }: { label: string; opts: Opt[]; d: DD; arrows?: boolean }) {
+  return (
+    <div className="iopt">
+      <span className="iolabel">{label}</span>
+      <div className="iolist">
+        {opts.map((o, i) => (
+          <div key={i} className={`iochoice ${i === 0 ? "best" : ""}`}>
+            <div className="row">
+              {o.ids.map((id, k) => (
+                <span key={`${id}-${k}`} className="step">
+                  {arrows && k > 0 && "›"}
+                  <img className="ic" src={img.item(d, id)} title={d.items[id]?.name} alt={d.items[id]?.name ?? ""} />
+                </span>
+              ))}
+            </div>
+            <div className="iostat">
+              <b className={o.win >= 0.5 ? "good" : "bad"}>{pct(o.win)}</b>
+              <small>{pct(o.pick)} · {o.play.toLocaleString("fr")}</small>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 const RIOT_POS: Record<string, string> = { top: "TOP", jungle: "JUNGLE", mid: "MIDDLE", adc: "BOTTOM", support: "UTILITY" };
 const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
 
@@ -33,6 +59,14 @@ export default function Builds({ champ, go, role: initialRole = "", compact = fa
   const [src, setSrc] = useState<Src>("opgg");
   const [b, setB] = useState<Build | null | undefined>();
   const [msg, setMsg] = useState("");
+  const [rank, setRank] = useState(() => settings().rankFilter);
+  const [sb, setSb] = useState(0);
+  const pickRank = (r: string) => {
+    setRank(r);
+    try {
+      localStorage.setItem("rw-settings", JSON.stringify({ ...settings(), rankFilter: r }));
+    } catch {}
+  };
 
   useEffect(() => {
     ddragon().then(setD);
@@ -44,14 +78,15 @@ export default function Builds({ champ, go, role: initialRole = "", compact = fa
     setMsg("");
     const load =
       src === "opgg" && mode === "aram" ? opggBuild(d, champ, "mid", "aram")
-      : src === "opgg" ? (role ? Promise.resolve(role) : mainPosition(d, champ).then((p) => (setRole(p), p))).then((p) => opggBuild(d, champ, p))
+      : src === "opgg" ? (role ? Promise.resolve(role) : mainPosition(d, champ).then((p) => (setRole(p), p))).then((p) => opggBuild(d, champ, p, "ranked", rank))
       : src === "toi" ? myBuild(d, champ, mode === "aram" ? 12 : 11)
       : riotBuild(champ, mode === "aram" ? "NONE" : RIOT_POS[role] ?? "NONE", mode === "aram" ? 12 : 11);
     load.then(
       (x) => (x === null && src === "opgg" ? setSrc("toi") : x === null && src === "toi" ? setSrc("riot") : setB(x)),
       () => (src === "opgg" ? setSrc("toi") : src === "toi" ? setSrc("riot") : setB(null)),
     );
-  }, [d, champ, src, role, mode]);
+    setSb(0);
+  }, [d, champ, src, role, mode, rank]);
 
   if (!d) return null;
 
@@ -129,6 +164,11 @@ export default function Builds({ champ, go, role: initialRole = "", compact = fa
             {Object.entries(POS_LABEL).map(([k, l]) => <button key={k} className={`rolebtn ${role === k ? "on" : ""}`} onClick={() => setRole(k)} title={l}><img src={img.role(k)} />{l}</button>)}
           </div>
         )}
+        {src === "opgg" && mode === "ranked" && (
+          <div className="seg">
+            {RANK_FILTERS.map(([k, l]) => <button key={k} className={rank === k ? "on" : ""} onClick={() => pickRank(k)}>{l}</button>)}
+          </div>
+        )}
         <span className="grow" />
         {msg && <span className="muted">{msg}</span>}
         <button className="primary" disabled={!b} onClick={apply}>Importer dans le client</button>
@@ -200,29 +240,58 @@ export default function Builds({ champ, go, role: initialRole = "", compact = fa
               <h3>Objets</h3>
               <Auto k="autoItems" label="Item set auto" />
             </div>
-            {b.start.length > 0 && (<><h3>Objets de départ</h3>{items(b.start)}</>)}
-            {b.order.length > 0 && (<><h3>{o ? "Build principal" : "Ordre d'achat"}</h3>{items(b.order, true)}</>)}
-            {o && o.boots.length > 0 && (<><h3>Bottes</h3>{items(o.boots)}</>)}
-            {b.core.length > 0 && (<><h3>{o ? "Objets situationnels" : "Objets finis les plus joués"}</h3>{items(b.core)}</>)}
+            {o ? (
+              <div className="iopts">
+                {o.startOpt && <OptRow label="Départ" opts={[o.startOpt]} d={d} />}
+                {o.coreOpt && <OptRow label="Build principal" opts={[o.coreOpt]} d={d} arrows />}
+                {o.bootsOpt && <OptRow label="Bottes" opts={[o.bootsOpt]} d={d} />}
+                {o.fourth.length > 0 && <OptRow label="4e objet" opts={o.fourth} d={d} />}
+                {o.fifth.length > 0 && <OptRow label="5e objet" opts={o.fifth} d={d} />}
+                {o.sixth.length > 0 && <OptRow label="6e objet" opts={o.sixth} d={d} />}
+              </div>
+            ) : (
+              <>
+                {b.start.length > 0 && (<><h3>Objets de départ</h3>{items(b.start)}</>)}
+                {b.order.length > 0 && (<><h3>Ordre d'achat</h3>{items(b.order, true)}</>)}
+                {b.core.length > 0 && (<><h3>Objets finis les plus joués</h3>{items(b.core)}</>)}
+              </>
+            )}
             {b.source === "riot" && <p className="muted">Les objets recommandés par Riot sont déjà dans la boutique en jeu.</p>}
           </section>
-          {b.skills.some(Boolean) && (
+          {b.skills.some(Boolean) && (() => {
+            const pick = o?.skillBuilds[sb];
+            const order = pick ? pick.order.map((k) => ({ Q: 1, W: 2, E: 3, R: 4 })[k] ?? 0) : b.skills;
+            return (
             <section className="card wide">
               <h3>
                 Ordre des compétences{" "}
-                {o && o.maxOrder.length > 0 && <small className="muted">Max {o.maxOrder.join(" › ")}</small>}
+                {pick ? <small className="muted">Max {pick.max.join(" › ")}</small> : o && o.maxOrder.length > 0 && <small className="muted">Max {o.maxOrder.join(" › ")}</small>}
               </h3>
+              {o && o.skillBuilds.length > 1 && (
+                <div className="sbuilds">
+                  {o.skillBuilds.map((x, i) => (
+                    <button key={i} className={i === sb ? "on" : ""} onClick={() => setSb(i)}>
+                      <b>{x.order.slice(0, 3).join(" ")}</b>
+                      <span>Max {x.max.join(" › ")}</span>
+                      <em className={x.win >= 0.5 ? "good" : "bad"}>{pct(x.win)}</em>
+                      <small>{pct(x.pick)}</small>
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="skills">
                 {["Q", "W", "E", "R"].map((k, slot) => (
-                  <div key={k} className="srow" style={{ gridTemplateColumns: `32px repeat(${b.skills.length}, 1fr)` }}>
+                  <div key={k} className="srow" style={{ gridTemplateColumns: `32px repeat(${order.length}, 1fr)` }}>
                     <img src={img.ability(d, c.id, k)} onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
-                    {b.skills.map((s, lvl) => <span key={lvl} className={s === slot + 1 ? "on" : ""}>{s === slot + 1 ? k : ""}</span>)}
+                    {order.map((s, lvl) => <span key={lvl} className={s === slot + 1 ? "on" : ""}>{s === slot + 1 ? k : ""}</span>)}
                   </div>
                 ))}
-                <div className="srow lv" style={{ gridTemplateColumns: `32px repeat(${b.skills.length}, 1fr)` }}><span />{b.skills.map((_, i) => <span key={i}>{i + 1}</span>)}</div>
+                <div className="srow lv" style={{ gridTemplateColumns: `32px repeat(${order.length}, 1fr)` }}><span />{order.map((_, i) => <span key={i}>{i + 1}</span>)}</div>
               </div>
             </section>
-          )}
+            );
+          })()}
+          {mode === "ranked" && role === "jungle" && <JunglePath d={d} />}
           {o && (o.weak.length > 0 || o.strong.length > 0) && (
             <section className="card wide">
               <div className="ctwo">
