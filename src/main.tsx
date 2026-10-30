@@ -325,16 +325,16 @@ function App() {
         ) : route.page === "v-agents" ? (
           <ValoAgents />
         ) : needsValo ? (
-          <div className="liveempty">
-            <span className="pulse off" />
-            <h1>Lance VALORANT</h1>
-            <p className="muted">Ethra lit ton profil, tes parties et les rangs en direct depuis le client Riot, aucune clé ni compte requis. En attendant, ceci marche déjà :</p>
-            <div className="ltiles">
-              <button onClick={() => go({ page: "v-agents" })}><b>Tier list des agents</b><small>Winrate, part des choix et stats de chaque agent en Compétition, d'après OP.GG.</small></button>
-              <button onClick={() => switchGame("tft")}><b>Decks TFT</b><small>Les meilleures compositions du set en cours, avec leurs objets et leurs traits.</small></button>
-              <button onClick={() => switchGame("lol")}><b>League of Legends</b><small>Tier list, builds méta, jungle path et overlays en jeu.</small></button>
+          <>
+            <div className="notice">
+              <i />
+              <div>
+                <b>VALORANT est fermé</b>
+                <small>Lance le jeu pour voir ton profil, tes parties et les rangs en direct. En attendant, voici la méta des agents.</small>
+              </div>
             </div>
-          </div>
+            <ValoAgents />
+          </>
         ) : route.page === "v-profil" ? (
           <ValoProfile key={route.puuid ?? "me"} puuid={route.puuid} self={vSelf!} go={go} />
         ) : route.page === "v-match" ? (
@@ -342,16 +342,16 @@ function App() {
         ) : route.page === "v-partie" ? (
           <ValoLive phase={vph} self={vSelf!} go={go} />
         ) : needsClient ? (
-          <div className="liveempty">
-            <span className="pulse off" />
-            <h1>Lance le client League of Legends</h1>
-            <p className="muted">Ethra lit ton profil, ton historique et ta partie directement depuis le client, aucune clé ni compte requis. En attendant, tout ça marche déjà :</p>
-            <div className="ltiles">
-              <button onClick={() => go({ page: "tierlist" })}><b>Tier list</b><small>Les meilleurs champions du patch par rôle, d'après OP.GG.</small></button>
-              <button onClick={() => go({ page: "champions" })}><b>Builds méta</b><small>Runes, objets, ordre des compétences et matchups de chaque champion.</small></button>
-              <button onClick={() => go({ page: "overlays" })}><b>Overlays</b><small>Timers d'objectifs, benchmark de lane et stats affichés en jeu.</small></button>
+          <>
+            <div className="notice">
+              <i />
+              <div>
+                <b>Le client League of Legends est fermé</b>
+                <small>Lance-le pour voir ton profil, ton historique et ta partie en cours. En attendant, voici la tier list du patch.</small>
+              </div>
             </div>
-          </div>
+            <TierList go={go} />
+          </>
         ) : route.page === "profil" ? (
           <Profile key={route.puuid ?? "me"} puuid={route.puuid ?? null} go={go} />
         ) : route.page === "match" ? (

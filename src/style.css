@@ -883,3 +883,23 @@ h3 { letter-spacing: 0; }
 .copyid:hover:not(:disabled) span { color: var(--text); }
 .copyid:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 @media (max-width: 900px) { .setgrid { grid-template-columns: 1fr; } .keys > div { grid-template-columns: 1fr; gap: 4px; } }
+
+.notice { display: flex; align-items: center; gap: 14px; padding: 12px 16px; margin-bottom: 22px; border-radius: 10px; background: var(--panel); border: 1px solid rgba(255, 255, 255, .06); }
+.notice > i { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--loss); }
+.notice b { display: block; font-size: 14.5px; font-weight: 600; }
+.notice small { font-size: 13.5px; }
+
+.waiting { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; align-items: center; max-width: 1080px; margin: 24px auto 0; padding: 32px; border-radius: 12px; background: var(--panel); border: 1px solid rgba(255, 255, 255, .06); }
+.waiting h1 { font-size: 28px; margin: 10px 0 8px; }
+.waiting p { margin: 0; max-width: 46ch; line-height: 1.5; }
+.waiting .lbtns { margin-top: 22px; }
+.wstatus { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.wstatus i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 1.6s infinite; }
+.wsteps { list-style: none; margin: 0; padding: 0; counter-reset: s; display: grid; gap: 4px; }
+.wsteps li { counter-increment: s; display: grid; grid-template-columns: 28px 1fr; column-gap: 12px; padding: 12px 0; border-top: 1px solid rgba(255, 255, 255, .06); }
+.wsteps li:first-child { border-top: 0; }
+.wsteps li::before { content: counter(s); grid-row: span 2; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 7px; background: var(--panel2); font-family: var(--num); font-weight: 700; font-size: 13px; color: var(--accent); }
+.wsteps b { font-size: 14.5px; font-weight: 600; }
+.wsteps small { font-size: 13px; line-height: 1.45; }
+@media (prefers-reduced-motion: reduce) { .wstatus i { animation: none; } }
+@media (max-width: 860px) { .waiting { grid-template-columns: 1fr; gap: 24px; } }

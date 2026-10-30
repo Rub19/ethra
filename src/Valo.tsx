@@ -770,11 +770,21 @@ export function ValoLive({ phase, self, go }: { phase: VPhase; self: string; go:
 
   if (!game || !d) {
     return (
-      <div className="liveempty">
-        <span className="pulse" />
-        <h1>{phase === "PREGAME" || phase === "INGAME" ? "Chargement de la partie…" : "Aucune partie en cours"}</h1>
-        <p className="muted">Lance une file dans VALORANT : Ethra affiche les rangs et la forme de ton équipe dès la sélection des agents, puis ceux des adversaires en partie.</p>
-        <div className="lbtns"><button className="primary" onClick={() => go({ page: "v-profil" })}>Voir mon profil</button></div>
+      <div className="waiting">
+        <div>
+          <span className="wstatus"><i />{phase === "PREGAME" || phase === "INGAME" ? "Chargement de la partie" : "En attente d'une partie"}</span>
+          <h1>Lance une file dans VALORANT</h1>
+          <p className="muted">Ethra suit la partie depuis le client Riot, de la sélection des agents à la fin du match.</p>
+          <div className="lbtns">
+            <button className="primary" onClick={() => go({ page: "v-profil" })}>Voir mon profil</button>
+            <button className="ghostbtn" onClick={() => go({ page: "v-agents" })}>Tier list des agents</button>
+          </div>
+        </div>
+        <ol className="wsteps">
+          <li><b>Sélection des agents</b><small>Rang, winrate de l'acte, forme récente et groupes de ton équipe.</small></li>
+          <li><b>En partie</b><small>Les mêmes infos pour les adversaires, avec leur rang moyen. Les joueurs masqués le restent.</small></li>
+          <li><b>Après le match</b><small>RR gagnés, détail des manches et tableau des scores dans ton profil.</small></li>
+        </ol>
       </div>
     );
   }

@@ -119,19 +119,21 @@ export default function Live({ phase, go }: { phase: string; go: Go }) {
 
   if (!LIVE.includes(phase))
     return (
-      <div className="liveempty">
-        <span className="pulse" />
-        <h1>En attente d'une partie</h1>
-        <p className="muted">Lance une file dans le client League : Ethra prend le relais dès la sélection des champions.</p>
-        <div className="ltiles">
-          <div><b>Build importé</b><small>Runes, sorts et item set méta posés automatiquement quand tu verrouilles.</small></div>
-          <div><b>Les 10 joueurs</b><small>Rang, winrate récent, mains et séries de chaque joueur.</small></div>
-          <div><b>Overlays en jeu</b><small>Objectifs, ennemis morts, prochain objet et ordre des compétences.</small></div>
+      <div className="waiting">
+        <div>
+          <span className="wstatus"><i />En attente d'une partie</span>
+          <h1>Lance une file dans le client League</h1>
+          <p className="muted">Ethra prend le relais dès la sélection des champions, sans rien à faire de ton côté.</p>
+          <div className="lbtns">
+            <button className="primary" onClick={() => go({ page: "tierlist" })}>Voir la tier list</button>
+            <button className="ghostbtn" onClick={() => go({ page: "overlays" })}>Régler les overlays</button>
+          </div>
         </div>
-        <div className="lbtns">
-          <button className="primary" onClick={() => go({ page: "tierlist" })}>Voir la tier list</button>
-          <button className="ghostbtn" onClick={() => go({ page: "overlays" })}>Configurer les overlays</button>
-        </div>
+        <ol className="wsteps">
+          <li><b>Sélection des champions</b><small>Runes, sorts et item set importés quand tu verrouilles ton champion.</small></li>
+          <li><b>Chargement</b><small>Rang, winrate récent et champions favoris des 10 joueurs.</small></li>
+          <li><b>En jeu</b><small>Objectifs, ennemis morts, prochain objet, ordre des compétences et jungle path par-dessus le jeu.</small></li>
+        </ol>
       </div>
     );
   if (!d) return null;
