@@ -172,6 +172,20 @@ async fn opgg(state: tauri::State<'_, AppState>, tool: String, args: Value) -> R
 }
 
 #[tauri::command]
+fn game_icon(game: String) -> Result<tauri::ipc::Response, String> {
+    let id = match game.as_str() {
+        "lol" => "league_of_legends",
+        "valo" => "valorant",
+        "tft" => "teamfighttactics",
+        _ => return Err("jeu inconnu".into()),
+    };
+    let base = std::env::var("PROGRAMDATA").unwrap_or_else(|_| "C:/ProgramData".into());
+    let path = std::path::Path::new(&base).join("Riot Games").join("Metadata").join(format!("{id}.live")).join(format!("{id}.live.ico"));
+    let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
+    Ok(tauri::ipc::Response::new(bytes))
+}
+
+#[tauri::command]
 fn open_url(url: String) -> Result<(), String> {
     if !url.starts_with("https://github.com/Rub19/ethra") {
         return Err("lien refusé".into());
@@ -189,7 +203,7 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
         .manage(AppState { lcu: Mutex::new(None), valo: Mutex::new(None), http })
-        .invoke_handler(tauri::generate_handler![lcu, live, opgg, valo, open_url])
+        .invoke_handler(tauri::generate_handler![lcu, live, opgg, valo, open_url, game_icon])
         .register_asynchronous_uri_scheme_protocol("ethone", |ctx, req, responder| {
             let http = ctx.app_handle().state::<AppState>().http.clone();
             let path = req.uri().path().to_string();

@@ -1,8 +1,31 @@
 import { useEffect, useRef, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 
 export type GameKey = "lol" | "valo" | "tft";
 
+const icons = new Map<GameKey, Promise<string | null>>();
+const loadIcon = (g: GameKey) => {
+  if (!icons.has(g))
+    icons.set(
+      g,
+      invoke<ArrayBuffer>("game_icon", { game: g }).then(
+        (b) => URL.createObjectURL(new Blob([b], { type: "image/x-icon" })),
+        () => (icons.delete(g), null),
+      ),
+    );
+  return icons.get(g)!;
+};
+
 export function GameMark({ g, size = 30 }: { g: GameKey; size?: number }) {
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    let on = true;
+    loadIcon(g).then((x) => on && setSrc(x));
+    return () => {
+      on = false;
+    };
+  }, [g]);
+  if (src) return <img className="gmark official" src={src} width={size} height={size} alt="" />;
   if (g === "tft")
     return (
       <svg className="gmark tft" width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
@@ -70,12 +93,13 @@ export default function GamePicker({ game, onPick }: { game: GameKey; onPick: (g
           >
             <span className="gart" style={{ backgroundImage: `url(${g.art})` }} />
             <span className="ginfo">
-              <GameMark g={g.key} size={26} />
+              <GameMark g={g.key} size={34} />
               <b>{g.name}</b>
               <small>{g.sub}</small>
             </span>
           </button>
         ))}
+        <p className="glegal">Ethra n'est pas approuvé par Riot Games et ne reflète pas ses opinions. League of Legends, VALORANT et Teamfight Tactics sont des marques de Riot Games, Inc.</p>
       </div>
     </div>
   );

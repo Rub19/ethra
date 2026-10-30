@@ -903,3 +903,10 @@ h3 { letter-spacing: 0; }
 .wsteps small { font-size: 13px; line-height: 1.45; }
 @media (prefers-reduced-motion: reduce) { .wstatus i { animation: none; } }
 @media (max-width: 860px) { .waiting { grid-template-columns: 1fr; gap: 24px; } }
+
+.gmark.official { border-radius: 8px; object-fit: contain; }
+.ginfo { column-gap: 11px; }
+.ginfo b { font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
+.ginfo small { font-size: 12.5px; }
+.gcard { height: 268px; }
+.glegal { grid-column: 1 / -1; margin: 2px 4px 0; font-size: 11.5px; line-height: 1.45; color: var(--muted); }
