@@ -4,7 +4,7 @@ Tracker de jeux gratuit et open source, inspiré de Blitz / tracker.gg. App desk
 
 ## Télécharger
 
-**[⬇ Kairo 0.3.2 pour Windows (installeur)](https://github.com/Rub19/ethra/releases/latest/download/Kairo_0.3.2_x64-setup.exe)**
+**[⬇ Kairo 0.3.3 pour Windows (installeur)](https://github.com/Rub19/ethra/releases/latest/download/Kairo_0.3.3_x64-setup.exe)**
 
 Toutes les versions : [Releases](https://github.com/Rub19/ethra/releases). L'installeur n'est pas signé : Windows SmartScreen peut afficher « Windows a protégé votre ordinateur », clique sur « Informations complémentaires » puis « Exécuter quand même ».
 
@@ -37,6 +37,6 @@ npm install
 npm run tauri dev
 ```
 
-Build installeur : `npm run tauri build` (sortie dans `src-tauri/target/release/bundle/nsis`).
+Installeur et mise à jour signée : `npm run release -- "Notes de version"` (sortie dans `release/`). Il faut la clé de signature dans `~/.tauri/kairo-updater.key`.
 
 Kairo n'est pas approuvé par Riot Games et ne reflète pas les opinions de Riot Games ni de quiconque officiellement impliqué dans la production ou la gestion des propriétés de Riot Games. League of Legends, VALORANT et Teamfight Tactics sont des marques de Riot Games, Inc.

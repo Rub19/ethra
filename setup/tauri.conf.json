@@ -1,0 +1,8 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Kairo Setup",
+  "identifier": "dev.ethone.kairo.setup",
+  "build": { "frontendDist": "ui" },
+  "app": { "withGlobalTauri": true, "windows": [], "security": { "csp": null } },
+  "bundle": { "active": false, "icon": ["../src-tauri/icons/icon.ico"] }
+}

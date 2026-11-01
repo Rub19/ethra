@@ -1,13 +1,14 @@
 {
   "name": "ethra",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "tauri": "tauri",
-    "check": "node src/opggParse.check.ts"
+    "check": "node src/opggParse.check.ts",
+    "release": "node scripts/release.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.12.4",

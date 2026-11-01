@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Kairo</title>
+<style>
+  :root {
+    --bg: #0e1220; --line: rgba(255, 255, 255, .08); --text: #eef0f7; --muted: #8b93ab; --mint: #2fd3b5; --spark: #f5f7fc; --err: #f0506e;
+    --ease: cubic-bezier(.2, .8, .2, 1);
+    font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    color: var(--text);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; overflow: hidden; background: var(--bg); user-select: none; cursor: default; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  button:focus-visible, input:focus-visible + i { outline: 2px solid var(--mint); outline-offset: 2px; }
+
+  .win { position: fixed; top: 0; right: 0; display: flex; z-index: 2; }
+  .win button { width: 46px; height: 36px; display: grid; place-items: center; color: var(--muted); transition: background .12s, color .12s; }
+  .win button:hover { background: rgba(255, 255, 255, .08); color: var(--text); }
+  .win .x:hover { background: #c42b1c; color: #fff; }
+  body.busy .win { visibility: hidden; }
+
+  main { height: 100%; display: grid; grid-template-columns: 340px 1fr; align-items: center; }
+  .stage { height: 100%; display: grid; place-items: center; position: relative; }
+  svg.ring { width: 264px; height: 264px; overflow: visible; }
+  .track, .fill { fill: none; stroke-width: 28; stroke-linecap: round; transform: rotate(-9deg); transform-origin: 120px 120px; }
+  .track { stroke: rgba(255, 255, 255, .06); stroke-dasharray: 288 999; }
+  .fill { stroke: var(--mint); stroke-dasharray: 288 999; }
+  .spark { transform-origin: 120px 120px; transform: rotate(-45deg); }
+  .spark circle { fill: var(--spark); }
+  body.done .spark { transition: transform .7s var(--ease); }
+  body.error .fill { stroke: var(--err); }
+  .pct { position: absolute; font-family: Bahnschrift, "Segoe UI", sans-serif; font-size: 40px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.01em; opacity: 0; transition: opacity .2s; }
+  .pct small { font-size: 20px; color: var(--muted); margin-left: 1px; }
+  body.busy .pct { opacity: 1; }
+
+  .side { padding: 0 56px 0 8px; display: grid; gap: 22px; align-content: center; }
+  h1 { font-family: Bahnschrift, "Segoe UI", sans-serif; font-size: 46px; font-weight: 600; letter-spacing: -.02em; line-height: 1.02; }
+  h1 span { display: block; font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif; font-size: 13.5px; font-weight: 400; letter-spacing: 0; color: var(--muted); margin-top: 8px; }
+  .lead { font-size: 15px; line-height: 1.5; color: var(--muted); max-width: 38ch; min-height: 45px; overflow-wrap: anywhere; }
+  body.error .lead { color: var(--err); user-select: text; }
+
+  .opts { display: grid; }
+  .opts label { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 0; font-size: 14px; border-top: 1px solid var(--line); cursor: pointer; }
+  .opts label:last-child { border-bottom: 1px solid var(--line); }
+  .opts input { position: absolute; opacity: 0; pointer-events: none; }
+  .opts i { flex: none; position: relative; width: 34px; height: 20px; border-radius: 10px; background: rgba(255, 255, 255, .12); transition: background .16s; }
+  .opts i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--text); transition: transform .2s var(--ease); }
+  .opts input:checked + i { background: var(--mint); }
+  .opts input:checked + i::after { transform: translateX(14px); background: #06231d; }
+
+  .actions { display: flex; gap: 10px; }
+  .go { padding: 12px 26px; border-radius: 9px; font-weight: 600; font-size: 15px; background: var(--mint); color: #06231d; transition: filter .12s, transform .12s; }
+  .go:hover { filter: brightness(1.08); }
+  .go:active, .alt:active { transform: scale(.97); }
+  .alt { padding: 12px 18px; border-radius: 9px; font-size: 15px; color: var(--muted); transition: color .12s, background .12s; }
+  .alt:hover { color: var(--text); background: rgba(255, 255, 255, .06); }
+
+  .legal { position: fixed; left: 24px; right: 24px; bottom: 14px; font-size: 11px; color: #5d6479; text-align: center; }
+  [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+  <div class="win" data-tauri-drag-region>
+    <button id="min" aria-label="Réduire"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M0 5.5h10" stroke="currentColor" /></svg></button>
+    <button id="close" class="x" aria-label="Fermer"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M.5.5l9 9M9.5.5l-9 9" stroke="currentColor" /></svg></button>
+  </div>
+  <main data-tauri-drag-region>
+    <div class="stage" data-tauri-drag-region>
+      <svg class="ring" viewBox="0 0 240 240" aria-hidden="true">
+        <circle class="track" cx="120" cy="120" r="82" pathLength="360" />
+        <circle class="fill" id="fill" cx="120" cy="120" r="82" pathLength="360" />
+        <g class="spark" id="spark"><circle cx="202" cy="120" r="19" /></g>
+      </svg>
+      <div class="pct" id="pct" role="status"><span id="num">0</span><small>%</small></div>
+    </div>
+    <div class="side" data-tauri-drag-region>
+      <h1 id="title" data-tauri-drag-region>Kairo<span id="sub"></span></h1>
+      <p class="lead" id="lead"></p>
+      <div class="opts" id="opts">
+        <label id="o-desktop"><span>Raccourci sur le Bureau</span><input type="checkbox" id="desktop" checked /><i></i></label>
+        <label id="o-open"><span>Ouvrir Kairo à la fin</span><input type="checkbox" id="open" checked /><i></i></label>
+        <label id="o-purge" hidden><span>Supprimer aussi mes réglages</span><input type="checkbox" id="purge" /><i></i></label>
+      </div>
+      <div class="actions" id="actions">
+        <button class="go" id="go"></button>
+        <button class="alt" id="alt" hidden></button>
+      </div>
+    </div>
+  </main>
+  <p class="legal">Kairo n'est pas approuvé par Riot Games. League of Legends, VALORANT et Teamfight Tactics sont des marques de Riot Games, Inc.</p>
+
+<script>
+  const T = window.__TAURI__;
+  const $ = (id) => document.getElementById(id);
+  const TRACK = 288, START = -9, REST = -45;
+  let st = null, target = 0, shown = 0, busy = false, settled = null;
+
+  const setRing = (p) => {
+    $("fill").style.strokeDasharray = `${TRACK * p} 999`;
+    $("spark").style.transform = `rotate(${START + TRACK * p}deg)`;
+    $("num").textContent = Math.round(p * 100);
+  };
+  const logo = () => {
+    $("fill").style.strokeDasharray = `${TRACK} 999`;
+    $("spark").style.transform = `rotate(${REST}deg)`;
+  };
+
+  function view({ title, sub = "", lead = "", go = "", alt = "", opts = false, cls = "" }) {
+    document.body.className = cls;
+    $("title").firstChild.nodeValue = title;
+    $("sub").textContent = sub;
+    $("sub").hidden = !sub;
+    $("lead").textContent = lead;
+    $("opts").hidden = !opts;
+    $("actions").hidden = !go;
+    $("go").textContent = go;
+    $("alt").textContent = alt;
+    $("alt").hidden = !alt;
+  }
+
+  // The ring eases toward the real progress and never gets ahead of it
+  function animate() {
+    if (!busy) return;
+    const step = Math.max((target - shown) * 0.07, target > shown ? 0.002 : 0);
+    shown = Math.min(target, shown + step);
+    setRing(shown);
+    if (shown >= 0.999 && settled) {
+      const f = settled;
+      settled = null;
+      busy = false;
+      f();
+      return;
+    }
+    requestAnimationFrame(animate);
+  }
+
+  function run(cmd, payload, label) {
+    busy = true;
+    target = shown = 0;
+    setRing(0);
+    view({ title: label, lead: "Préparation", cls: "busy" });
+    requestAnimationFrame(animate);
+    const on = new T.core.Channel();
+    on.onmessage = (m) => {
+      target = Math.max(target, m.pct / 100);
+      $("lead").textContent = m.label;
+    };
+    return new Promise((resolve, reject) => {
+      T.core.invoke(cmd, { ...payload, on }).then(
+        () => {
+          target = 1;
+          settled = resolve;
+        },
+        (e) => {
+          busy = false;
+          reject(e);
+        },
+      );
+    });
+  }
+
+  function fail(e, retry) {
+    setRing(Math.max(shown, 0.02));
+    view({ title: "Échec", lead: String(e), go: "Réessayer", alt: "Fermer", cls: "error" });
+    $("go").onclick = retry;
+    $("alt").onclick = () => T.core.invoke("finish", { open: false });
+  }
+
+  function doInstall() {
+    const updating = st.mode === "update";
+    run("install", { options: { desktop: $("desktop").checked } }, updating ? "Mise à jour" : "Installation").then(() => {
+      logo();
+      if (st.auto) {
+        view({ title: "Kairo est à jour", sub: `Version ${st.version}`, lead: "Redémarrage de Kairo", cls: "done" });
+        setTimeout(() => T.core.invoke("finish", { open: true }), 1100);
+        return;
+      }
+      view({ title: "Kairo est prêt", sub: `Version ${st.version}`, lead: "Tes réglages sont conservés.", go: "Ouvrir Kairo", alt: "Fermer", cls: "done" });
+      $("go").onclick = () => T.core.invoke("finish", { open: true });
+      $("alt").onclick = () => T.core.invoke("finish", { open: false });
+      if ($("open").checked) setTimeout(() => T.core.invoke("finish", { open: true }), 1400);
+    }, (e) => fail(e, doInstall));
+  }
+
+  function doUninstall() {
+    run("uninstall", { purge: $("purge").checked }, "Désinstallation").then(() => {
+      view({ title: "Kairo est désinstallé", lead: $("purge").checked ? "Tes réglages ont été supprimés." : "Tes réglages restent sur ce PC si tu le réinstalles.", go: "Fermer", cls: "done" });
+      $("go").onclick = () => T.core.invoke("finish", { open: false });
+    }, (e) => fail(e, doUninstall));
+  }
+
+  async function boot() {
+    st = await T.core.invoke("state");
+    logo();
+    $("min").onclick = () => T.window.getCurrentWindow().minimize();
+    $("close").onclick = () => { if (!busy) T.core.invoke("finish", { open: false }); };
+    if (st.mode === "uninstall") {
+      $("o-desktop").hidden = $("o-open").hidden = true;
+      $("o-purge").hidden = false;
+      view({ title: "Désinstaller Kairo", sub: st.installed ? `Version ${st.installed}` : "", lead: st.dir, go: "Désinstaller", alt: "Annuler", opts: true });
+      $("go").onclick = doUninstall;
+      $("alt").onclick = () => T.core.invoke("finish", { open: false });
+      return;
+    }
+    if (st.auto) return doInstall();
+    const same = st.installed === st.version;
+    view({
+      title: "Kairo",
+      sub: `Version ${st.version}`,
+      lead: st.installed ? (same ? "Cette version est déjà installée." : `Remplace la version ${st.installed}. Tes réglages sont conservés.`) : "Le tracker pour League of Legends, VALORANT et Teamfight Tactics.",
+      go: !st.installed ? "Installer" : same ? "Réinstaller" : "Mettre à jour",
+      opts: true,
+    });
+    $("go").onclick = doInstall;
+  }
+  boot();
+</script>
+</body>
+</html>
