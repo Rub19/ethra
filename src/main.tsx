@@ -17,6 +17,43 @@ import { VPhase, vPhase, vSession } from "./valoApi";
 import GamePicker, { GameKey } from "./GamePicker";
 import TftDecks from "./Tft";
 import UpdateCorner from "./Updater";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+
+function WindowControls() {
+  const [max, setMax] = useState(false);
+  useEffect(() => {
+    let un: (() => void) | undefined;
+    try {
+      const w = getCurrentWindow();
+      const sync = () => w.isMaximized().then(setMax, () => {});
+      sync();
+      w.onResized(sync).then((f) => (un = f), () => {});
+    } catch {}
+    return () => un?.();
+  }, []);
+  const run = (f: (w: ReturnType<typeof getCurrentWindow>) => Promise<void>) => () => {
+    try {
+      f(getCurrentWindow()).catch(() => {});
+    } catch {}
+  };
+  return (
+    <div className="winctl">
+      <button aria-label="Réduire" onClick={run((w) => w.minimize())}>
+        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M0 5.5h10" stroke="currentColor" /></svg>
+      </button>
+      <button aria-label={max ? "Restaurer" : "Agrandir"} onClick={run((w) => w.toggleMaximize())}>
+        {max ? (
+          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5.5h7v7M.5 2.5h7v7h-7z" fill="none" stroke="currentColor" /></svg>
+        ) : (
+          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect x=".5" y=".5" width="9" height="9" fill="none" stroke="currentColor" /></svg>
+        )}
+      </button>
+      <button className="close" aria-label="Fermer" onClick={run((w) => w.close())}>
+        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M.5.5l9 9M9.5.5l-9 9" stroke="currentColor" /></svg>
+      </button>
+    </div>
+  );
+}
 export type Route =
   | { page: "v-profil"; puuid?: string }
   | { page: "v-match"; id: string; puuid: string }
@@ -286,10 +323,10 @@ function App() {
 
   return (
     <div className="app">
-      <header>
-        <div className="bar">
+      <header data-tauri-drag-region>
+        <div className="bar" data-tauri-drag-region>
           <GamePicker game={game} onPick={switchGame} />
-          <div className="brand"><svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><path d="M25.3 14.5A9.4 9.4 0 1 1 17.5 6.7" fill="none" stroke="#2fd3b5" strokeWidth="3.6" strokeLinecap="round" /><circle cx="22.6" cy="9.4" r="2.2" fill="#f5f7fc" /></svg>Kairo</div>
+          <div className="brand" data-tauri-drag-region><svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><path d="M25.3 14.5A9.4 9.4 0 1 1 17.5 6.7" fill="none" stroke="#2fd3b5" strokeWidth="3.6" strokeLinecap="round" /><circle cx="22.6" cy="9.4" r="2.2" fill="#f5f7fc" /></svg>Kairo</div>
           <div className="hist">
             <button disabled={!canBack} onClick={back} aria-label="Retour"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M9 2.5 4.5 7 9 11.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
             <button disabled={!canFwd} onClick={fwd} aria-label="Suivant"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2.5 9.5 7 5 11.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
@@ -302,7 +339,7 @@ function App() {
               </button>
             ))}
           </nav>
-          {tftGame ? <div className="bar-spacer" /> : valoGame ? <ValoSearch go={go} /> : <Search d={d} go={go} toast={setToast} />}
+          {tftGame ? <div className="bar-spacer" data-tauri-drag-region /> : valoGame ? <ValoSearch go={go} /> : <Search d={d} go={go} toast={setToast} />}
           <div className={`client ${connected ? "" : "off"}`} title={connected ? "Client connecté" : "Client fermé"}>
             {!valoGame && self && d ? (
               <AccountMenu self={self} d={d} go={go} />
@@ -310,6 +347,7 @@ function App() {
               <span><i />{tftGame ? "Méta OP.GG" : valoGame ? (vSelf ? "VALORANT connecté" : "VALORANT fermé") : phase === null ? "Client fermé" : "Connexion…"}</span>
             )}
           </div>
+          <WindowControls />
         </div>
       </header>
       <main>
