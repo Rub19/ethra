@@ -100,6 +100,9 @@ export const history = (puuid: string, count = 20) =>
     (r) => r.games.games,
   );
 
+export const tftHistory = (puuid: string, begin: number, count: number) =>
+  lcu<any>(`/lol-match-history/v1/products/tft/${puuid}/matches?begin=${begin}&count=${count}`);
+
 const gameCache = new Map<number, Promise<Game>>();
 export const gameDetails = (id: number) => {
   if (!gameCache.has(id)) gameCache.set(id, lcu<Game>(`/lol-match-history/v1/games/${id}`));

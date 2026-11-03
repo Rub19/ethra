@@ -16,6 +16,7 @@ import { ValoAgents, ValoLive, ValoMatch, ValoProfile, ValoSearch } from "./Valo
 import { VPhase, vPhase, vSession } from "./valoApi";
 import GamePicker, { GameKey } from "./GamePicker";
 import TftDecks from "./Tft";
+import TftProfile from "./TftProfile";
 import UpdateCorner from "./Updater";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
@@ -59,6 +60,7 @@ export type Route =
   | { page: "v-match"; id: string; puuid: string }
   | { page: "v-partie" }
   | { page: "v-agents" }
+  | { page: "t-profil" }
   | { page: "t-decks" }
   | { page: "profil"; puuid?: string }
   | { page: "champions" }
@@ -190,7 +192,7 @@ function App() {
   const [vSelf, setVSelf] = useState<string | null>(null);
   const [vph, setVph] = useState<VPhase>(null);
 
-  const homeOf = (g: GameKey): Route => ({ page: g === "valo" ? "v-profil" : g === "tft" ? "t-decks" : "profil" });
+  const homeOf = (g: GameKey): Route => ({ page: g === "valo" ? "v-profil" : g === "tft" ? "t-profil" : "profil" });
   const savedRoute = (g: GameKey): Route | null => {
     try {
       const r = JSON.parse(localStorage.getItem(`rw-route-${g}`) || "null");
@@ -237,7 +239,7 @@ function App() {
 
   useEffect(() => {
     if (game === "valo" && route.page === "profil" && !route.puuid) go({ page: "v-profil" });
-    if (game === "tft" && route.page === "profil" && !route.puuid) go({ page: "t-decks" });
+    if (game === "tft" && route.page === "profil" && !route.puuid) go({ page: "t-profil" });
   }, []);
 
   useEffect(() => {
@@ -308,7 +310,7 @@ function App() {
   const tftGame = game === "tft";
   const inGame = valoGame ? vph === "PREGAME" || vph === "INGAME" : !!phase && LIVE.includes(phase);
   const tabs: [Route["page"], string][] = tftGame
-    ? [["t-decks", "Decks méta"], ["reglages", "Réglages"]]
+    ? [["t-profil", "Profil"], ["t-decks", "Decks méta"], ["reglages", "Réglages"]]
     : valoGame
     ? [["v-profil", "Profil"], ["v-agents", "Agents"], ["v-partie", "Partie en cours"], ["reglages", "Réglages"]]
     : [["profil", "Profil"], ["tierlist", "Tier list"], ["champions", "Champions"], ["partie", "Partie en cours"], ["overlays", "Overlays"], ["reglages", "Réglages"]];
@@ -318,7 +320,7 @@ function App() {
     : route.page;
   const needsClient = phase === null && !["reglages", "overlays", "champions", "champion", "tierlist", "v-profil", "v-match", "v-partie"].includes(route.page);
   const needsValo = !vSelf && ["v-profil", "v-match", "v-partie"].includes(route.page);
-  const connected = tftGame ? true : valoGame ? !!vSelf : phase !== null;
+  const connected = valoGame ? !!vSelf : phase !== null;
   const liveRoute = valoGame ? "v-partie" : "partie";
 
   return (
@@ -344,7 +346,7 @@ function App() {
             {!valoGame && self && d ? (
               <AccountMenu self={self} d={d} go={go} />
             ) : (
-              <span><i />{tftGame ? "Méta OP.GG" : valoGame ? (vSelf ? "VALORANT connecté" : "VALORANT fermé") : phase === null ? "Client fermé" : "Connexion…"}</span>
+              <span><i />{valoGame ? (vSelf ? "VALORANT connecté" : "VALORANT fermé") : phase === null ? "Client fermé" : "Connexion…"}</span>
             )}
           </div>
           <WindowControls />
@@ -353,6 +355,19 @@ function App() {
       <main>
         {route.page === "t-decks" ? (
           <TftDecks />
+        ) : route.page === "t-profil" ? (
+          phase === null ? (
+            <>
+              <div className="notice">
+                <i />
+                <div>
+                  <b>Le client League of Legends est fermé</b>
+                  <small>Lance-le pour voir ton rang et tes parties TFT. En attendant, voici les decks méta.</small>
+                </div>
+              </div>
+              <TftDecks />
+            </>
+          ) : <TftProfile />
         ) : route.page === "v-agents" ? (
           <ValoAgents />
         ) : needsValo ? (

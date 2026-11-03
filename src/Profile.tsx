@@ -4,8 +4,12 @@ import {
 } from "./lcu";
 import type { Go } from "./main";
 import { useAvatar } from "./Account";
+import { champsIn, counted, filterGames, HistoryFilter, isRemake, NO_FILTER, queuesIn } from "./history";
 import Skeleton from "./Skeleton";
 import { copyText } from "./util";
+
+const PAGE = 20;
+const RESULTS: [HistoryFilter["result"], string][] = [["", "Toutes"], ["win", "Victoires"], ["loss", "Défaites"]];
 
 const QUEUES: [string, string][] = [["RANKED_SOLO_5x5", "Classé Solo/Duo"], ["RANKED_FLEX_SR", "Classé Flex"], ["CHERRY", "Arena"]];
 
@@ -173,33 +177,53 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
   const [queues, setQueues] = useState<Record<number, string>>({});
   const [err, setErr] = useState("");
   const [sub, setSub] = useState<"apercu" | "pool">("apercu");
+  const [filter, setFilter] = useState<HistoryFilter>(NO_FILTER);
+  const [attempt, setAttempt] = useState(0);
+  const [more, setMore] = useState<"idle" | "loading" | "end">("idle");
 
   useEffect(() => {
     setGames(null);
     setErr("");
+    setMore("idle");
+    setFilter(NO_FILTER);
     (async () => {
       const s = puuid ? await summoner(puuid) : await me();
       setSum(s);
-      const [r, h, dd, q] = await Promise.all([ranked(s.puuid).catch(() => ({})), history(s.puuid, 20), ddragon(), queueNames().catch(() => ({}))]);
+      const [r, h, dd, q] = await Promise.all([ranked(s.puuid).catch(() => ({})), history(s.puuid, PAGE), ddragon(), queueNames().catch(() => ({}))]);
       setRanks(r);
       setD(dd);
       setQueues(q);
       setGames(h);
+      if (h.length < PAGE) setMore("end");
     })().catch((e) => setErr(String(e)));
-  }, [puuid]);
+  }, [puuid, attempt]);
 
-  if (err) return <div className="empty"><p>{err}</p></div>;
+  const loadMore = () => {
+    if (!sum || !games || more !== "idle") return;
+    setMore("loading");
+    history(sum.puuid, games.length + PAGE).then(
+      (next) => {
+        setMore(next.length <= games.length ? "end" : "idle");
+        setGames(next);
+      },
+      () => setMore("idle"),
+    );
+  };
+
+  if (err) return <div className="empty"><h2>Profil indisponible</h2><p>{err}</p><button className="primary" onClick={() => setAttempt((x) => x + 1)}>Réessayer</button></div>;
   if (!sum || !d) return <div className="profile"><div className="skel"><div style={{ height: 150 }} /></div><Skeleton rows={6} /></div>;
 
   const lp = lpHistory(sum.puuid, ranks.RANKED_SOLO_5x5);
+  const shown = games ? filterGames(games, filter) : null;
+  const played = counted(shown ?? []);
   const pool = new Map<number, { g: number; w: number; k: number; cs: number }>();
-  for (const g of games ?? []) {
+  for (const g of played) {
     const p = g.participants[0];
     const c = pool.get(p.championId) ?? { g: 0, w: 0, k: 0, cs: 0 };
     pool.set(p.championId, { g: c.g + 1, w: c.w + (p.stats.win ? 1 : 0), k: c.k + kda(p.stats), cs: c.cs + cs(p.stats) / (g.gameDuration / 60) });
   }
   const champs = [...pool.entries()].sort((a, b) => b[1].g - a[1].g);
-  const wins = games?.filter((g) => g.participants[0].stats.win).length ?? 0;
+  const wins = played.filter((g) => g.participants[0].stats.win).length;
 
   return (
     <div className="profile">
@@ -207,11 +231,11 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
         <div className="avatar"><img src={(!puuid && avatar) || img.icon(d, sum.profileIconId)} /><span>{sum.summonerLevel}</span></div>
         <div className="pid">
           <h1><button className="copyid" onClick={() => copyText(`${sum.gameName}#${sum.tagLine}`, "Riot ID")} title="Copier le Riot ID">{sum.gameName} <span>#{sum.tagLine}</span></button></h1>
-          {games && games.length > 0 && (
+          {played.length > 0 && (
             <div className="pquick">
-              <div><b className={wins / games.length >= 0.5 ? "good" : "bad"}>{Math.round((wins / games.length) * 100)}%</b><small>Winrate récent</small></div>
-              <div><b>{(games.reduce((a, g) => a + kda(g.participants[0].stats), 0) / games.length).toFixed(2)}</b><small>KDA moyen</small></div>
-              <div><b>{games.length}</b><small>Parties analysées</small></div>
+              <div><b className={wins / played.length >= 0.5 ? "good" : "bad"}>{Math.round((wins / played.length) * 100)}%</b><small>Winrate récent</small></div>
+              <div><b>{(played.reduce((a, g) => a + kda(g.participants[0].stats), 0) / played.length).toFixed(2)}</b><small>KDA moyen</small></div>
+              <div><b>{played.length}</b><small>Parties analysées</small></div>
               {champs[0] && <div><b>{d.champs[champs[0][0]]?.name}</b><small>Champion favori</small></div>}
             </div>
           )}
@@ -220,12 +244,27 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
       <div className="subtabs">
         <button className={sub === "apercu" ? "on" : ""} onClick={() => setSub("apercu")}>Aperçu</button>
         <button className={sub === "pool" ? "on" : ""} onClick={() => setSub("pool")}>Champions</button>
+        {games && games.length > 0 && (
+          <div className="lfilters">
+            <select aria-label="Filtrer par mode" value={filter.queue} onChange={(e) => setFilter({ ...filter, queue: +e.target.value })}>
+              <option value={0}>Tous les modes</option>
+              {queuesIn(games).map((q) => <option key={q} value={q}>{queues[q] ?? `File ${q}`}</option>)}
+            </select>
+            <select aria-label="Filtrer par champion" value={filter.champ} onChange={(e) => setFilter({ ...filter, champ: +e.target.value })}>
+              <option value={0}>Tous les champions</option>
+              {champsIn(games).sort((a, b) => (d.champs[a]?.name ?? "").localeCompare(d.champs[b]?.name ?? "", "fr")).map((c) => <option key={c} value={c}>{d.champs[c]?.name ?? c}</option>)}
+            </select>
+            <div className="seg vfilter">
+              {RESULTS.map(([k, l]) => <button key={k || "all"} className={filter.result === k ? "on" : ""} onClick={() => setFilter({ ...filter, result: k })}>{l}</button>)}
+            </div>
+          </div>
+        )}
       </div>
       <div className="cols">
         <aside>
           {!puuid && games && (() => {
             const midnight = new Date().setHours(0, 0, 0, 0);
-            const today = games.filter((g) => g.gameCreation >= midnight && g.gameDuration >= 300);
+            const today = games.filter((g) => g.gameCreation >= midnight && !isRemake(g));
             const w = today.filter((g) => g.participants[0].stats.win).length;
             const before = lp.filter((x) => x.t < midnight).at(-1);
             const delta = before && lp.length ? lp[lp.length - 1].v - before.v : null;
@@ -267,9 +306,9 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
             </section>
           )}
           <section className="card">
-            <h3>{games?.length ?? 0} dernières parties</h3>
-            <div className="wr"><i style={{ width: `${games?.length ? (wins / games.length) * 100 : 0}%` }} /></div>
-            <small className="muted">{wins}V - {(games?.length ?? 0) - wins}D</small>
+            <h3>{played.length} dernières parties</h3>
+            <div className="wr"><i style={{ width: `${played.length ? (wins / played.length) * 100 : 0}%` }} /></div>
+            <small className="muted">{wins}V - {played.length - wins}D</small>
             {champs.slice(0, 6).map(([c, x]) => (
               <div key={c} className="perf link" onClick={() => go({ page: "champion", champ: c })}>
                 <img src={img.champ(d, c)} />
@@ -280,8 +319,13 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
           </section>
         </aside>
         <div className="list">
-          {!games ? <Skeleton rows={8} /> : sub === "apercu" ? (
-            games.map((g) => <MatchRow key={g.gameId} g={g} puuid={sum.puuid} d={d} queues={queues} onOpen={onOpen} onMatch={() => go({ page: "match", gameId: g.gameId, puuid: sum.puuid })} />)
+          {!games || !shown ? <Skeleton rows={8} /> : shown.length === 0 ? (
+            <div className="empty lempty">
+              <h2>{games.length === 0 ? "Aucune partie" : "Aucune partie avec ces filtres"}</h2>
+              {games.length > 0 && <button className="primary" onClick={() => setFilter(NO_FILTER)}>Tout afficher</button>}
+            </div>
+          ) : sub === "apercu" ? (
+            shown.map((g) => <MatchRow key={g.gameId} g={g} puuid={sum.puuid} d={d} queues={queues} onOpen={onOpen} onMatch={() => go({ page: "match", gameId: g.gameId, puuid: sum.puuid })} />)
           ) : (
             <table className="pool">
               <thead><tr><th>Champion</th><th>Parties</th><th>Winrate</th><th>KDA</th><th>CS/min</th></tr></thead>
@@ -298,6 +342,7 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
               </tbody>
             </table>
           )}
+          {games && games.length > 0 && more !== "end" && <button className="ghostbtn vmore" onClick={loadMore} disabled={more === "loading"}>{more === "loading" ? "Chargement…" : "Voir plus de parties"}</button>}
         </div>
       </div>
     </div>
