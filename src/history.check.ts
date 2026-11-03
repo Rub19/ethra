@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { champsIn, counted, filterGames, NO_FILTER, parseTftGames, queuesIn, tftQueue, tftSummary } from "./history.ts";
+import { champsIn, counted, filterGames, mergeGames, NO_FILTER, parseTftGames, queuesIn, tftQueue, tftSummary } from "./history.ts";
 
 const game = (gameId: number, queueId: number, championId: number, win: boolean, gameDuration = 1500) =>
   ({ gameId, queueId, gameDuration, participants: [{ championId, stats: { win } }] }) as any;
@@ -14,6 +14,11 @@ assert.deepStrictEqual(ids(filterGames(games, { ...NO_FILTER, queue: 450 })), [3
 assert.deepStrictEqual(ids(filterGames(games, { result: "loss", queue: 420, champ: 8 })), [2]);
 assert.deepStrictEqual(queuesIn(games), [420, 450]);
 assert.deepStrictEqual(champsIn(games), [7, 8]);
+
+const old = (gameId: number, gameCreation: number, tag = "") => ({ gameId, gameCreation, tag });
+assert.deepStrictEqual(mergeGames([old(3, 30, "neuf"), old(2, 20, "neuf")], [old(2, 20, "vieux"), old(1, 10, "vieux")], 10), [old(3, 30, "neuf"), old(2, 20, "neuf"), old(1, 10, "vieux")]);
+assert.deepStrictEqual(mergeGames([old(3, 30)], [old(2, 20), old(1, 10)], 2).map((g) => g.gameId), [3, 2]);
+assert.deepStrictEqual(mergeGames([], [], 5), []);
 
 const raw = {
   games: [

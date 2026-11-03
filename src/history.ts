@@ -17,6 +17,11 @@ export function filterGames(games: Game[], f: HistoryFilter): Game[] {
   });
 }
 
+export function mergeGames<T extends { gameId: number; gameCreation: number }>(fresh: T[], kept: T[], limit: number): T[] {
+  const known = new Set(fresh.map((g) => g.gameId));
+  return [...fresh, ...kept.filter((g) => !known.has(g.gameId))].sort((a, b) => b.gameCreation - a.gameCreation).slice(0, limit);
+}
+
 const distinctBy = (values: number[]) => [...new Set(values)];
 export const queuesIn = (games: Game[]) => distinctBy(games.map((g) => g.queueId));
 export const champsIn = (games: Game[]) => distinctBy(games.map((g) => g.participants[0].championId));

@@ -4,11 +4,26 @@ import {
 } from "./lcu";
 import type { Go } from "./main";
 import { useAvatar } from "./Account";
-import { champsIn, counted, filterGames, HistoryFilter, isRemake, NO_FILTER, queuesIn } from "./history";
+import { champsIn, counted, filterGames, HistoryFilter, isRemake, mergeGames, NO_FILTER, queuesIn } from "./history";
 import Skeleton from "./Skeleton";
 import { copyText } from "./util";
 
 const PAGE = 20;
+const KEPT_GAMES = 150;
+
+function keepGames(puuid: string, fresh: Game[]): Game[] {
+  const key = `rw-games-${puuid}`;
+  let kept: Game[] = [];
+  try {
+    kept = JSON.parse(localStorage.getItem(key) || "[]");
+  } catch {}
+  const all = mergeGames(fresh, kept, KEPT_GAMES);
+  try {
+    localStorage.setItem(key, JSON.stringify(all));
+  } catch {}
+  return all;
+}
+
 const RESULTS: [HistoryFilter["result"], string][] = [["", "Toutes"], ["win", "Victoires"], ["loss", "Défaites"]];
 
 const QUEUES: [string, string][] = [["RANKED_SOLO_5x5", "Classé Solo/Duo"], ["RANKED_FLEX_SR", "Classé Flex"], ["CHERRY", "Arena"]];
@@ -179,12 +194,12 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
   const [sub, setSub] = useState<"apercu" | "pool">("apercu");
   const [filter, setFilter] = useState<HistoryFilter>(NO_FILTER);
   const [attempt, setAttempt] = useState(0);
-  const [more, setMore] = useState<"idle" | "loading" | "end">("idle");
+  const [visible, setVisible] = useState(PAGE);
 
   useEffect(() => {
     setGames(null);
     setErr("");
-    setMore("idle");
+    setVisible(PAGE);
     setFilter(NO_FILTER);
     (async () => {
       const s = puuid ? await summoner(puuid) : await me();
@@ -193,22 +208,9 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
       setRanks(r);
       setD(dd);
       setQueues(q);
-      setGames(h);
-      if (h.length < PAGE) setMore("end");
+      setGames(puuid ? h : keepGames(s.puuid, h));
     })().catch((e) => setErr(String(e)));
   }, [puuid, attempt]);
-
-  const loadMore = () => {
-    if (!sum || !games || more !== "idle") return;
-    setMore("loading");
-    history(sum.puuid, games.length + PAGE).then(
-      (next) => {
-        setMore(next.length <= games.length ? "end" : "idle");
-        setGames(next);
-      },
-      () => setMore("idle"),
-    );
-  };
 
   if (err) return <div className="empty"><h2>Profil indisponible</h2><p>{err}</p><button className="primary" onClick={() => setAttempt((x) => x + 1)}>Réessayer</button></div>;
   if (!sum || !d) return <div className="profile"><div className="skel"><div style={{ height: 150 }} /></div><Skeleton rows={6} /></div>;
@@ -325,7 +327,7 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
               {games.length > 0 && <button className="primary" onClick={() => setFilter(NO_FILTER)}>Tout afficher</button>}
             </div>
           ) : sub === "apercu" ? (
-            shown.map((g) => <MatchRow key={g.gameId} g={g} puuid={sum.puuid} d={d} queues={queues} onOpen={onOpen} onMatch={() => go({ page: "match", gameId: g.gameId, puuid: sum.puuid })} />)
+            shown.slice(0, visible).map((g) => <MatchRow key={g.gameId} g={g} puuid={sum.puuid} d={d} queues={queues} onOpen={onOpen} onMatch={() => go({ page: "match", gameId: g.gameId, puuid: sum.puuid })} />)
           ) : (
             <table className="pool">
               <thead><tr><th>Champion</th><th>Parties</th><th>Winrate</th><th>KDA</th><th>CS/min</th></tr></thead>
@@ -342,7 +344,7 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
               </tbody>
             </table>
           )}
-          {games && games.length > 0 && more !== "end" && <button className="ghostbtn vmore" onClick={loadMore} disabled={more === "loading"}>{more === "loading" ? "Chargement…" : "Voir plus de parties"}</button>}
+          {sub === "apercu" && shown && shown.length > visible && <button className="ghostbtn vmore" onClick={() => setVisible(visible + PAGE)}>Voir plus de parties</button>}
         </div>
       </div>
     </div>
