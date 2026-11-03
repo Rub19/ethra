@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { pressable } from "./util";
 import { ago, cs, DD, ddragon, Game, history, img, kda, me } from "./lcu";
 import type { Go } from "./main";
 
@@ -97,7 +98,7 @@ export default function Champions({ go }: { go: Go }) {
           </thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={r.id} onClick={() => go({ page: "champion", champ: r.id })}>
+              <tr key={r.id} {...pressable(() => go({ page: "champion", champ: r.id }))}>
                 <td className="muted">{i + 1}</td>
                 <td><div className="cname"><img src={img.champ(d, r.id)} />{r.name}</div></td>
                 <td className="muted">{CLASSES.find(([k]) => k === d.champs[r.id].tags[0])?.[1] ?? ""}</td>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { pressable } from "./util";
 import { DD, ddragon, img } from "./lcu";
 import { meta, MetaRow, POS_LABEL, TIER_LABEL } from "./opgg";
 import type { Go } from "./main";
@@ -71,7 +72,7 @@ export default function TierList({ go }: { go: Go }) {
           {list.map((r, i) => {
             const delta = r.rankPrev ? r.rankPrev - r.rank : 0;
             return (
-              <tr key={`${r.position}-${r.name}`} onClick={() => r.champ && go({ page: "champion", champ: r.champ, role: r.position })}>
+              <tr key={`${r.position}-${r.name}`} {...pressable(() => r.champ && go({ page: "champion", champ: r.champ, role: r.position }))}>
                 <td className="muted">{i + 1}</td>
                 <td><span className="role"><img src={img.role(r.position)} />{POS_LABEL[r.position]}</span></td>
                 <td><div className="cname">{r.champ ? <img src={img.champ(d, r.champ)} /> : null}{d.champs[r.champ]?.name ?? r.name}</div></td>

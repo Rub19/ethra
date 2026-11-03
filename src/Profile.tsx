@@ -6,7 +6,7 @@ import type { Go } from "./main";
 import { useAvatar } from "./Account";
 import { champsIn, counted, filterGames, HistoryFilter, isRemake, mergeGames, NO_FILTER, queuesIn } from "./history";
 import Skeleton from "./Skeleton";
-import { copyText } from "./util";
+import { copyText, pressable } from "./util";
 
 const PAGE = 20;
 const KEPT_GAMES = 150;
@@ -166,7 +166,7 @@ export function Scoreboard({ g, d, puuid, onOpen }: { g: Game; d: DD; puuid: str
               return (
                 <tr key={x.participantId} className={who?.puuid === puuid ? "me" : ""}>
                   <td><img className="bc" src={img.champ(d, x.championId)} /></td>
-                  <td className="name" onClick={() => who?.puuid && onOpen(who.puuid)}>{who?.gameName ?? "?"}<small>#{who?.tagLine}</small></td>
+                  <td className="name" {...pressable(() => who?.puuid && onOpen(who.puuid))}>{who?.gameName ?? "?"}<small>#{who?.tagLine}</small></td>
                   <td className="c"><b>{n(x.stats, "kills")} / <span className="bad">{n(x.stats, "deaths")}</span> / {n(x.stats, "assists")}</b><small>{kda(x.stats).toFixed(2)} KDA</small></td>
                   <td className="c">{Math.round(((n(x.stats, "kills") + n(x.stats, "assists")) / teamKills) * 100)}%</td>
                   <td className="c">{cs(x.stats)}<small>{(cs(x.stats) / min).toFixed(1)}/min</small></td>
@@ -312,7 +312,7 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
             <div className="wr"><i style={{ width: `${played.length ? (wins / played.length) * 100 : 0}%` }} /></div>
             <small className="muted">{wins}V - {played.length - wins}D</small>
             {champs.slice(0, 6).map(([c, x]) => (
-              <div key={c} className="perf link" onClick={() => go({ page: "champion", champ: c })}>
+              <div key={c} className="perf link" {...pressable(() => go({ page: "champion", champ: c }))}>
                 <img src={img.champ(d, c)} />
                 <div><b>{d.champs[c]?.name}</b><small>{(x.k / x.g).toFixed(1)} KDA</small></div>
                 <div className="r"><b className={x.w / x.g >= 0.5 ? "good" : "bad"}>{Math.round((x.w / x.g) * 100)}%</b><small>{x.g} parties</small></div>
@@ -333,7 +333,7 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
               <thead><tr><th>Champion</th><th>Parties</th><th>Winrate</th><th>KDA</th><th>CS/min</th></tr></thead>
               <tbody>
                 {champs.map(([c, x]) => (
-                  <tr key={c} className="link" onClick={() => go({ page: "champion", champ: c })}>
+                  <tr key={c} className="link" {...pressable(() => go({ page: "champion", champ: c }))}>
                     <td><img src={img.champ(d, c)} /> {d.champs[c]?.name}</td>
                     <td>{x.g}</td>
                     <td className={x.w / x.g >= 0.5 ? "good" : "bad"}>{Math.round((x.w / x.g) * 100)}%</td>

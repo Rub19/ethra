@@ -3,6 +3,17 @@ import pkg from "../package.json";
 
 export const REPO = "https://github.com/Rub19/ethra";
 
+export const pressable = (run: () => void) => ({
+  role: "button",
+  tabIndex: 0,
+  onClick: run,
+  onKeyDown: (e: { key: string; preventDefault: () => void }) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    run();
+  },
+});
+
 export const toast = (msg: string) => window.dispatchEvent(new CustomEvent("rw-toast", { detail: msg }));
 
 export const copyText = (text: string, label: string) =>

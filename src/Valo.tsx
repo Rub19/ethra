@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Go } from "./main";
 import Skeleton from "./Skeleton";
 import { call as opggCall } from "./opgg";
-import { copyText } from "./util";
+import { pressable, copyText } from "./util";
 import { ago, mmss } from "./lcu";
 import {
   queueLabel, valo, vdata, VD, vHistory, vMatch, VMatch, vName, VName, vNames, VPhase, VPlayer, vRank, VRank, VRR, vRRUpdates, vScore, vStats, vTeamWon, mkLabel, vWeaponKills, vEconomy, vParties, PARTY_LABEL, seenPlayers, Seen,
@@ -645,7 +645,7 @@ export function ValoMatch({ id, puuid, go }: { id: string; puuid: string; go: Go
                   return (
                     <tr key={x.subject} className={x.subject === puuid ? "me" : ""}>
                       <td><img className="bc" src={d.agents[x.characterId.toLowerCase()]?.icon} title={d.agents[x.characterId.toLowerCase()]?.name} /></td>
-                      <td className="name" onClick={() => go({ page: "v-profil", puuid: x.subject })}>{nameOf(x).name || "…"}{nameOf(x).tag && <small>#{nameOf(x).tag}</small>}</td>
+                      <td className="name" {...pressable(() => go({ page: "v-profil", puuid: x.subject }))}>{nameOf(x).name || "…"}{nameOf(x).tag && <small>#{nameOf(x).tag}</small>}</td>
                       <td className="c">{x.competitiveTier > 2 && tier ? <img className="vtier" src={tier.icon} title={tier.name} /> : "–"}</td>
                       <td className="c"><b>{Math.round(s.acs)}</b><i className="dbar2"><i style={{ width: `${(s.acs / maxAcs) * 100}%` }} /></i></td>
                       <td className="c"><b>{x.stats?.kills} / <span className="bad">{x.stats?.deaths}</span> / {x.stats?.assists}</b></td>
