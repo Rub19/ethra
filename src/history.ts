@@ -26,6 +26,21 @@ const distinctBy = (values: number[]) => [...new Set(values)];
 export const queuesIn = (games: Game[]) => distinctBy(games.map((g) => g.queueId));
 export const champsIn = (games: Game[]) => distinctBy(games.map((g) => g.participants[0].championId));
 
+export type Form = { streak: { win: boolean; n: number } | null; strip: boolean[]; kdaNow: number | null; kdaBefore: number | null };
+
+export function formOf(games: Game[], kdaOf: (g: Game) => number): Form {
+  const list = counted(games);
+  const avg = (part: Game[]) => part.reduce((sum, g) => sum + kdaOf(g), 0) / part.length;
+  let n = 0;
+  while (n < list.length && list[n].participants[0].stats.win === list[0].participants[0].stats.win) n++;
+  return {
+    streak: list.length ? { win: list[0].participants[0].stats.win, n } : null,
+    strip: list.slice(0, 20).reverse().map((g) => g.participants[0].stats.win),
+    kdaNow: list.length >= 10 ? avg(list.slice(0, 5)) : null,
+    kdaBefore: list.length >= 10 ? avg(list.slice(5, 10)) : null,
+  };
+}
+
 export type TftUnit = { characterId: string; tier: number; rarity: number };
 export type TftTrait = { name: string; num_units: number; style: number };
 export type TftGame = { id: string; at: number; seconds: number; queueId: number; placement: number; level: number; units: TftUnit[]; traits: TftTrait[] };

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { pressable } from "./util";
+import { pressable, sortProps } from "./util";
+import Skeleton from "./Skeleton";
 import { ago, cs, DD, ddragon, Game, history, img, kda, me } from "./lcu";
 import type { Go } from "./main";
 
@@ -20,7 +21,7 @@ export default function Champions({ go }: { go: Go }) {
     me().then((s) => history(s.puuid, 100)).then(setGames, () => setGames([]));
   }, []);
 
-  if (!d) return null;
+  if (!d) return <div className="champions"><div className="pagehead"><h1>Champions</h1></div><Skeleton rows={8} height={56} /></div>;
 
   const stats = new Map<number, Row>();
   for (const g of games ?? []) {
@@ -45,7 +46,7 @@ export default function Champions({ go }: { go: Go }) {
     });
   if (!showPlayed) rows.sort((a, b) => a.name.localeCompare(b.name, "fr"));
   const th = (k: Key, l: string) => (
-    <th className={sort.k === k ? "sorted" : ""} onClick={() => setSort({ k, desc: sort.k === k ? !sort.desc : k !== "name" })}>
+    <th className={sort.k === k ? "sorted" : ""} {...sortProps(sort.k === k, sort.desc, () => setSort({ k, desc: sort.k === k ? !sort.desc : k !== "name" }))}>
       {l} {sort.k === k ? (sort.desc ? "▾" : "▴") : ""}
     </th>
   );

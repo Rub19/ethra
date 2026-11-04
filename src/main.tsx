@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import "./style.css";
 import { DD, ddragon, findPlayer, img, lcu, me, settings, Summoner } from "./lcu";
 import { applyBuild, bestBuild, POSITIONS } from "./buildData";
@@ -18,6 +18,7 @@ import GamePicker, { GameKey } from "./GamePicker";
 import TftDecks from "./Tft";
 import TftProfile from "./TftProfile";
 import UpdateCorner from "./Updater";
+import { favChamps } from "./util";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 function WindowControls() {
@@ -120,6 +121,7 @@ function Search({ d, go, toast }: { d: DD | null; go: Go; toast: (s: string) => 
   const opts: Opt[] = [
     ...(q.includes("#") ? [{ key: "find", label: q.trim(), sub: "Chercher ce joueur", run: () => lookup(q.trim()) }] : []),
     ...champs.map(([id, c]) => ({ key: `c${id}`, label: c.name, sub: "Build méta du champion", icon: d ? img.champ(d, +id) : undefined, run: () => go({ page: "champion", champ: +id }) })),
+    ...(d && !t ? favChamps().filter((id) => d.champs[id]).slice(0, 5).map((id) => ({ key: `f${id}`, label: d.champs[id].name, sub: "Favori", icon: img.champ(d, id), run: () => go({ page: "champion", champ: id }) })) : []),
     ...players.map((p) => ({ key: p.puuid, label: p.name, sub: "Joueur récent", run: () => go({ page: "profil", puuid: p.puuid }) })),
   ];
 
@@ -159,6 +161,7 @@ function Search({ d, go, toast }: { d: DD | null; go: Go; toast: (s: string) => 
         }}
       />
       <kbd>Ctrl K</kbd>
+      {open && t && opts.length === 0 && <div className="sresults shint">Aucun champion trouvé. Pour un joueur, écris Nom#TAG.</div>}
       {open && opts.length > 0 && (
         <div className="sresults">
           {opts.map((o, i) => (
@@ -180,6 +183,10 @@ function App() {
   const [self, setSelf] = useState<Summoner | null>(null);
   const [d, setD] = useState<DD | null>(null);
   const [toast, setToast] = useState("");
+  const shownToast = useRef("");
+  if (toast) shownToast.current = toast;
+  const navRef = useRef<HTMLElement>(null);
+  const [ink, setInk] = useState<{ x: number; w: number } | null>(null);
   const imported = useRef(0);
   const [game, setGame] = useState<GameKey>(() => {
     try {
@@ -325,6 +332,7 @@ function App() {
 
   return (
     <div className="app">
+      <NavMeasure navRef={navRef} watch={`${active}|${game}`} onMeasure={setInk} />
       <header data-tauri-drag-region>
         <div className="bar" data-tauri-drag-region>
           <GamePicker game={game} onPick={switchGame} />
@@ -333,7 +341,8 @@ function App() {
             <button disabled={!canBack} onClick={back} aria-label="Retour"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M9 2.5 4.5 7 9 11.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
             <button disabled={!canFwd} onClick={fwd} aria-label="Suivant"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2.5 9.5 7 5 11.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
           </div>
-          <nav aria-label="Pages">
+          <nav aria-label="Pages" ref={navRef}>
+            <i className="navink" aria-hidden="true" style={ink ? { opacity: 1, transform: `translateX(${ink.x}px) scaleX(${ink.w / 100})` } : undefined} />
             {tabs.map(([k, l]) => (
               <button key={k} className={active === k ? "on" : ""} aria-current={active === k ? "page" : undefined} onClick={() => go({ page: k } as Route)}>
                 {l}
@@ -353,6 +362,7 @@ function App() {
         </div>
       </header>
       <main>
+        <div className="page" key={JSON.stringify(route)}>
         {route.page === "t-decks" ? (
           <TftDecks />
         ) : route.page === "t-profil" ? (
@@ -413,6 +423,7 @@ function App() {
         ) : (
           route.page === "overlays" ? <Overlays /> : <Settings only="general" />
         )}
+        </div>
       </main>
       {inGame && route.page !== liveRoute && (
         <button className="livebanner" onClick={() => go({ page: liveRoute })}>
@@ -424,11 +435,30 @@ function App() {
           <span className="primary">Ouvrir</span>
         </button>
       )}
-      {toast && <div className="toast">{toast}</div>}
+      <div className={`toast ${toast ? "show" : ""}`} role="status" aria-live="polite" onClick={() => setToast("")}>{shownToast.current}</div>
       <UpdateCorner />
     </div>
   );
 }
+
+function NavMeasure({ navRef, watch, onMeasure }: { navRef: React.RefObject<HTMLElement | null>; watch: string; onMeasure: (v: { x: number; w: number } | null) => void }) {
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = navRef.current?.querySelector<HTMLElement>("button.on");
+      if (!el) return onMeasure(null);
+      const pad = parseFloat(getComputedStyle(el).paddingLeft);
+      onMeasure({ x: el.offsetLeft + pad, w: el.offsetWidth - pad * 2 });
+    };
+    measure();
+    document.fonts?.ready.then(measure);
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [watch]);
+  return null;
+}
+
+window.addEventListener("keydown", () => document.documentElement.setAttribute("data-keynav", ""), true);
+window.addEventListener("pointerdown", () => document.documentElement.removeAttribute("data-keynav"), true);
 
 document.addEventListener("contextmenu", (e) => {
   if (!(e.target as HTMLElement).closest("input, textarea")) e.preventDefault();

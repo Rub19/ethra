@@ -1,10 +1,20 @@
 import assert from "node:assert";
-import { champsIn, counted, filterGames, mergeGames, NO_FILTER, parseTftGames, queuesIn, tftQueue, tftSummary } from "./history.ts";
+import { champsIn, counted, filterGames, formOf, mergeGames, NO_FILTER, parseTftGames, queuesIn, tftQueue, tftSummary } from "./history.ts";
 
 const game = (gameId: number, queueId: number, championId: number, win: boolean, gameDuration = 1500) =>
   ({ gameId, queueId, gameDuration, participants: [{ championId, stats: { win } }] }) as any;
 const games = [game(1, 420, 7, true), game(2, 420, 8, false), game(3, 450, 7, false), game(4, 420, 7, false, 200)];
 const ids = (list: any[]) => list.map((g) => g.gameId);
+
+const series = [true, true, false, false, false, false, false, false, false, false, true].map((w, i) => game(100 + i, 420, 7, w));
+const form = formOf([game(99, 420, 7, false, 100), ...series], (g) => g.gameId);
+assert.deepStrictEqual(form.streak, { win: true, n: 2 });
+assert.strictEqual(form.strip.length, 11);
+assert.strictEqual(form.strip[10], true);
+assert.strictEqual(form.kdaNow, 102);
+assert.strictEqual(form.kdaBefore, 107);
+assert.strictEqual(formOf([], () => 0).streak, null);
+assert.strictEqual(formOf(series.slice(0, 5), () => 1).kdaNow, null);
 
 assert.deepStrictEqual(ids(counted(games)), [1, 2, 3]);
 assert.deepStrictEqual(ids(filterGames(games, NO_FILTER)), [1, 2, 3, 4]);

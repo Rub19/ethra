@@ -14,6 +14,33 @@ export const pressable = (run: () => void) => ({
   },
 });
 
+const FAVS = "rw-fav-champs";
+export const favChamps = (): number[] => {
+  try {
+    return JSON.parse(localStorage.getItem(FAVS) || "[]");
+  } catch {
+    return [];
+  }
+};
+export const toggleFavChamp = (id: number) => {
+  const next = favChamps().includes(id) ? favChamps().filter((x) => x !== id) : [id, ...favChamps()];
+  try {
+    localStorage.setItem(FAVS, JSON.stringify(next));
+  } catch {}
+  return next;
+};
+
+export const sortProps = (active: boolean, desc: boolean, run: () => void) => ({
+  tabIndex: 0,
+  "aria-sort": active ? (desc ? "descending" : "ascending") : "none",
+  onClick: run,
+  onKeyDown: (e: { key: string; preventDefault: () => void }) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    run();
+  },
+}) as const;
+
 export const toast = (msg: string) => window.dispatchEvent(new CustomEvent("rw-toast", { detail: msg }));
 
 export const copyText = (text: string, label: string) =>

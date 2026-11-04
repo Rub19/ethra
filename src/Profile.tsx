@@ -4,7 +4,7 @@ import {
 } from "./lcu";
 import type { Go } from "./main";
 import { useAvatar } from "./Account";
-import { champsIn, counted, filterGames, HistoryFilter, isRemake, mergeGames, NO_FILTER, queuesIn } from "./history";
+import { champsIn, counted, filterGames, formOf, HistoryFilter, isRemake, mergeGames, NO_FILTER, queuesIn } from "./history";
 import Skeleton from "./Skeleton";
 import { copyText, pressable } from "./util";
 
@@ -226,6 +226,7 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
   }
   const champs = [...pool.entries()].sort((a, b) => b[1].g - a[1].g);
   const wins = played.filter((g) => g.participants[0].stats.win).length;
+  const form = formOf(shown ?? [], (g) => kda(g.participants[0].stats));
 
   return (
     <div className="profile">
@@ -272,7 +273,10 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
             const delta = before && lp.length ? lp[lp.length - 1].v - before.v : null;
             return (
               <section className="card session">
-                <h3>Session du jour</h3>
+                <div className="shead">
+                  <h3>Session du jour</h3>
+                  {today.length > 0 && <button className="linkbtn" onClick={() => copyText(`Session du jour : ${w}V ${today.length - w}D (${Math.round((w / today.length) * 100)} %), KDA ${(today.reduce((a, g) => a + kda(g.participants[0].stats), 0) / today.length).toFixed(2)}${delta !== null ? `, ${delta >= 0 ? "+" : ""}${delta} LP` : ""}`, "Résumé")}>Copier</button>}
+                </div>
                 {today.length === 0 ? (
                   <p className="muted">Aucune partie aujourd'hui.</p>
                 ) : (
@@ -304,13 +308,16 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
           {lp.length > 1 && (
             <section className="card">
               <h3>Historique LP (Solo)</h3>
-              <Spark pts={lp.map((p) => p.v)} />
+              <LpChart pts={lp} />
             </section>
           )}
           <section className="card">
             <h3>{played.length} dernières parties</h3>
             <div className="wr"><i style={{ width: `${played.length ? (wins / played.length) * 100 : 0}%` }} /></div>
             <small className="muted">{wins}V - {played.length - wins}D</small>
+            {form.streak && form.streak.n >= 2 && <p className={`formline ${form.streak.win ? "good" : "bad"}`}>{form.streak.n} {form.streak.win ? "victoires" : "défaites"} de suite</p>}
+            {form.strip.length > 1 && <div className="streak formstrip" role="img" aria-label={`${form.strip.filter(Boolean).length} victoires sur les ${form.strip.length} dernières parties`}>{form.strip.map((w, i) => <i key={i} className={w ? "sw" : "sl"} />)}</div>}
+            {form.kdaNow !== null && form.kdaBefore !== null && <small className="muted formkda">KDA <b className={form.kdaNow >= form.kdaBefore ? "good" : "bad"}>{form.kdaNow.toFixed(2)}</b> sur les 5 dernières, {form.kdaBefore.toFixed(2)} sur les 5 d'avant</small>}
             {champs.slice(0, 6).map(([c, x]) => (
               <div key={c} className="perf link" {...pressable(() => go({ page: "champion", champ: c }))}>
                 <img src={img.champ(d, c)} />
@@ -351,12 +358,30 @@ export default function Profile({ puuid, go }: { puuid: string | null; go: Go })
   );
 }
 
-function Spark({ pts }: { pts: number[] }) {
-  const lo = Math.min(...pts), hi = Math.max(...pts), w = 260, h = 60;
-  const xy = pts.map((v, i) => `${(i / (pts.length - 1)) * w},${h - ((v - lo) / Math.max(1, hi - lo)) * h}`).join(" ");
+function LpChart({ pts }: { pts: { t: number; v: number }[] }) {
+  const [hover, setHover] = useState<number | null>(null);
+  const lo = Math.min(...pts.map((p) => p.v)), hi = Math.max(...pts.map((p) => p.v)), w = 260, h = 60;
+  const x = (i: number) => (i / (pts.length - 1)) * w;
+  const y = (v: number) => h - 3 - ((v - lo) / Math.max(1, hi - lo)) * (h - 6);
+  const xy = pts.map((p, i) => `${x(i)},${y(p.v)}`).join(" ");
+  const total = pts[pts.length - 1].v - pts[0].v;
+  const at = hover ?? pts.length - 1;
+  const days = Math.max(1, Math.round((pts[pts.length - 1].t - pts[0].t) / 864e5));
+  const signed = (d: number) => `${d >= 0 ? "+" : ""}${d} LP`;
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="spark">
-      <polyline points={xy} fill="none" stroke="var(--accent)" strokeWidth="2" />
-    </svg>
+    <div className="lpchart" onPointerLeave={() => setHover(null)} onPointerMove={(e) => {
+      const r = e.currentTarget.getBoundingClientRect();
+      setHover(Math.max(0, Math.min(pts.length - 1, Math.round(((e.clientX - r.left) / r.width) * (pts.length - 1)))));
+    }}>
+      <div className="lphead">
+        <b className={total >= 0 ? "good" : "bad"}>{signed(total)}</b>
+        <small>{days > 1 ? `sur ${days} jours` : "aujourd'hui"}</small>
+      </div>
+      <svg viewBox={`-3 0 ${w + 6} ${h}`} className="spark" role="img" aria-label={`Évolution des LP : ${signed(total)}`}>
+        <polyline points={xy} fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+        <circle cx={x(at)} cy={y(pts[at].v)} r="3.5" fill="var(--accent)" stroke="var(--panel)" strokeWidth="2" />
+      </svg>
+      <small className="lptip">{hover === null ? "Survole la courbe pour voir le détail" : `${new Date(pts[at].t).toLocaleDateString("fr", { day: "numeric", month: "short" })} : ${signed(pts[at].v - pts[0].v)} depuis le début`}</small>
+    </div>
   );
 }

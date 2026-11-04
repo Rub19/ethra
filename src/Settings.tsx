@@ -22,10 +22,43 @@ const SHORTCUTS: [string, string][] = [
   ["Boutons latéraux de la souris", "Page précédente et suivante"],
 ];
 
+function ConfirmBtn({ label, disabled, onConfirm }: { label: string; disabled?: boolean; onConfirm: () => void }) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const id = setTimeout(() => setArmed(false), 3000);
+    return () => clearTimeout(id);
+  }, [armed]);
+  return <button className={`ghostbtn ${armed ? "armed" : ""}`} disabled={disabled} onClick={() => (armed ? (setArmed(false), onConfirm()) : setArmed(true))}>{armed ? "Confirmer" : label}</button>;
+}
+
+const storedWith = (prefix: string) => {
+  try {
+    return Object.keys(localStorage).filter((k) => k.startsWith(prefix));
+  } catch {
+    return [];
+  }
+};
+const keptGames = () => storedWith("rw-games-").reduce((sum, k) => {
+  try {
+    return sum + JSON.parse(localStorage.getItem(k) || "[]").length;
+  } catch {
+    return sum;
+  }
+}, 0);
+const recentCount = () => {
+  try {
+    return JSON.parse(localStorage.getItem("rw-recent") || "[]").length;
+  } catch {
+    return 0;
+  }
+};
+
 export default function Settings(_: { only?: string }) {
   const [cfg, setCfg] = useState<S>(settings);
   const [upd, setUpd] = useState<Update | undefined>(undefined);
   const [seen, setSeen] = useState(() => seenPlayers().length);
+  const [stored, setStored] = useState(() => ({ games: keptGames(), lp: storedWith("rw-lp-").length, recent: recentCount() }));
 
   useEffect(() => {
     checkUpdate().then(setUpd);
@@ -104,6 +137,18 @@ export default function Settings(_: { only?: string }) {
             <div className="setrow">
               <div><b>Cache TFT</b><small>Noms et icônes du set en cours, rechargés une fois par jour.</small></div>
               <button className="ghostbtn" onClick={() => clear(["rw-tft"], "Cache TFT vidé, il sera rechargé")}>Vider</button>
+            </div>
+            <div className="setrow">
+              <div><b>Parties conservées</b><small>{stored.games} parties League gardées sur ce PC, au-delà des 20 du client.</small></div>
+              <ConfirmBtn label="Effacer" disabled={!stored.games} onConfirm={() => (clear(storedWith("rw-games-"), "Parties conservées effacées"), setStored({ ...stored, games: 0 }))} />
+            </div>
+            <div className="setrow">
+              <div><b>Historique LP</b><small>{stored.lp ? "La courbe de LP de tes comptes repart de zéro si tu l'effaces." : "Aucune courbe enregistrée."}</small></div>
+              <ConfirmBtn label="Effacer" disabled={!stored.lp} onConfirm={() => (clear(storedWith("rw-lp-"), "Historique LP effacé"), setStored({ ...stored, lp: 0 }))} />
+            </div>
+            <div className="setrow">
+              <div><b>Recherches récentes</b><small>{stored.recent} joueur{stored.recent > 1 ? "s" : ""} proposé{stored.recent > 1 ? "s" : ""} dans la recherche.</small></div>
+              <button className="ghostbtn" disabled={!stored.recent} onClick={() => (clear(["rw-recent"], "Recherches récentes oubliées"), setStored({ ...stored, recent: 0 }))}>Oublier</button>
             </div>
           </section>
           <section className="card about">
