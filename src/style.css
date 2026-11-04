@@ -1070,3 +1070,21 @@ html[data-keynav] .navink { transition: none; }
   .seg button:active, .ghostbtn:active, .primary:active, .sharebtn:active, .toggleall:active, .cgrid button:active img, .favstar:active svg { transform: none; }
   .ltiles > button:hover, .av:hover img, .gcard:hover .gart { transform: none; }
 }
+
+@keyframes bar-grow { from { transform: scaleX(.02); } }
+.wr i, .mini i, .dbar2 > i, .vwbar i, .score > i > i { transform-origin: left center; animation: bar-grow .46s var(--ease-out) backwards; }
+.streak i { animation: fade-in .3s ease-out backwards; }
+.skel { animation: fade-in .2s ease-out; }
+.matchpage > * { animation: row-in .26s var(--ease-out) backwards; }
+.matchpage > :nth-child(2) { animation-delay: 40ms; }
+.matchpage > :nth-child(3) { animation-delay: 80ms; }
+.matchpage > :nth-child(n + 4) { animation-delay: 120ms; }
+.bgrid > *, .ovgrid > * { animation: row-in .26s var(--ease-out) backwards; }
+.xbtn, .hist button, .gbtn, .gcard { transition: background-color .12s ease, color .12s ease, outline-color .15s, transform .14s var(--ease-out); }
+.xbtn:active { transform: scale(.92); }
+html[data-keynav] .matchpage > *, html[data-keynav] .bgrid > *, html[data-keynav] .ovgrid > * { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .wr i, .mini i, .dbar2 > i, .vwbar i, .score > i > i { animation: none; }
+  .matchpage > *, .bgrid > *, .ovgrid > * { animation-name: fade-in; }
+  .xbtn:active, .hist button:active, .gbtn:active, .gcard:active { transform: none; }
+}
