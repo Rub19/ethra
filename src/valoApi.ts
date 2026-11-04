@@ -246,15 +246,16 @@ export async function vParties(puuids: string[], self: string): Promise<Record<s
 export const PARTY_LABEL = ["", "", "Duo", "Trio", "Quatuor", "Five stack"];
 
 export type VPhase = "MENUS" | "PREGAME" | "INGAME" | null;
-export async function vPhase(puuid: string): Promise<VPhase> {
+export async function vPresence(puuid: string): Promise<{ open: boolean; phase: VPhase }> {
   const r = await valo<{ presences: { puuid: string; product: string; private: string }[] }>("local", "/chat/v4/presences");
   const p = r.presences.find((x) => x.puuid === puuid && x.product === "valorant");
-  if (!p?.private) return "MENUS";
+  if (!p) return { open: false, phase: "MENUS" };
+  if (!p.private) return { open: true, phase: "MENUS" };
   try {
     const j = JSON.parse(atob(p.private));
-    return (j.matchPresenceData?.sessionLoopState ?? j.sessionLoopState ?? "MENUS") as VPhase;
+    return { open: true, phase: (j.matchPresenceData?.sessionLoopState ?? j.sessionLoopState ?? "MENUS") as VPhase };
   } catch {
-    return "MENUS";
+    return { open: true, phase: "MENUS" };
   }
 }
 

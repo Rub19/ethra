@@ -13,7 +13,7 @@ import Match from "./Match";
 import AccountMenu from "./Account";
 import Overlays from "./Overlays";
 import { ValoAgents, ValoLive, ValoMatch, ValoProfile, ValoSearch } from "./Valo";
-import { VPhase, vPhase, vSession } from "./valoApi";
+import { VPhase, vPresence, vSession } from "./valoApi";
 import GamePicker, { GameKey } from "./GamePicker";
 import TftDecks from "./Tft";
 import TftProfile from "./TftProfile";
@@ -198,6 +198,7 @@ function App() {
   });
   const [vSelf, setVSelf] = useState<string | null>(null);
   const [vph, setVph] = useState<VPhase>(null);
+  const [vOpen, setVOpen] = useState(false);
 
   const homeOf = (g: GameKey): Route => ({ page: g === "valo" ? "v-profil" : g === "tft" ? "t-profil" : "profil" });
   const savedRoute = (g: GameKey): Route | null => {
@@ -262,7 +263,9 @@ function App() {
     const tick = async () => {
       const s = await vSession().catch(() => null);
       setVSelf(s?.puuid || null);
-      const p = s?.puuid ? await vPhase(s.puuid).catch(() => "MENUS" as VPhase) : null;
+      const presence = s?.puuid ? await vPresence(s.puuid).catch(() => ({ open: false, phase: "MENUS" as VPhase })) : null;
+      setVOpen(!!presence?.open);
+      const p = presence?.phase ?? null;
       setVph((old) => {
         if (p === "PREGAME" && old !== "PREGAME" && settings().autoOpenLive) go({ page: "v-partie" });
         return p;
@@ -327,7 +330,7 @@ function App() {
     : route.page;
   const needsClient = phase === null && !["reglages", "overlays", "champions", "champion", "tierlist", "v-profil", "v-match", "v-partie"].includes(route.page);
   const needsValo = !vSelf && ["v-profil", "v-match", "v-partie"].includes(route.page);
-  const connected = valoGame ? !!vSelf : phase !== null;
+  const connected = valoGame ? vOpen : phase !== null;
   const liveRoute = valoGame ? "v-partie" : "partie";
 
   return (
@@ -351,11 +354,11 @@ function App() {
             ))}
           </nav>
           {tftGame ? <div className="bar-spacer" data-tauri-drag-region /> : valoGame ? <ValoSearch go={go} /> : <Search d={d} go={go} toast={setToast} />}
-          <div className={`client ${connected ? "" : "off"}`} title={connected ? "Client connecté" : "Client fermé"}>
+          <div className={`client ${connected ? "" : "off"}`} title={valoGame ? (vOpen ? "Le jeu est ouvert" : vSelf ? "Ton profil vient du client Riot, le jeu est fermé" : "Client Riot fermé") : connected ? "Client connecté" : "Client fermé"}>
             {!valoGame && self && d ? (
               <AccountMenu self={self} d={d} go={go} />
             ) : (
-              <span><i />{valoGame ? (vSelf ? "VALORANT connecté" : "VALORANT fermé") : phase === null ? "Client fermé" : "Connexion…"}</span>
+              <span><i />{valoGame ? (vOpen ? "VALORANT ouvert" : "VALORANT fermé") : phase === null ? "Client fermé" : "Connexion…"}</span>
             )}
           </div>
           <WindowControls />

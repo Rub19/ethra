@@ -1088,3 +1088,21 @@ html[data-keynav] .matchpage > *, html[data-keynav] .bgrid > *, html[data-keynav
   .matchpage > *, .bgrid > *, .ovgrid > * { animation-name: fade-in; }
   .xbtn:active, .hist button:active, .gbtn:active, .gcard:active { transform: none; }
 }
+
+.gmark { display: grid; place-items: center; flex: none; border-radius: 26%; background: #0d111c; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); }
+.gmark svg, .gmark img { display: block; width: 68%; height: 68%; object-fit: contain; }
+.gmark svg { fill: currentColor; }
+.gmark.lol { color: #d8ab4c; }
+.gmark.valo { color: #ff4655; }
+.gmark.tft { color: #f2c230; }
+.gmark.valo svg { width: 72%; height: 72%; }
+.gmark.tft img { width: 80%; height: 80%; }
+.ginfo { display: block; }
+.ginfo .gmark { margin-bottom: 9px; background: rgba(13, 17, 28, .78); }
+.ginfo b { display: block; margin-bottom: 2px; }
+.ginfo small { display: block; }
+
+.gmark.lol path, .gmark.valo path, .gmark.tft path { fill: currentColor; stroke: none; }
+.gmark.tft path:last-of-type { fill: none; stroke: currentColor; }
+.gmark.lol img, .gmark.tft img { width: 84%; height: 84%; }
+.gmenu { background: var(--panel); backdrop-filter: none; -webkit-backdrop-filter: none; }
