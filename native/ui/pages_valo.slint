@@ -1,0 +1,848 @@
+import { Theme, Motion, Act, Press, Pic, T, Small, Num, Reveal, Card, CardTitle, Ghost, Primary, Seg, Bar, Strip, StatBox, ChipView, RankView, PerfRow, Table, Skeleton, Empty, Notice, PageHead, Page } from "theme.slint";
+import { Data, VRowV, VLiveRow, VLiveTeam, PlayerChip } from "data.slint";
+import { WaitPanel } from "pages_lol.slint";
+
+component Mini {
+    in property <PlayerChip> p;
+    height: 22px;
+    Rectangle {
+        border-radius: 6px;
+        background: pr.hover ? #ffffff0d : transparent;
+        pr := Press {
+            enabled: root.p.route != "";
+            clicked => { Act.act("go:" + root.p.route); }
+        }
+        HorizontalLayout {
+            padding-left: 4px;
+            padding-right: 4px;
+            spacing: 6px;
+            VerticalLayout {
+                alignment: center;
+                Pic {
+                    url: root.p.icon;
+                    width: 20px;
+                    height: 20px;
+                    radius: 5px;
+                    back: Theme.panel2;
+                }
+            }
+            T {
+                text: root.p.name;
+                font-size: 13px;
+                font-weight: root.p.me ? 600 : 400;
+                color: root.p.me || pr.hover ? Theme.text : Theme.muted;
+            }
+        }
+    }
+}
+
+component Em {
+    in property <string> text;
+    in property <color> fg: Theme.accent;
+    min-width: lb.preferred-width + 16px;
+    height: 20px;
+    horizontal-stretch: 0;
+    Rectangle {
+        border-radius: 5px;
+        background: root.fg.transparentize(0.86);
+        lb := Text {
+            text: root.text;
+            font-size: 12px;
+            font-weight: 600;
+            color: root.fg;
+        }
+    }
+}
+
+export component VLine {
+    in property <VRowV> r;
+    in property <int> index;
+    in property <length> avail;
+    height: root.r.state == 0 ? 112px : 76px;
+    if root.r.state == 2: Rectangle {
+        background: Theme.panel;
+        border-radius: 16px;
+        border-width: 1px;
+        border-color: Theme.line-soft;
+        HorizontalLayout {
+            padding-left: 16px;
+            padding-right: 14px;
+            Small { text: "Impossible de charger cette partie pour l'instant."; font-size: 14px; }
+            VerticalLayout {
+                alignment: center;
+                Ghost {
+                    label: "Réessayer";
+                    clicked => { Act.act("vretry:" + root.r.id); }
+                }
+            }
+        }
+    }
+    if root.r.state == 1: Rectangle {
+        background: Theme.panel;
+        border-radius: 12px;
+        border-width: 1px;
+        border-color: Theme.line-soft;
+    }
+    if root.r.state == 0: Reveal {
+        index: root.index;
+        Rectangle {
+            background: Theme.panel;
+            border-radius: 16px;
+            border-width: 1px;
+            border-color: p.hover ? #ffffff24 : Theme.line-soft;
+            animate border-color { duration: Motion.fast; }
+            p := Press {
+                ring-radius: 16px;
+                clicked => { Act.act("go:" + root.r.route); }
+            }
+            HorizontalLayout {
+                padding-left: 14px;
+                padding-right: 16px;
+                spacing: 18px;
+                VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 72px;
+                        height: 72px;
+                        Rectangle {
+                            border-radius: 14px;
+                            border-width: 2.5px;
+                            border-color: root.r.result == 0 ? Theme.teal : root.r.result == 1 ? Theme.loss : Theme.muted;
+                            clip: true;
+                            background: Theme.panel2;
+                            Pic { url: root.r.face; }
+                        }
+                        if root.r.tier != "": Pic {
+                            x: 50px;
+                            y: 50px;
+                            width: 30px;
+                            height: 30px;
+                            url: root.r.tier;
+                            fit: contain;
+                        }
+                    }
+                }
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 8px;
+                    HorizontalLayout {
+                        spacing: 10px;
+                        alignment: start;
+                        height: 24px;
+                        Num {
+                            text: root.r.title;
+                            font-size: 19px;
+                            font-weight: 700;
+                            color: root.r.result == 0 ? Theme.teal : root.r.result == 1 ? Theme.loss : Theme.muted;
+                        }
+                        Small { text: root.r.queue; font-size: 14px; }
+                        Small { text: root.r.when; font-size: 14px; }
+                        Small { text: root.r.duration; font-size: 14px; }
+                        if root.r.mvp != "": VerticalLayout { alignment: center; Em { text: root.r.mvp; } }
+                        if root.r.multi != "": VerticalLayout { alignment: center; Em { text: root.r.multi; fg: #f6c867; } }
+                        if root.r.rr != "": VerticalLayout { alignment: center; Em { text: root.r.rr; fg: root.r.rr-up ? Theme.teal : Theme.loss; } }
+                        if root.r.promo != "": VerticalLayout { alignment: center; Em { text: root.r.promo; fg: root.r.promo-up ? Theme.teal : Theme.loss; } }
+                    }
+                    HorizontalLayout {
+                        spacing: 22px;
+                        alignment: start;
+                        Rectangle {
+                            width: 120px;
+                            height: 48px;
+                            border-radius: 11px;
+                            background: Theme.panel2;
+                            clip: true;
+                            Pic { url: root.r.map; }
+                            Rectangle { background: @linear-gradient(90deg, #0a0c14e0, #0a0c1473); }
+                            VerticalLayout {
+                                padding-left: 12px;
+                                alignment: center;
+                                Num { text: root.r.score; font-size: 19px; }
+                                Text { text: root.r.map-name; font-size: 13px; color: #d5d9e4; font-family: Theme.num; }
+                            }
+                        }
+                        VerticalLayout {
+                            alignment: center;
+                            HorizontalLayout {
+                                spacing: 4px;
+                                alignment: start;
+                                Num { text: root.r.kda-k; font-size: 19px; }
+                                Num { text: "/"; font-size: 19px; color: Theme.muted; }
+                                Num { text: root.r.kda-d; font-size: 19px; color: Theme.loss; }
+                                Num { text: "/"; font-size: 19px; color: Theme.muted; }
+                                Num { text: root.r.kda-a; font-size: 19px; }
+                            }
+                            HorizontalLayout {
+                                spacing: 4px;
+                                alignment: start;
+                                Small { text: root.r.kd; font-size: 13px; color: root.r.kd-good ? Theme.teal : Theme.muted; }
+                                Small { text: "K/D"; font-size: 13px; }
+                            }
+                        }
+                        for s in [{ v: root.r.kpr, l: "KPR" }, { v: root.r.adr, l: "ADR" }, { v: root.r.acs, l: "ACS" }, { v: root.r.hs, l: "HS%" }]: VerticalLayout {
+                            alignment: center;
+                            Num { text: s.v; font-size: 19px; }
+                            Small { text: s.l; font-size: 13px; }
+                        }
+                    }
+                }
+                Rectangle { horizontal-stretch: 1; }
+                if root.avail > 880px && !root.r.dm: HorizontalLayout {
+                    width: 236px;
+                    spacing: 10px;
+                    for team in [root.r.team1, root.r.team2]: VerticalLayout {
+                        width: 113px;
+                        alignment: center;
+                        for pl in team: Mini { p: pl; }
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component VProfileView {
+    Page {
+        if Data.notice-title != "": VerticalLayout {
+            padding-bottom: 22px;
+            Notice { title: Data.notice-title; text: Data.notice-text; }
+        }
+        if Data.vprofile.error != "": Empty { text: Data.vprofile.error; }
+        if Data.vprofile.loading && Data.vprofile.error == "": Skeleton { rows: 7; }
+        if !Data.vprofile.loading && Data.vprofile.error == "": VerticalLayout {
+            spacing: 6px;
+            Rectangle {
+                height: 170px;
+                border-radius: 18px;
+                border-width: 1px;
+                border-color: Theme.line-soft;
+                background: Theme.panel;
+                clip: true;
+                Pic {
+                    url: Data.vprofile.portrait;
+                    x: parent.width * 0.55;
+                    width: parent.width * 0.45;
+                    fit: cover;
+                }
+                Rectangle { background: @linear-gradient(90deg, #0e1220 30%, #0e1220cc 55%, #0e122000 100%); }
+                HorizontalLayout {
+                    padding-left: 28px;
+                    padding-right: 28px;
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 14px;
+                        HorizontalLayout {
+                            alignment: start;
+                            Rectangle {
+                                min-width: nm.preferred-width;
+                                height: nm.preferred-height;
+                                cp := Press {
+                                    enabled: Data.vprofile.can-copy;
+                                    clicked => { Act.act("copy-id"); }
+                                }
+                                nm := HorizontalLayout {
+                                    spacing: 8px;
+                                    Text {
+                                        text: Data.vprofile.name;
+                                        font-family: Theme.num;
+                                        font-weight: 700;
+                                        font-size: 32px;
+                                        color: Theme.text;
+                                    }
+                                    Text {
+                                        text: "#" + Data.vprofile.tag;
+                                        font-family: Theme.num;
+                                        font-size: 32px;
+                                        color: cp.hover ? Theme.text : Theme.muted;
+                                    }
+                                }
+                            }
+                        }
+                        HorizontalLayout {
+                            spacing: 30px;
+                            alignment: start;
+                            for s in Data.vprofile.quick: StatBox { s: s; }
+                        }
+                    }
+                    Rectangle { horizontal-stretch: 1; }
+                    if Data.vprofile.rank-icon != "": VerticalLayout {
+                        alignment: center;
+                        spacing: 2px;
+                        horizontal-stretch: 0;
+                        HorizontalLayout {
+                            alignment: center;
+                            Pic {
+                                url: Data.vprofile.rank-icon;
+                                width: 84px;
+                                height: 84px;
+                                fit: contain;
+                            }
+                        }
+                        Num { text: Data.vprofile.rank-name; font-size: 20px; color: Data.vprofile.rank-color; horizontal-alignment: center; }
+                        Small { text: Data.vprofile.rank-rr; horizontal-alignment: center; }
+                    }
+                }
+            }
+            HorizontalLayout {
+                spacing: 22px;
+                height: 52px;
+                for t in Data.vprofile.tabs: VerticalLayout {
+                    horizontal-stretch: 0;
+                    alignment: center;
+                    Rectangle {
+                        min-width: tl.preferred-width;
+                        height: 40px;
+                        pt := Press {
+                            clicked => { Act.act(t.key); }
+                        }
+                        tl := Text {
+                            text: t.label;
+                            font-weight: 600;
+                            font-size: 14.5px;
+                            color: t.on || pt.hover ? Theme.text : Theme.muted;
+                            vertical-alignment: center;
+                            animate color { duration: Motion.xfast; }
+                        }
+                        Rectangle {
+                            y: parent.height - 2px;
+                            height: 2px;
+                            background: t.on ? Theme.accent : transparent;
+                            animate background { duration: Motion.fast; }
+                        }
+                    }
+                }
+                Rectangle { horizontal-stretch: 1; }
+                VerticalLayout {
+                    alignment: center;
+                    horizontal-stretch: 0;
+                    Seg {
+                        options: Data.vprofile.filters;
+                        fsize: 13.5px;
+                        pad: 11px;
+                    }
+                }
+            }
+            HorizontalLayout {
+                spacing: 16px;
+                VerticalLayout {
+                    width: 300px;
+                    spacing: 12px;
+                    alignment: start;
+                    if Data.vprofile.me: Card {
+                        VerticalLayout {
+                            padding: 16px;
+                            spacing: 8px;
+                            CardTitle { text: "Session du jour"; }
+                            if Data.vprofile.session-text != "": Small { text: Data.vprofile.session-text; font-size: 14px; }
+                            if Data.vprofile.session-text == "": HorizontalLayout {
+                                spacing: 12px;
+                                for s in Data.vprofile.session: StatBox { s: s; size: 18px; align: center; }
+                            }
+                            if Data.vprofile.session-text == "": Strip {
+                                items: Data.vprofile.session-strip;
+                                item-width: 14px;
+                                align: center;
+                            }
+                        }
+                    }
+                    Card {
+                        VerticalLayout {
+                            padding-left: 16px;
+                            padding-right: 16px;
+                            padding-top: 8px;
+                            padding-bottom: 8px;
+                            for r in Data.vprofile.ranks: RankView { r: r; }
+                        }
+                    }
+                    Card {
+                        VerticalLayout {
+                            padding: 16px;
+                            spacing: 6px;
+                            CardTitle { text: Data.vprofile.title; }
+                            Bar { value: Data.vprofile.wr; thick: 6px; fill: Theme.teal; track: Theme.loss; }
+                            Small { text: Data.vprofile.wr-text; }
+                            for f in Data.vprofile.perfs: PerfRow { f: f; }
+                        }
+                    }
+                }
+                lst := VerticalLayout {
+                    spacing: 8px;
+                    alignment: start;
+                    horizontal-stretch: 1;
+                    if Data.vprofile.ids-loading: Skeleton { rows: 8; }
+                    if !Data.vprofile.ids-loading && Data.vprofile.empty != "": Card {
+                        min-height: 54px;
+                        Small { x: 16px; text: Data.vprofile.empty; font-size: 14px; }
+                    }
+                    if !Data.vprofile.ids-loading && Data.vprofile.empty == "" && Data.vprofile.tab == "parties": VerticalLayout {
+                        spacing: 8px;
+                        for r[i] in Data.vprofile.rows: VLine {
+                            r: r;
+                            index: i;
+                            avail: lst.width;
+                        }
+                        if Data.vprofile.more != "": HorizontalLayout {
+                            alignment: center;
+                            padding-top: 6px;
+                            Ghost {
+                                label: Data.vprofile.more;
+                                enabled: Data.vprofile.more-enabled;
+                                clicked => { Act.act("vmore"); }
+                            }
+                        }
+                    }
+                    if !Data.vprofile.ids-loading && Data.vprofile.empty == "" && Data.vprofile.tab == "armes": Card {
+                        min-height: wc.preferred-height;
+                        wc := VerticalLayout {
+                            padding: 14px;
+                            spacing: 4px;
+                            if Data.vprofile.weapons-empty: Small { text: "Aucune élimination sur ces parties."; font-size: 14px; }
+                            for w in Data.vprofile.weapons: HorizontalLayout {
+                                spacing: 14px;
+                                height: 50px;
+                                Rectangle {
+                                    width: 120px;
+                                    if w.icon != "": Pic {
+                                        x: 0px;
+                                        url: w.icon;
+                                        width: w.agent ? 30px : 110px;
+                                        height: 30px;
+                                        y: 10px;
+                                        fit: contain;
+                                        radius: w.agent ? 8px : 0px;
+                                    }
+                                    if w.icon == "": Rectangle {
+                                        x: 0px;
+                                        y: 10px;
+                                        width: 30px;
+                                        height: 30px;
+                                        border-radius: 8px;
+                                        background: Theme.panel2;
+                                        Text { text: w.label.character-count > 0 ? "•" : ""; color: Theme.muted; }
+                                    }
+                                }
+                                T { text: w.label; width: 150px; font-weight: 700; font-size: 15px; }
+                                VerticalLayout {
+                                    alignment: center;
+                                    Bar { value: w.value; thick: 6px; }
+                                }
+                                Small { text: w.kills; width: 130px; font-size: 13.5px; }
+                                Num { text: w.part; width: 52px; font-size: 14px; color: Theme.muted; horizontal-alignment: right; }
+                            }
+                        }
+                    }
+                    if !Data.vprofile.ids-loading && Data.vprofile.empty == "" && (Data.vprofile.tab == "agents" || Data.vprofile.tab == "cartes"): Table {
+                        cols: Data.vprofile.cols;
+                        rows: Data.vprofile.table;
+                        row-height: 48px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component VMatchView {
+    Page {
+        if Data.vmatch.error != "": Empty { text: Data.vmatch.error; }
+        if Data.vmatch.loading && Data.vmatch.error == "": Skeleton { rows: 10; }
+        if !Data.vmatch.loading && Data.vmatch.error == "": VerticalLayout {
+            spacing: 16px;
+            Rectangle {
+                height: 170px;
+                border-radius: 18px;
+                border-width: 1px;
+                border-color: Theme.line-soft;
+                background: Theme.panel;
+                clip: true;
+                Pic { url: Data.vmatch.splash; }
+                Rectangle { background: @linear-gradient(90deg, #0e1220 25%, #0b0f17aa 60%, #0b0f1733 100%); }
+                VerticalLayout {
+                    padding-left: 28px;
+                    alignment: center;
+                    spacing: 14px;
+                    HorizontalLayout {
+                        spacing: 10px;
+                        alignment: start;
+                        Text { text: Data.vmatch.map; font-family: Theme.num; font-weight: 700; font-size: 32px; color: Theme.text; }
+                        Text { text: Data.vmatch.queue; font-family: Theme.num; font-size: 32px; color: Theme.muted; }
+                    }
+                    HorizontalLayout {
+                        spacing: 30px;
+                        alignment: start;
+                        for s in Data.vmatch.quick: StatBox { s: s; }
+                    }
+                }
+            }
+            if Data.vmatch.has-rounds: Card {
+                min-height: rc.preferred-height;
+                rc := VerticalLayout {
+                    padding: 16px;
+                    spacing: 10px;
+                    CardTitle { text: "Manches"; }
+                    HorizontalLayout {
+                        spacing: 4px;
+                        alignment: start;
+                        for r in Data.vmatch.rounds: HorizontalLayout {
+                            spacing: 0px;
+                            VerticalLayout {
+                                spacing: 4px;
+                                width: 38px;
+                                alignment: start;
+                                HorizontalLayout {
+                                    alignment: center;
+                                    Rectangle {
+                                        width: 26px;
+                                        height: 26px;
+                                        border-radius: 6px;
+                                        background: r.won ? #2fd3b533 : #f0506e2e;
+                                        border-width: r.selected ? 2px : rb.hover ? 1px : 0px;
+                                        border-color: r.selected ? Theme.accent : #ffffff40;
+                                        transform-scale: rb.down && !Motion.reduced ? 0.94 : 1;
+                                        animate transform-scale { duration: Motion.xfast; }
+                                        rb := Press {
+                                            ring-radius: 6px;
+                                            clicked => { Act.act(r.key); }
+                                        }
+                                        Text {
+                                            text: r.label;
+                                            font-family: Theme.num;
+                                            font-weight: 700;
+                                            font-size: 11px;
+                                            color: r.won ? Theme.teal : #ff6b7d;
+                                        }
+                                    }
+                                }
+                                Text {
+                                    text: r.eco;
+                                    font-size: 9.5px;
+                                    font-weight: 600;
+                                    horizontal-alignment: center;
+                                    overflow: elide;
+                                    color: r.eco-tone == 1 ? Theme.text : r.eco-tone == 2 ? #c9a95b : Theme.muted;
+                                }
+                            }
+                            if r.half: Rectangle {
+                                width: 13px;
+                                Rectangle {
+                                    x: 6px;
+                                    width: 1px;
+                                    background: #ffffff14;
+                                }
+                            }
+                        }
+                    }
+                    if !Data.vmatch.selected: Small { text: "Clique sur une manche pour voir ses éliminations."; font-size: 13px; }
+                    if Data.vmatch.selected: VerticalLayout {
+                        spacing: 8px;
+                        padding-top: 10px;
+                        HorizontalLayout {
+                            spacing: 16px;
+                            alignment: start;
+                            Num { text: Data.vmatch.detail-title; font-size: 17px; color: Data.vmatch.detail-won ? Theme.teal : Theme.loss; }
+                            Small { text: Data.vmatch.detail-result; font-size: 13.5px; }
+                            Small { text: Data.vmatch.detail-eco; font-size: 13.5px; }
+                        }
+                        if Data.vmatch.spike != "": Text { text: Data.vmatch.spike; font-size: 14px; color: Theme.muted; wrap: word-wrap; }
+                        if Data.vmatch.kills.length == 0: Small { text: "Aucune élimination dans cette manche."; font-size: 14px; }
+                        for k in Data.vmatch.kills: Rectangle {
+                            height: 36px;
+                            border-radius: 9px;
+                            background: #ffffff06;
+                            HorizontalLayout {
+                                padding-left: 8px;
+                                padding-right: 8px;
+                                spacing: 12px;
+                                Num { text: k.time; width: 52px; font-size: 14px; color: Theme.muted; }
+                                HorizontalLayout {
+                                    spacing: 8px;
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Pic { url: k.killer-icon; width: 26px; height: 26px; radius: 7px; back: Theme.panel2; }
+                                    }
+                                    T { text: k.killer; font-weight: 600; color: k.killer-ally ? Theme.teal : Theme.loss; }
+                                }
+                                Rectangle {
+                                    width: 120px;
+                                    if k.weapon-icon != "": Pic { url: k.weapon-icon; width: 110px; height: 22px; fit: contain; }
+                                    if k.weapon-icon == "": Small { text: k.weapon-text; horizontal-alignment: center; }
+                                }
+                                HorizontalLayout {
+                                    spacing: 8px;
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Pic { url: k.victim-icon; width: 26px; height: 26px; radius: 7px; back: Theme.panel2; }
+                                    }
+                                    T { text: k.victim; font-weight: 600; color: k.victim-ally ? Theme.teal : Theme.loss; }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Card {
+                VerticalLayout {
+                    padding: 12px;
+                    Table {
+                        framed: false;
+                        cols: Data.vmatch.cols;
+                        rows: Data.vmatch.rows;
+                        row-height: 50px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+component VLiveRowView {
+    in property <VLiveRow> p;
+    height: 68px;
+    Rectangle {
+        border-radius: 12px;
+        background: root.p.me ? Theme.accent.transparentize(0.91) : lp.hover ? #ffffff0a : transparent;
+        animate background { duration: Motion.xfast; }
+        if root.p.in-party: Rectangle {
+            x: 0px;
+            y: 10px;
+            width: 3px;
+            height: parent.height - 20px;
+            border-radius: 2px;
+            background: root.p.party-color;
+        }
+        lp := Press {
+            enabled: !root.p.hidden;
+            ring-radius: 12px;
+            clicked => { Act.act("go:" + root.p.route); }
+        }
+        HorizontalLayout {
+            padding-left: 10px;
+            padding-right: 10px;
+            spacing: 12px;
+            VerticalLayout {
+                alignment: center;
+                width: 58px;
+                Rectangle {
+                    width: 52px;
+                    height: 52px;
+                    Pic {
+                        url: root.p.face;
+                        radius: 12px;
+                        back: Theme.panel2;
+                        dim: root.p.hover ? 0.4 : 1;
+                    }
+                    if root.p.role-icon != "": Rectangle {
+                        x: 37px;
+                        y: 37px;
+                        width: 20px;
+                        height: 20px;
+                        border-radius: 10px;
+                        background: Theme.bg;
+                        Pic {
+                            url: root.p.role-icon;
+                            width: 14px;
+                            height: 14px;
+                            fit: contain;
+                        }
+                    }
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                spacing: 2px;
+                horizontal-stretch: 1;
+                min-width: 80px;
+                HorizontalLayout {
+                    spacing: 2px;
+                    alignment: start;
+                    T { text: root.p.name; font-weight: 700; }
+                    if root.p.tag != "": Small { text: "#" + root.p.tag; }
+                }
+                HorizontalLayout {
+                    spacing: 8px;
+                    alignment: start;
+                    Small { text: root.p.sub; font-size: 13px; }
+                    if root.p.party != "": VerticalLayout { alignment: center; Em { text: root.p.party; fg: root.p.party-color; } }
+                    if root.p.locked: VerticalLayout { alignment: center; Em { text: "Verrouillé"; fg: Theme.teal; } }
+                    if root.p.level != "": Small { text: root.p.level; font-size: 13px; }
+                }
+            }
+            HorizontalLayout {
+                width: 190px;
+                spacing: 9px;
+                if !root.p.loaded: Small { text: "…"; }
+                if root.p.loaded && root.p.rank-icon != "": VerticalLayout {
+                    alignment: center;
+                    Pic { url: root.p.rank-icon; width: 36px; height: 36px; fit: contain; }
+                }
+                if root.p.loaded && root.p.rank-icon == "": VerticalLayout {
+                    alignment: center;
+                    Rectangle { width: 32px; height: 32px; border-radius: 16px; background: Theme.panel2; }
+                }
+                if root.p.loaded: VerticalLayout {
+                    alignment: center;
+                    Num { text: root.p.rank; font-size: 14.5px; color: root.p.rank-color; }
+                    Small { text: root.p.peak; }
+                }
+            }
+            VerticalLayout {
+                width: 74px;
+                alignment: center;
+                Num { text: root.p.wr; font-size: 17px; color: Theme.tone(root.p.wr-tone); horizontal-alignment: center; }
+                Small { text: root.p.games; horizontal-alignment: center; }
+            }
+            VerticalLayout {
+                width: 92px;
+                alignment: center;
+                spacing: 2px;
+                if root.p.form.length > 0: HorizontalLayout {
+                    spacing: 3px;
+                    alignment: center;
+                    for x in root.p.form: Rectangle {
+                        width: 10px;
+                        height: 10px;
+                        border-radius: 3px;
+                        background: x > 0 ? Theme.teal : x < 0 ? Theme.loss : Theme.panel2;
+                    }
+                }
+                Num { text: root.p.net; font-size: 13px; color: Theme.tone(root.p.net-tone); horizontal-alignment: center; }
+            }
+        }
+    }
+}
+
+export component VLiveView {
+    Page {
+        if Data.notice-title != "": VerticalLayout {
+            padding-bottom: 22px;
+            Notice { title: Data.notice-title; text: Data.notice-text; }
+        }
+        if Data.vlive.waiting: WaitPanel {
+            status: Data.vlive.status;
+            title: "Lance une file dans VALORANT";
+            text: "Kairo suit la partie depuis le client Riot, de la sélection des agents à la fin du match.";
+            btn1: "Voir mon profil";
+            key1: "go:v-profil";
+            btn2: "Tier list des agents";
+            key2: "go:v-agents";
+            steps: [
+                { title: "Sélection des agents", text: "Rang, winrate de l'acte, forme récente et groupes de ton équipe." },
+                { title: "En partie", text: "Les mêmes infos pour les adversaires, avec leur rang moyen. Les joueurs masqués le restent." },
+                { title: "Après le match", text: "RR gagnés, détail des manches et tableau des scores dans ton profil." },
+            ];
+        }
+        if !Data.vlive.waiting: VerticalLayout {
+            spacing: 16px;
+            Rectangle {
+                height: 170px;
+                border-radius: 18px;
+                border-width: 1px;
+                border-color: Theme.line-soft;
+                background: Theme.panel;
+                clip: true;
+                Pic { url: Data.vlive.splash; }
+                Rectangle { background: @linear-gradient(90deg, #0e1220 25%, #0e1220a6 60%, #0e122000 100%); }
+                VerticalLayout {
+                    padding-left: 28px;
+                    alignment: center;
+                    spacing: 8px;
+                    HorizontalLayout {
+                        alignment: start;
+                        Rectangle {
+                            min-width: ph.preferred-width;
+                            height: 26px;
+                            border-radius: 5px;
+                            background: #ffffff14;
+                            ph := HorizontalLayout {
+                                padding-left: 9px;
+                                padding-right: 11px;
+                                spacing: 7px;
+                                VerticalLayout {
+                                    alignment: center;
+                                    Rectangle {
+                                        width: 7px;
+                                        height: 7px;
+                                        border-radius: 4px;
+                                        background: Data.vlive.pre ? Theme.accent : Theme.teal;
+                                    }
+                                }
+                                Text { text: Data.vlive.phase; font-size: 12.5px; font-weight: 700; color: Theme.text; vertical-alignment: center; }
+                            }
+                        }
+                    }
+                    HorizontalLayout {
+                        spacing: 10px;
+                        alignment: start;
+                        Text { text: Data.vlive.map; font-family: Theme.num; font-weight: 700; font-size: 32px; color: Theme.text; }
+                        Text { text: Data.vlive.queue; font-family: Theme.num; font-size: 32px; color: Theme.muted; }
+                    }
+                    Small { text: Data.vlive.text; }
+                }
+            }
+            for team in Data.vlive.teams: Card {
+                min-height: tc.preferred-height;
+                Rectangle {
+                    x: 0px;
+                    width: 3px;
+                    y: 12px;
+                    height: parent.height - 24px;
+                    background: team.mine ? Theme.teal : Theme.loss;
+                }
+                tc := VerticalLayout {
+                    padding: 16px;
+                    padding-bottom: 10px;
+                    spacing: 4px;
+                    HorizontalLayout {
+                        spacing: 12px;
+                        height: 30px;
+                        Text { text: team.title; font-weight: 600; font-size: 17px; color: Theme.text; vertical-alignment: center; horizontal-stretch: 0; }
+                        for c in team.parties: VerticalLayout { alignment: center; ChipView { c: c; } }
+                        Rectangle { horizontal-stretch: 1; }
+                        if team.avg != "": HorizontalLayout {
+                            spacing: 6px;
+                            horizontal-stretch: 0;
+                            VerticalLayout {
+                                alignment: center;
+                                Pic { url: team.avg-icon; width: 24px; height: 24px; fit: contain; }
+                            }
+                            Small { text: "Rang moyen"; font-size: 13px; }
+                            Num { text: team.avg; font-size: 14px; color: team.avg-color; }
+                        }
+                    }
+                    for p[i] in team.rows: Reveal {
+                        index: i;
+                        min-height: 68px;
+                        VLiveRowView { p: p; }
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component VAgentsView {
+    Page {
+        if Data.notice-title != "": VerticalLayout {
+            padding-bottom: 22px;
+            Notice { title: Data.notice-title; text: Data.notice-text; }
+        }
+        PageHead {
+            title: "Agents";
+            sub: Data.vagents.sub;
+            text: "Statistiques mondiales fournies par OP.GG. Le tier est calculé sur le winrate : les 15 % meilleurs agents sont en S. La part des choix indique la proportion de joueurs qui prennent l'agent.";
+        }
+        if Data.vagents.error != "": Empty { title: "OP.GG ne répond pas"; text: Data.vagents.error; }
+        if Data.vagents.loading && Data.vagents.error == "": Skeleton { rows: 10; row-height: 56px; }
+        if !Data.vagents.loading && Data.vagents.error == "": VerticalLayout {
+            spacing: 16px;
+            HorizontalLayout {
+                alignment: start;
+                Seg { options: Data.vagents.roles; }
+            }
+            Table {
+                cols: Data.vagents.cols;
+                rows: Data.vagents.rows;
+            }
+        }
+    }
+}

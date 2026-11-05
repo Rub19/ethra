@@ -1,0 +1,1060 @@
+import { ScrollView } from "std-widgets.slint";
+import "../assets/fonts/Barlow-Regular.ttf";
+import "../assets/fonts/Barlow-Medium.ttf";
+import "../assets/fonts/Barlow-SemiBold.ttf";
+import "../assets/fonts/Barlow-Bold.ttf";
+import "../assets/fonts/BarlowSemiCondensed-Medium.ttf";
+import "../assets/fonts/BarlowSemiCondensed-SemiBold.ttf";
+import "../assets/fonts/BarlowSemiCondensed-Bold.ttf";
+
+export global Api {
+    in property <int> rev;
+    pure callback img(string, int) -> image;
+}
+
+export global Act {
+    callback act(string);
+}
+
+export global Motion {
+    in property <bool> reduced;
+    in property <bool> keyboard;
+    out property <bool> still: reduced || keyboard;
+    out property <duration> xfast: still ? 0ms : 120ms;
+    out property <duration> fast: still ? 0ms : 160ms;
+    out property <duration> normal: still ? 0ms : 200ms;
+    out property <duration> slow: still ? 0ms : 280ms;
+    out property <length> rise: still ? 0px : 6px;
+}
+
+export global Theme {
+    in property <string> game: "lol";
+    out property <color> bg: #0e1220;
+    out property <color> panel: #151a2a;
+    out property <color> panel2: #1c2236;
+    out property <color> line: #262d44;
+    out property <color> line-soft: #ffffff0e;
+    out property <color> text: #eef0f7;
+    out property <color> muted: #8b93ab;
+    out property <color> teal: #2fd3b5;
+    out property <color> loss: #f0506e;
+    out property <color> bad-soft: #ff6b7d;
+    out property <color> accent: game == "valo" ? #ff4655 : game == "tft" ? #b48cff : #e3b34c;
+    out property <color> on-accent: game == "valo" ? #ffffff : game == "tft" ? #170c2b : #1a1405;
+    out property <string> num: "Barlow Semi Condensed";
+    pure public function tone(t: int) -> color {
+        if (t == 1) { return teal; }
+        if (t == 2) { return loss; }
+        if (t == 3) { return accent; }
+        if (t == 4) { return muted; }
+        return text;
+    }
+}
+
+export struct Opt { key: string, label: string, icon: string, on: bool, sub: string }
+export struct Stat { value: string, label: string, tone: int }
+export struct Badge { text: string, gold: bool }
+export struct Perf { icon: string, title: string, sub: string, right: string, right-sub: string, tone: int, route: string }
+export struct RankRow { emblem: string, has: bool, label: string, value: string, color: color, sub: string }
+export struct Cell { text: string, sub: string, icon: string, tone: int, bar: float, icons: [string], kind: int, key: string, on: bool, color: color, use-color: bool }
+export struct Col { label: string, px: length, sort: string, active: bool, desc: bool }
+export struct TRow { cells: [Cell], route: string, me: bool, header: bool }
+export struct Chip { text: string, tone: int, pill: bool }
+
+export component Press {
+    in property <bool> enabled: true;
+    in property <MouseCursor> cursor: pointer;
+    in property <length> ring-radius: 8px;
+    callback clicked;
+    out property <bool> hover: ta.has-hover && enabled;
+    out property <bool> down: ta.pressed && enabled;
+    out property <bool> focused: fs.has-focus;
+    fs := FocusScope {
+        enabled: root.enabled;
+        key-pressed(e) => {
+            if (e.text == Key.Return || e.text == " ") {
+                root.clicked();
+                return accept;
+            }
+            return reject;
+        }
+        ta := TouchArea {
+            enabled: root.enabled;
+            mouse-cursor: root.enabled ? root.cursor : default;
+            clicked => {
+                fs.focus();
+                root.clicked();
+            }
+        }
+    }
+    if fs.has-focus && Motion.keyboard: Rectangle {
+        border-width: 2px;
+        border-color: Theme.accent;
+        border-radius: root.ring-radius;
+    }
+}
+
+export component Pic {
+    in property <string> url;
+    in property <length> radius: 0px;
+    in property <image-fit> fit: cover;
+    in property <color> back: transparent;
+    in property <float> dim: 1;
+    in property <bool> gray: false;
+    preferred-width: 32px;
+    preferred-height: 32px;
+    Rectangle {
+        background: root.back;
+        border-radius: root.radius;
+        clip: root.radius > 0px;
+        im := Image {
+            width: 100%;
+            height: 100%;
+            source: root.url == "" ? @image-url("") : Api.img(root.url, Api.rev);
+            image-fit: root.fit;
+            colorize: root.gray ? #8b93ab : transparent;
+            opacity: self.source.width > 0 ? root.dim : 0;
+            animate opacity { duration: Motion.fast; easing: ease-out; }
+        }
+    }
+}
+
+export component T inherits Text {
+    color: Theme.text;
+    vertical-alignment: center;
+    overflow: elide;
+}
+
+export component Small inherits Text {
+    color: Theme.muted;
+    font-size: 12px;
+    vertical-alignment: center;
+    overflow: elide;
+}
+
+export component Num inherits Text {
+    font-family: Theme.num;
+    font-weight: 600;
+    color: Theme.text;
+    vertical-alignment: center;
+    overflow: elide;
+}
+
+export component Reveal {
+    in property <int> index: 0;
+    in property <bool> rise: true;
+    property <bool> shown;
+    init => { shown = true; }
+    Rectangle {
+        y: root.shown ? 0px : (root.rise ? Motion.rise : 0px);
+        opacity: root.shown ? 1 : 0;
+        width: 100%;
+        height: 100%;
+        animate y { duration: Motion.slow; delay: Motion.still ? 0ms : min(root.index, 7) * 25ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+        animate opacity { duration: Motion.normal; delay: Motion.still ? 0ms : min(root.index, 7) * 25ms; easing: ease-out; }
+        @children
+    }
+}
+
+export component Card inherits Rectangle {
+    background: Theme.panel;
+    border-width: 1px;
+    border-color: Theme.line-soft;
+    border-radius: 16px;
+}
+
+export component CardTitle inherits Text {
+    color: Theme.text;
+    font-size: 14.5px;
+    font-weight: 600;
+    vertical-alignment: center;
+    overflow: elide;
+}
+
+export component Ghost {
+    in property <string> label;
+    in property <bool> enabled: true;
+    in property <bool> armed: false;
+    callback clicked;
+    min-width: lb.preferred-width + 28px;
+    min-height: 36px;
+    max-height: 36px;
+    horizontal-stretch: 0;
+    Rectangle {
+        border-radius: 10px;
+        border-width: 1px;
+        border-color: root.armed ? Theme.loss : p.hover ? Theme.accent : Theme.line;
+        background: #0e1220aa;
+        opacity: root.enabled ? 1 : 0.45;
+        animate border-color { duration: Motion.fast; }
+        transform-scale: p.down && !Motion.reduced ? 0.97 : 1;
+        animate transform-scale { duration: Motion.xfast; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+        p := Press {
+            enabled: root.enabled;
+            ring-radius: 10px;
+            clicked => { root.clicked(); }
+        }
+        lb := T {
+            text: root.label;
+            color: root.armed ? Theme.loss : Theme.text;
+            horizontal-alignment: center;
+            font-size: 14px;
+        }
+    }
+}
+
+export component Primary {
+    in property <string> label;
+    in property <bool> enabled: true;
+    callback clicked;
+    min-width: lb.preferred-width + 28px;
+    min-height: 36px;
+    max-height: 36px;
+    horizontal-stretch: 0;
+    Rectangle {
+        border-radius: 10px;
+        background: p.hover ? Theme.accent.brighter(0.08) : Theme.accent;
+        opacity: root.enabled ? 1 : 0.4;
+        animate background { duration: Motion.fast; }
+        transform-scale: p.down && !Motion.reduced ? 0.97 : 1;
+        animate transform-scale { duration: Motion.xfast; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+        p := Press {
+            enabled: root.enabled;
+            ring-radius: 10px;
+            clicked => { root.clicked(); }
+        }
+        lb := Text {
+            text: root.label;
+            color: Theme.on-accent;
+            font-weight: 700;
+            font-size: 14px;
+            vertical-alignment: center;
+            horizontal-alignment: center;
+        }
+    }
+}
+
+export component LinkBtn {
+    in property <string> label;
+    callback clicked;
+    min-width: lb.preferred-width;
+    min-height: lb.preferred-height;
+    horizontal-stretch: 0;
+    p := Press {
+        clicked => { root.clicked(); }
+    }
+    lb := T {
+        text: root.label;
+        font-size: 13px;
+        font-weight: 600;
+        color: p.hover ? Theme.accent : Theme.text;
+        animate color { duration: Motion.xfast; }
+    }
+}
+
+component SegItem {
+    in property <Opt> o;
+    in property <length> fsize: 14px;
+    in property <length> pad: 12px;
+    min-width: row.preferred-width + 2 * pad;
+    Rectangle {
+        border-radius: 9px;
+        background: root.o.on ? Theme.text : p.hover ? #ffffff0f : transparent;
+        animate background { duration: Motion.fast; easing: ease-out; }
+        transform-scale: p.down && !Motion.reduced ? 0.97 : 1;
+        animate transform-scale { duration: Motion.xfast; }
+        p := Press {
+            ring-radius: 9px;
+            clicked => { Act.act(root.o.key); }
+        }
+        row := HorizontalLayout {
+            alignment: center;
+            spacing: 6px;
+            if root.o.icon != "": Pic {
+                url: root.o.icon;
+                width: 16px;
+                height: 16px;
+                y: (parent.height - 16px) / 2;
+                fit: contain;
+                dim: root.o.on ? 1 : 0.75;
+            }
+            Text {
+                text: root.o.label;
+                font-size: root.fsize;
+                font-weight: root.o.on ? 600 : 400;
+                color: root.o.on ? Theme.bg : p.hover ? Theme.text : Theme.muted;
+                vertical-alignment: center;
+                animate color { duration: Motion.fast; }
+            }
+        }
+    }
+}
+
+export component Seg {
+    in property <[Opt]> options;
+    in property <length> fsize: 14px;
+    in property <length> pad: 12px;
+    min-height: 36px;
+    max-height: 36px;
+    horizontal-stretch: 0;
+    Rectangle {
+        background: #ffffff0a;
+        border-width: 1px;
+        border-color: Theme.line-soft;
+        border-radius: 12px;
+        HorizontalLayout {
+            padding: 3px;
+            spacing: 2px;
+            for o in root.options: SegItem {
+                o: o;
+                fsize: root.fsize;
+                pad: root.pad;
+            }
+        }
+    }
+}
+
+export component Select {
+    in property <[Opt]> options;
+    in property <string> label;
+    in property <length> list-width: 240px;
+    min-height: 34px;
+    max-height: 34px;
+    min-width: 150px;
+    Rectangle {
+        background: Theme.panel2;
+        border-width: 1px;
+        border-color: p.hover ? Theme.accent : Theme.line;
+        border-radius: 10px;
+        animate border-color { duration: Motion.fast; }
+        p := Press {
+            ring-radius: 10px;
+            clicked => { pop.show(); }
+        }
+        HorizontalLayout {
+            padding-left: 10px;
+            padding-right: 10px;
+            spacing: 6px;
+            T {
+                text: root.label;
+                font-size: 13.5px;
+            }
+            Text {
+                text: "▾";
+                color: Theme.muted;
+                font-size: 10px;
+                vertical-alignment: center;
+                horizontal-stretch: 0;
+            }
+        }
+    }
+    pop := PopupWindow {
+        x: 0px;
+        y: root.height + 4px;
+        width: root.list-width;
+        height: min(320px, root.options.length * 32px + 12px);
+        Rectangle {
+            background: Theme.panel;
+            border-width: 1px;
+            border-color: Theme.line;
+            border-radius: 10px;
+            clip: true;
+            ScrollView {
+                viewport-height: list.preferred-height;
+                viewport-width: self.visible-width;
+                list := VerticalLayout {
+                    padding: 6px;
+                    width: root.list-width - 2px;
+                    for o in root.options: Rectangle {
+                        height: 32px;
+                        border-radius: 7px;
+                        background: ip.hover ? Theme.panel2 : transparent;
+                        ip := Press {
+                            clicked => {
+                                pop.close();
+                                Act.act(o.key);
+                            }
+                        }
+                        HorizontalLayout {
+                            padding-left: 8px;
+                            padding-right: 8px;
+                            T {
+                                text: o.label;
+                                font-size: 13.5px;
+                                color: o.on ? Theme.accent : Theme.text;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component Switch {
+    in property <bool> on;
+    in property <string> key;
+    width: 40px;
+    height: 22px;
+    Rectangle {
+        border-radius: 11px;
+        background: root.on ? #2fd3b533 : Theme.panel2;
+        border-width: 1px;
+        border-color: root.on ? Theme.teal : Theme.line;
+        animate background, border-color { duration: Motion.fast; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+        Rectangle {
+            x: root.on ? 20px : 2px;
+            width: 16px;
+            height: 16px;
+            y: 2px;
+            border-radius: 8px;
+            background: root.on ? Theme.teal : Theme.muted;
+            animate x, background { duration: Motion.fast; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+        }
+    }
+}
+
+export component Toggle {
+    in property <string> title;
+    in property <string> help;
+    in property <string> key;
+    in property <bool> on;
+    in property <bool> sep: true;
+    min-height: col.preferred-height + 24px;
+    p := Press {
+        clicked => { Act.act(root.key); }
+    }
+    HorizontalLayout {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        spacing: 16px;
+        col := VerticalLayout {
+            spacing: 2px;
+            alignment: center;
+            Text {
+                text: root.title;
+                color: Theme.text;
+                font-weight: 600;
+                wrap: word-wrap;
+            }
+            Small {
+                text: root.help;
+                wrap: word-wrap;
+                overflow: clip;
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            horizontal-stretch: 0;
+            Switch { on: root.on; }
+        }
+    }
+    if root.sep: Rectangle {
+        y: root.height - 1px;
+        height: 1px;
+        background: Theme.line-soft;
+    }
+}
+
+export component AutoSwitch {
+    in property <string> label;
+    in property <string> key;
+    in property <bool> on;
+    min-width: row.preferred-width;
+    height: 26px;
+    horizontal-stretch: 0;
+    Rectangle {
+        border-radius: 13px;
+        border-width: 1px;
+        border-color: root.on ? #3ddc9755 : Theme.line;
+        background: Theme.panel2;
+        p := Press {
+            clicked => { Act.act(root.key); }
+        }
+        row := HorizontalLayout {
+            padding-left: 10px;
+            padding-right: 4px;
+            spacing: 8px;
+            Text {
+                text: root.label;
+                font-size: 12px;
+                font-weight: 600;
+                color: root.on ? #3ddc97 : Theme.muted;
+                vertical-alignment: center;
+            }
+            Rectangle {
+                width: 30px;
+                height: 16px;
+                y: 5px;
+                border-radius: 8px;
+                background: root.on ? #3ddc9733 : #ffffff1a;
+                animate background { duration: Motion.fast; }
+                Rectangle {
+                    x: root.on ? 16px : 2px;
+                    y: 2px;
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 6px;
+                    background: root.on ? #3ddc97 : Theme.muted;
+                    animate x, background { duration: Motion.fast; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+                }
+            }
+        }
+    }
+}
+
+export component Bar {
+    in property <float> value;
+    in property <color> fill: Theme.accent;
+    in property <color> track: #ffffff12;
+    in property <length> thick: 5px;
+    property <bool> shown;
+    init => { shown = true; }
+    height: thick;
+    Rectangle {
+        background: root.track;
+        border-radius: root.thick / 2;
+        clip: true;
+        Rectangle {
+            x: 0px;
+            height: 100%;
+            width: parent.width * (root.shown ? clamp(root.value, 0, 1) : 0.02);
+            background: root.fill;
+            border-radius: root.thick / 2;
+            animate width { duration: Motion.slow; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+        }
+    }
+}
+
+export component Strip {
+    in property <[bool]> items;
+    in property <length> item-width: 10px;
+    in property <Alignment> align: start;
+    height: 6px;
+    HorizontalLayout {
+        alignment: root.align;
+        spacing: 3px;
+        for w[i] in root.items: Reveal {
+            index: i;
+            rise: false;
+            width: root.item-width;
+            Rectangle {
+                border-radius: 3px;
+                background: w ? Theme.teal : Theme.loss;
+            }
+        }
+    }
+}
+
+export component StatBox {
+    in property <Stat> s;
+    in property <length> size: 20px;
+    in property <TextHorizontalAlignment> align: left;
+    VerticalLayout {
+        spacing: 1px;
+        Num {
+            text: root.s.value;
+            font-size: root.size;
+            color: Theme.tone(root.s.tone);
+            horizontal-alignment: root.align;
+        }
+        Small {
+            text: root.s.label;
+            horizontal-alignment: root.align;
+        }
+    }
+}
+
+export component BadgeView {
+    in property <Badge> b;
+    min-width: lb.preferred-width + 16px;
+    height: 22px;
+    horizontal-stretch: 0;
+    Rectangle {
+        border-radius: 5px;
+        background: root.b.gold ? Theme.accent.transparentize(0.9) : Theme.panel2;
+        lb := Text {
+            text: root.b.text;
+            font-size: 11px;
+            color: root.b.gold ? Theme.accent : Theme.text;
+            vertical-alignment: center;
+            horizontal-alignment: center;
+        }
+    }
+}
+
+export component ChipView {
+    in property <Chip> c;
+    min-width: lb.preferred-width + 20px;
+    height: 24px;
+    horizontal-stretch: 0;
+    Rectangle {
+        border-radius: 5px;
+        background: root.c.pill ? Theme.accent.transparentize(0.92) : Theme.panel2;
+        lb := Text {
+            text: root.c.text;
+            font-size: 12px;
+            color: root.c.pill ? Theme.accent : Theme.tone(root.c.tone);
+            vertical-alignment: center;
+            horizontal-alignment: center;
+        }
+    }
+}
+
+export component RankView {
+    in property <RankRow> r;
+    min-height: 60px;
+    HorizontalLayout {
+        spacing: 12px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        Rectangle {
+            width: 44px;
+            if root.r.has: Pic {
+                url: root.r.emblem;
+                width: 44px;
+                height: 44px;
+                fit: contain;
+            }
+            if !root.r.has: Rectangle {
+                width: 38px;
+                height: 38px;
+                border-radius: 19px;
+                background: Theme.panel2;
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            spacing: 1px;
+            Small { text: root.r.label; }
+            Num {
+                text: root.r.value;
+                font-size: 15px;
+                color: root.r.color;
+            }
+            if root.r.sub != "": Small { text: root.r.sub; }
+        }
+    }
+}
+
+export component PerfRow {
+    in property <Perf> f;
+    min-height: 44px;
+    Rectangle {
+        border-radius: 8px;
+        if root.f.route != "": p := Press {
+            ring-radius: 8px;
+            clicked => { Act.act("go:" + root.f.route); }
+        }
+        HorizontalLayout {
+            spacing: 10px;
+            padding-top: 4px;
+            padding-bottom: 4px;
+            Pic {
+                url: root.f.icon;
+                width: 34px;
+                height: 34px;
+                radius: 8px;
+                back: Theme.panel2;
+            }
+            VerticalLayout {
+                alignment: center;
+                T {
+                    text: root.f.title;
+                    font-weight: 600;
+                    font-size: 14px;
+                }
+                Small { text: root.f.sub; }
+            }
+            VerticalLayout {
+                alignment: center;
+                horizontal-stretch: 0;
+                Num {
+                    text: root.f.right;
+                    font-size: 15px;
+                    color: Theme.tone(root.f.tone);
+                    horizontal-alignment: right;
+                }
+                Small {
+                    text: root.f.right-sub;
+                    horizontal-alignment: right;
+                }
+            }
+        }
+    }
+}
+
+component CellView {
+    in property <Cell> c;
+    in property <bool> center;
+    in property <bool> head;
+    HorizontalLayout {
+        alignment: root.center ? center : start;
+        spacing: 8px;
+        padding-left: 8px;
+        padding-right: 8px;
+        if root.c.kind == 0 && root.c.icon != "": VerticalLayout {
+            alignment: center;
+            Pic {
+                url: root.c.icon;
+                width: 32px;
+                height: 32px;
+                radius: 8px;
+                back: Theme.panel2;
+            }
+        }
+        if root.c.kind == 0: VerticalLayout {
+            alignment: center;
+            spacing: 2px;
+            Text {
+                text: root.c.text;
+                font-family: Theme.num;
+                font-size: 15px;
+                font-weight: root.c.on ? 700 : 500;
+                color: root.c.use-color ? root.c.color : Theme.tone(root.c.tone);
+                overflow: elide;
+                horizontal-alignment: root.center ? center : left;
+            }
+            if root.c.sub != "": Small {
+                text: root.c.sub;
+                horizontal-alignment: root.center ? center : left;
+            }
+            if root.c.bar >= 0: Bar {
+                value: root.c.bar;
+                thick: 4px;
+                fill: root.c.use-color ? root.c.color : Theme.accent;
+            }
+        }
+        if root.c.kind == 1: VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 30px;
+                height: 24px;
+                border-radius: 6px;
+                background: root.c.tone == 1 ? Theme.accent.transparentize(0.85) : root.c.tone == 2 ? Theme.teal.transparentize(0.85) : root.c.tone == 3 ? #4c6fff26 : Theme.panel2;
+                Text {
+                    text: root.c.text;
+                    font-family: Theme.num;
+                    font-weight: 700;
+                    font-size: 13px;
+                    color: root.c.tone == 1 ? Theme.accent : root.c.tone == 2 ? Theme.teal : root.c.tone == 3 ? #8fa6ff : Theme.muted;
+                }
+            }
+        }
+        if root.c.kind == 2: HorizontalLayout {
+            alignment: center;
+            spacing: 3px;
+            for u in root.c.icons: VerticalLayout {
+                alignment: center;
+                Pic {
+                    url: u;
+                    width: 28px;
+                    height: 28px;
+                    radius: 6px;
+                    back: Theme.panel2;
+                }
+            }
+        }
+        if root.c.kind == 3: VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 26px;
+                height: 26px;
+                border-radius: 7px;
+                background: sp.hover ? #ffffff0f : transparent;
+                sp := Press {
+                    clicked => { Act.act(root.c.key); }
+                }
+                Path {
+                    width: 14px;
+                    height: 14px;
+                    viewbox-width: 24;
+                    viewbox-height: 24;
+                    commands: "M12 3.5l2.7 5.5 6 .9-4.3 4.2 1 6-5.4-2.8-5.4 2.8 1-6-4.3-4.2 6-.9z";
+                    fill: root.c.on ? Theme.accent : transparent;
+                    stroke: root.c.on ? Theme.accent : Theme.muted;
+                    stroke-width: 1.3px;
+                    transform-scale: sp.down && !Motion.reduced ? 0.82 : 1;
+                    animate transform-scale { duration: Motion.xfast; }
+                }
+            }
+        }
+        if root.c.kind == 4: VerticalLayout {
+            alignment: center;
+            HorizontalLayout {
+                spacing: 8px;
+                Pic {
+                    url: root.c.icon;
+                    width: 16px;
+                    height: 16px;
+                    y: (parent.height - 16px) / 2;
+                    fit: contain;
+                    dim: 0.75;
+                }
+                Small { text: root.c.text; font-size: 14px; }
+            }
+        }
+        if root.c.kind == 5: VerticalLayout {
+            alignment: center;
+            Pic {
+                url: root.c.icon;
+                width: 64px;
+                height: 30px;
+                radius: 6px;
+            }
+        }
+    }
+}
+
+export component Table {
+    in property <[Col]> cols;
+    in property <[TRow]> rows;
+    in property <length> row-height: 56px;
+    in property <bool> framed: true;
+    in property <bool> center-from-second: true;
+    Rectangle {
+        background: root.framed ? Theme.panel : transparent;
+        border-width: root.framed ? 1px : 0px;
+        border-color: Theme.line-soft;
+        border-radius: root.framed ? 16px : 0px;
+        clip: root.framed;
+        VerticalLayout {
+            if root.cols.length > 0: HorizontalLayout {
+                height: 40px;
+                padding-left: 6px;
+                padding-right: 6px;
+                for c in root.cols: Rectangle {
+                    min-width: c.px;
+                    max-width: c.px > 0 ? c.px : 100000px;
+                    horizontal-stretch: c.px > 0 ? 0 : 1;
+                    if c.sort != "": hp := Press {
+                        ring-radius: 6px;
+                        clicked => { Act.act(c.sort); }
+                    }
+                    Text {
+                        x: c.px > 0 ? 0px : 8px;
+                        width: c.px > 0 ? parent.width : parent.width - 8px;
+                        text: c.label + (c.active ? (c.desc ? " ▾" : " ▴") : "");
+                        font-size: 12.5px;
+                        font-weight: 600;
+                        color: c.active ? Theme.text : Theme.muted;
+                        vertical-alignment: center;
+                        horizontal-alignment: c.px > 0 ? center : left;
+                        overflow: elide;
+                    }
+                }
+            }
+            for r[ri] in root.rows: Rectangle {
+                height: r.header ? 40px : root.row-height;
+                background: r.me ? Theme.accent.transparentize(0.92) : rp.hover && r.route != "" ? Theme.panel2 : transparent;
+                animate background { duration: Motion.xfast; }
+                Rectangle {
+                    y: 0px;
+                    height: 1px;
+                    background: Theme.line-soft;
+                }
+                rp := Press {
+                    enabled: r.route != "";
+                    clicked => { Act.act("go:" + r.route); }
+                }
+                HorizontalLayout {
+                    padding-left: 6px;
+                    padding-right: 6px;
+                    for c[i] in r.cells: CellView {
+                        c: c;
+                        head: r.header;
+                        min-width: root.cols[i].px;
+                        max-width: root.cols[i].px > 0 ? root.cols[i].px : 100000px;
+                        horizontal-stretch: root.cols[i].px > 0 ? 0 : 1;
+                        center: root.cols[i].px > 0;
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component Skeleton {
+    in property <int> rows: 6;
+    in property <length> row-height: 76px;
+    property <float> pulse;
+    Timer {
+        interval: 700ms;
+        running: !Motion.reduced;
+        triggered => { root.pulse = root.pulse > 0.5 ? 0 : 1; }
+    }
+    VerticalLayout {
+        spacing: 10px;
+        alignment: start;
+        for i in root.rows: Rectangle {
+            height: root.row-height;
+            border-radius: 12px;
+            background: root.pulse > 0.5 ? Theme.panel2 : Theme.panel;
+            border-width: 1px;
+            border-color: Theme.line-soft;
+            animate background { duration: Motion.reduced ? 0ms : 700ms; easing: ease-in-out; }
+        }
+    }
+}
+
+export component Empty {
+    in property <string> title;
+    in property <string> text;
+    in property <string> button;
+    in property <string> key;
+    VerticalLayout {
+        padding: 60px;
+        spacing: 8px;
+        alignment: center;
+        if root.title != "": Text {
+            text: root.title;
+            font-family: Theme.num;
+            font-weight: 700;
+            font-size: 26px;
+            color: Theme.text;
+            horizontal-alignment: center;
+        }
+        if root.text != "": Text {
+            text: root.text;
+            color: Theme.muted;
+            wrap: word-wrap;
+            horizontal-alignment: center;
+        }
+        if root.button != "": HorizontalLayout {
+            alignment: center;
+            padding-top: 8px;
+            Primary {
+                label: root.button;
+                clicked => { Act.act(root.key); }
+            }
+        }
+    }
+}
+
+export component Notice {
+    in property <string> title;
+    in property <string> text;
+    min-height: 62px;
+    Rectangle {
+        background: Theme.panel;
+        border-width: 1px;
+        border-color: Theme.line-soft;
+        border-radius: 10px;
+        HorizontalLayout {
+            padding: 12px;
+            padding-left: 16px;
+            spacing: 14px;
+            VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 4px;
+                    background: Theme.loss;
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                Text {
+                    text: root.title;
+                    color: Theme.text;
+                    font-weight: 600;
+                    font-size: 14.5px;
+                }
+                Small {
+                    text: root.text;
+                    font-size: 13.5px;
+                }
+            }
+        }
+    }
+}
+
+export component PageHead {
+    in property <string> title;
+    in property <string> sub;
+    in property <string> text;
+    VerticalLayout {
+        spacing: 4px;
+        padding-bottom: 14px;
+        HorizontalLayout {
+            spacing: 10px;
+            alignment: start;
+            Text {
+                text: root.title;
+                font-family: Theme.num;
+                font-weight: 700;
+                font-size: 26px;
+                color: Theme.text;
+                vertical-alignment: bottom;
+            }
+            if root.sub != "": Text {
+                text: root.sub;
+                font-size: 16px;
+                color: Theme.muted;
+                vertical-alignment: bottom;
+            }
+        }
+        if root.text != "": Text {
+            text: root.text;
+            color: Theme.muted;
+            wrap: word-wrap;
+        }
+    }
+}
+
+export component SearchBox {
+    in property <string> placeholder;
+    in property <string> key;
+    in-out property <string> value;
+    in property <length> radius: 10px;
+    min-height: 36px;
+    max-height: 36px;
+    min-width: 220px;
+    Rectangle {
+        background: Theme.panel;
+        border-width: 1px;
+        border-color: ti.has-focus ? Theme.accent : Theme.line;
+        border-radius: root.radius;
+        animate border-color { duration: Motion.fast; }
+        ti := TextInput {
+            x: 12px;
+            width: parent.width - 24px;
+            vertical-alignment: center;
+            color: Theme.text;
+            selection-background-color: Theme.accent.transparentize(0.65);
+            text <=> root.value;
+            single-line: true;
+            edited => { Act.act(root.key + self.text); }
+        }
+        if ti.text == "": Text {
+            x: 12px;
+            text: root.placeholder;
+            color: Theme.muted;
+            vertical-alignment: center;
+        }
+    }
+}
+
+export component Page {
+    in property <length> max: 1560px;
+    ScrollView {
+        viewport-width: self.visible-width;
+        viewport-height: inner.preferred-height;
+        inner := VerticalLayout {
+            width: parent.visible-width;
+            padding-top: 22px;
+            padding-bottom: 40px;
+            alignment: start;
+            HorizontalLayout {
+                alignment: center;
+                VerticalLayout {
+                    width: min(root.max, root.width - 44px);
+                    alignment: start;
+                    spacing: 0px;
+                    @children
+                }
+            }
+        }
+    }
+}

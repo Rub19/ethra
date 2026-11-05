@@ -1,0 +1,154 @@
+import { Opt, Stat, Badge, Perf, RankRow, Col, TRow, Chip } from "theme.slint";
+
+export struct PlayerChip { icon: string, name: string, me: bool, route: string }
+export struct MatchRow {
+    route: string, result: int, title: string, queue: string, when: string, champ: string, level: string,
+    icons: [string], k: string, d: string, a: string, kda: string, kda-good: bool, kp: string,
+    csmin: string, dmg: string, third-v: string, third-l: string, items: [string], trinket: string,
+    badges: [Badge], team1: [PlayerChip], team2: [PlayerChip],
+}
+export struct LpPoint { x: float, y: float, tip: string }
+export struct LpData { total: string, tone: int, span: string, path: string, points: [LpPoint] }
+export struct ProfileData {
+    loading: bool, error: string, splash: string, avatar: string, level: string, name: string, tag: string, quick: [Stat],
+    sub: string, tabs: [Opt], show-filters: bool, queue-label: string, queue-opts: [Opt], champ-label: string, champ-opts: [Opt], results: [Opt],
+    show-session: bool, session-empty: bool, session: [Stat], session-strip: [bool],
+    ranks: [RankRow], has-lp: bool, lp: LpData,
+    recent-title: string, wr: float, wr-text: string, form-line: string, form-tone: int, form-strip: [bool], kda-line: string, perfs: [Perf],
+    games-loading: bool, empty-title: string, empty-filtered: bool, more: bool, pool-cols: [Col], pool-rows: [TRow],
+}
+export struct Score { k: string, v: string, value: float, grade: string, color: color }
+export struct ChartSeries { name: string, color: color, path: string, end-y: float, values: [string], ys: [float] }
+export struct AxisLabel { pos: float, text: string }
+export struct ChartData { series: [ChartSeries], yticks: [AxisLabel], xticks: [AxisLabel], len: int, mark14: float, tabs: [Opt], unit: string }
+export struct ObjTeam { title: string, mine: bool, stats: [Stat] }
+export struct ShareData { label: string, result: string, tone: int, mvp: bool, duration: string, damage: string, stats: [Stat], runes: [string], items: [string], splash: string }
+export struct MatchPage {
+    loading: bool, error: string, result: int, title: string, sub: string, champ: string, badges: [Badge], build-label: string, build-route: string,
+    share: ShareData, share-msg: string, scores: [Score], best: string, summary: string,
+    has-chart: bool, chart: ChartData, objs: [ObjTeam], cols: [Col], rows: [TRow],
+}
+export struct TierData { loading: bool, error: string, q-opts: [Opt], fav: [Opt], roles: [Opt], cols: [Col], rows: [TRow], empty-title: string, empty-text: string }
+export struct GridChamp { icon: string, name: string, sub: string, route: string }
+export struct ChampionsData { loading: bool, text: string, classes: [Opt], played: [Opt], show-table: bool, cols: [Col], rows: [TRow], grid: [GridChamp] }
+export struct RuneCell { icon: string, on: bool, name: string }
+export struct RuneSlot { runes: [RuneCell], keys: bool }
+export struct RuneTree { icon: string, name: string, slots: [RuneSlot] }
+export struct ItemStep { icon: string, arrow: bool, name: string }
+export struct IOpt { items: [ItemStep], win: string, tone: int, pick: string, best: bool }
+export struct IOptRow { label: string, rows: [[IOpt]] }
+export struct ItemsPlain { title: string, items: [ItemStep] }
+export struct SkillCell { on: bool, key: string }
+export struct SkillRow { icon: string, key: string, cells: [SkillCell] }
+export struct SkillVariant { first: string, max: string, win: string, tone: int, pick: string, on: bool, key: string }
+export struct CounterCell { icon: string, win: string, good: bool, name: string, route: string }
+export struct JungleStep { n: string, name: string, note: string, x: float, y: float, crab: bool }
+export struct JungleData { show: bool, teams: [Opt], starts: [Opt], map: string, path: string, steps: [JungleStep], text: string }
+export struct BuildsData {
+    loading: bool, none: bool, compact: bool, champ: string, name: string, tags: string, splash: string, has-stats: bool, tier: string, tier-tone: int, stats: [Stat], route: string,
+    sources: [Opt], modes: [Opt], roles: [Opt], ranks: [Opt], msg: string, can-apply: bool,
+    rune-chips: [Chip], page-name: string, trees: [RuneTree], shards: [string], auto-runes: bool, auto-spells: bool, auto-items: bool,
+    spells: [string], spell-chips: [Chip], opts: [IOptRow], plain: [ItemsPlain], riot-note: bool,
+    has-skills: bool, max-line: string, variants: [SkillVariant], skills: [SkillRow], levels: [string], jungle: JungleData,
+    has-counters: bool, weak: [CounterCell], strong: [CounterCell],
+}
+export struct PlayerCard { art: string, tags: [string], rank: string, rank-color: color, record: string, name: string, sub: string, wr: string, wr-tone: int, champ-line: string, route: string, me: bool }
+export struct DmgBar { label: string, ad: float, ap: float, ad-text: string, ap-text: string, show: bool }
+export struct LiveData { waiting: bool, title: string, show-build: bool, build-hint: bool, dmg1: DmgBar, dmg2: DmgBar, team1: [PlayerCard], team2: [PlayerCard] }
+export struct OvRow { icon: string, label: string, value: string, tone: int, bar: float }
+export struct OvWidget { title: string, rows: [OvRow] }
+export struct OvAlert { icon: string, name: string, secs: string }
+export struct OvCard { key: string, title: string, desc: string, on: bool, kind: int, widget: OvWidget, alert: OvAlert, skill-icon: string }
+export struct OverlaysData { enabled: bool, cards: [OvCard] }
+export struct KeyLine { key: string, text: string }
+export struct SetRow { title: string, help: string, btn: string, key: string, enabled: bool, armed: bool }
+export struct SettingsData {
+    general: [Opt], lol: [Opt], source-label: string, source-opts: [Opt], rank-label: string, rank-opts: [Opt],
+    seen: SetRow, keys: [KeyLine], data-rows: [SetRow], version: string, update-note: string, update-tone: int, update-url: string, update-label: string, migrated: string,
+}
+export struct TftUnitV { icon: string, name: string, stars: string, color: color, core: bool, items: [string] }
+export struct TftTraitV { icon: string, n: string, name: string, style: int }
+export struct TftDeckV { tier: string, tier-tone: int, name: string, tags: [string], stats: [Stat], units: [[TftUnitV]], traits: [[TftTraitV]] }
+export struct TftDecksData { loading: bool, error: string, sub: string, text: string, decks: [TftDeckV] }
+export struct TftRow { place: string, top: bool, queue: string, when: string, level: string, units: [TftUnitV], traits: [TftTraitV] }
+export struct TftProfileData { loading: bool, error: string, avatar: string, level: string, name: string, tag: string, quick: [Stat], rank: RankRow, games: [TftRow], empty: bool, more: string, more-enabled: bool }
+export struct VRowV {
+    id: string, route: string, state: int, result: int, title: string, queue: string, when: string, duration: string, face: string, tier: string,
+    mvp: string, multi: string, rr: string, rr-up: bool, promo: string, promo-up: bool, map: string, map-name: string, score: string, kda-k: string, kda-d: string, kda-a: string, kd: string, kd-good: bool,
+    kpr: string, adr: string, acs: string, hs: string, dm: bool, team1: [PlayerChip], team2: [PlayerChip],
+}
+export struct VWeapon { icon: string, agent: bool, label: string, kills: string, part: string, value: float }
+export struct VProfileData {
+    loading: bool, error: string, portrait: string, name: string, tag: string, can-copy: bool, quick: [Stat], rank-icon: string, rank-name: string, rank-color: color, rank-rr: string,
+    tabs: [Opt], tab: string, filters: [Opt], me: bool, session-text: string, session: [Stat], session-strip: [bool], ranks: [RankRow], title: string, wr: float, wr-text: string, perfs: [Perf],
+    ids-loading: bool, empty: string, rows: [VRowV], more: string, more-enabled: bool, weapons: [VWeapon], weapons-empty: bool, cols: [Col], table: [TRow],
+}
+export struct VRoundBtn { label: string, won: bool, selected: bool, half: bool, eco: string, eco-tone: int, key: string }
+export struct VKillV { time: string, killer: string, killer-icon: string, killer-ally: bool, victim: string, victim-icon: string, victim-ally: bool, weapon-icon: string, weapon-text: string }
+export struct VMatchData {
+    loading: bool, error: string, splash: string, map: string, queue: string, quick: [Stat], has-rounds: bool, rounds: [VRoundBtn], selected: bool, detail-title: string, detail-won: bool, detail-result: string, detail-eco: string, spike: string, kills: [VKillV], cols: [Col], rows: [TRow],
+}
+export struct VLiveRow { me: bool, hidden: bool, route: string, face: string, hover: bool, role-icon: string, name: string, tag: string, sub: string, party: string, party-color: color, in-party: bool, locked: bool, level: string, loaded: bool, rank-icon: string, rank: string, rank-color: color, peak: string, wr: string, wr-tone: int, games: string, form: [int], net: string, net-tone: int }
+export struct VLiveTeam { title: string, mine: bool, parties: [Chip], avg-icon: string, avg: string, avg-color: color, rows: [VLiveRow] }
+export struct VLiveData { waiting: bool, status: string, splash: string, pre: bool, phase: string, map: string, queue: string, text: string, teams: [VLiveTeam] }
+export struct VAgentsData { loading: bool, error: string, sub: string, roles: [Opt], cols: [Col], rows: [TRow] }
+export struct SearchOpt { label: string, tag: string, sub: string, icon: string, letter: string, key: string, on: bool }
+export struct AvatarItem { name: string, url: string, on: bool }
+export struct AvatarSection { title: string, count: string, rows: [[AvatarItem]] }
+export struct PickerData { open: bool, choice: string, count: string, tabs: [Opt], sections: [AvatarSection] }
+export struct GameCard { key: string, name: string, sub: string, art: string, on: bool }
+export struct UpdateData { show: bool, error: bool, title: string, text: string, notes: string, progress: float, busy: bool, progress-text: string, primary: string }
+
+export global Data {
+    in property <string> view: "boot";
+    in property <string> notice-title;
+    in property <string> notice-text;
+    in property <string> game: "lol";
+    in property <[Opt]> tabs;
+    in property <bool> can-back;
+    in property <bool> can-fwd;
+    in property <bool> maximized;
+    in property <bool> searchable: true;
+    in property <string> search-hint: "Joueur#TAG ou champion";
+    in-out property <string> search-text;
+    in property <int> search-sel;
+    in property <[SearchOpt]> search-opts;
+    in property <string> search-empty;
+    in property <bool> search-open;
+    in property <string> client-text;
+    in property <bool> client-on;
+    in property <bool> has-account;
+    in property <string> acc-avatar;
+    in property <string> acc-name;
+    in property <string> acc-tag;
+    in property <string> acc-level;
+    in property <bool> banner;
+    in property <string> banner-title;
+    in property <string> banner-text;
+    in property <string> toast;
+    in property <bool> toast-show;
+    in property <string> lol-mark;
+    in property <string> tft-mark;
+    in property <[GameCard]> games;
+    in property <bool> live-dot;
+    in property <ProfileData> profile;
+    in property <[MatchRow]> matches;
+    in property <MatchPage> match;
+    in property <TierData> tier;
+    in property <ChampionsData> champions;
+    in property <BuildsData> builds;
+    in property <LiveData> live;
+    in property <OverlaysData> overlays;
+    in property <SettingsData> settings;
+    in property <TftDecksData> tft-decks;
+    in property <TftProfileData> tft-profile;
+    in property <VProfileData> vprofile;
+    in property <VMatchData> vmatch;
+    in property <VLiveData> vlive;
+    in property <VAgentsData> vagents;
+    in property <PickerData> picker;
+    in property <UpdateData> update;
+    in-out property <string> tier-q;
+    in-out property <string> champ-q;
+    in-out property <string> avatar-q;
+}

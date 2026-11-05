@@ -1,0 +1,567 @@
+import { AboutSlint } from "std-widgets.slint";
+import { Theme, Motion, Act, Press, Pic, T, Small, Num, Card, CardTitle, Ghost, Primary, LinkBtn, Select, Toggle, Bar, StatBox, RankView, Skeleton, Empty, Notice, PageHead, Page, Reveal } from "theme.slint";
+import { Data, SetRow, TftDeckV, TftUnitV, TftTraitV, TftRow } from "data.slint";
+
+component SetLine {
+    in property <SetRow> r;
+    min-height: col.preferred-height + 24px;
+    HorizontalLayout {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        spacing: 16px;
+        col := VerticalLayout {
+            alignment: center;
+            spacing: 2px;
+            Text { text: root.r.title; color: Theme.text; font-weight: 600; }
+            Small { text: root.r.help; wrap: word-wrap; overflow: clip; }
+        }
+        VerticalLayout {
+            alignment: center;
+            horizontal-stretch: 0;
+            Ghost {
+                label: root.r.btn;
+                enabled: root.r.enabled;
+                armed: root.r.armed;
+                clicked => { Act.act(root.r.key); }
+            }
+        }
+    }
+}
+
+export component SettingsView {
+    Page {
+        max: 1180px;
+        PageHead {
+            title: "Réglages";
+            text: "Kairo est gratuit. Il lit tes clients Riot sur ce PC, la méta sur OP.GG et les images sur Data Dragon, CommunityDragon et valorant-api.com.";
+        }
+        HorizontalLayout {
+            spacing: 16px;
+            VerticalLayout {
+                spacing: 16px;
+                alignment: start;
+                Reveal {
+                    min-height: gc.preferred-height;
+                    Card {
+                        gc := VerticalLayout {
+                            padding-left: 20px;
+                            padding-right: 20px;
+                            padding-top: 18px;
+                            padding-bottom: 6px;
+                            CardTitle { text: "Général"; }
+                            for o[i] in Data.settings.general: Toggle {
+                                title: o.label;
+                                help: o.sub;
+                                key: o.key;
+                                on: o.on;
+                                sep: i < Data.settings.general.length - 1;
+                            }
+                        }
+                    }
+                }
+                Reveal {
+                    index: 1;
+                    min-height: lc.preferred-height;
+                    Card {
+                        lc := VerticalLayout {
+                            padding-left: 20px;
+                            padding-right: 20px;
+                            padding-top: 18px;
+                            padding-bottom: 14px;
+                            spacing: 2px;
+                            CardTitle { text: "League of Legends"; }
+                            for o in Data.settings.lol: Toggle {
+                                title: o.label;
+                                help: o.sub;
+                                key: o.key;
+                                on: o.on;
+                            }
+                            VerticalLayout {
+                                padding-top: 12px;
+                                spacing: 6px;
+                                Text { text: "Source des builds"; color: Theme.text; font-weight: 600; }
+                                Small { text: "« Auto » prend la méta OP.GG, sinon tes parties, sinon la recommandation Riot."; wrap: word-wrap; overflow: clip; }
+                                Select {
+                                    label: Data.settings.source-label;
+                                    options: Data.settings.source-opts;
+                                    list-width: 300px;
+                                }
+                            }
+                            VerticalLayout {
+                                padding-top: 12px;
+                                spacing: 6px;
+                                Text { text: "Rang des builds"; color: Theme.text; font-weight: 600; }
+                                Small { text: "Les builds OP.GG viennent des parties de ce niveau, aussi pour l'import automatique."; wrap: word-wrap; overflow: clip; }
+                                Select {
+                                    label: Data.settings.rank-label;
+                                    options: Data.settings.rank-opts;
+                                    list-width: 300px;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            VerticalLayout {
+                spacing: 16px;
+                alignment: start;
+                Reveal {
+                    index: 2;
+                    min-height: vc.preferred-height;
+                    Card {
+                        vc := VerticalLayout {
+                            padding-left: 20px;
+                            padding-right: 20px;
+                            padding-top: 18px;
+                            padding-bottom: 6px;
+                            CardTitle { text: "VALORANT"; }
+                            SetLine { r: Data.settings.seen; }
+                        }
+                    }
+                }
+                Reveal {
+                    index: 3;
+                    min-height: kc.preferred-height;
+                    Card {
+                        kc := VerticalLayout {
+                            padding: 18px;
+                            padding-left: 20px;
+                            padding-right: 20px;
+                            spacing: 2px;
+                            CardTitle { text: "Raccourcis"; }
+                            for k in Data.settings.keys: HorizontalLayout {
+                                height: 38px;
+                                spacing: 12px;
+                                HorizontalLayout {
+                                    width: 210px;
+                                    alignment: start;
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Rectangle {
+                                            min-width: kt.preferred-width + 12px;
+                                            height: 20px;
+                                            border-radius: 6px;
+                                            border-width: 1px;
+                                            border-color: #ffffff1a;
+                                            kt := Text {
+                                                text: k.key;
+                                                font-family: Theme.num;
+                                                font-size: 11.5px;
+                                                color: Theme.muted;
+                                            }
+                                        }
+                                    }
+                                }
+                                Small { text: k.text; font-size: 14px; }
+                            }
+                        }
+                    }
+                }
+                Reveal {
+                    index: 4;
+                    min-height: dc.preferred-height;
+                    Card {
+                        dc := VerticalLayout {
+                            padding-left: 20px;
+                            padding-right: 20px;
+                            padding-top: 18px;
+                            padding-bottom: 6px;
+                            CardTitle { text: "Données"; }
+                            for r in Data.settings.data-rows: SetLine { r: r; }
+                            if Data.settings.migrated != "": Small {
+                                text: Data.settings.migrated;
+                                wrap: word-wrap;
+                                overflow: clip;
+                            }
+                        }
+                    }
+                }
+                Reveal {
+                    index: 5;
+                    min-height: ac.preferred-height;
+                    Card {
+                        ac := VerticalLayout {
+                            padding: 18px;
+                            padding-left: 20px;
+                            padding-right: 20px;
+                            spacing: 10px;
+                            CardTitle { text: "À propos"; }
+                            HorizontalLayout {
+                                Small { text: "Version"; font-size: 13px; }
+                                Text { text: Data.settings.version; font-weight: 700; font-size: 13px; color: Theme.text; horizontal-stretch: 0; }
+                                Rectangle { width: 6px; horizontal-stretch: 0; }
+                                Text { text: Data.settings.update-note; font-size: 12px; color: Theme.tone(Data.settings.update-tone); horizontal-stretch: 0; }
+                            }
+                            if Data.settings.update-label != "": HorizontalLayout {
+                                alignment: start;
+                                Primary {
+                                    label: Data.settings.update-label;
+                                    clicked => { Act.act("open:" + Data.settings.update-url); }
+                                }
+                            }
+                            HorizontalLayout {
+                                Small { text: "Code source"; font-size: 13px; }
+                                LinkBtn {
+                                    label: "github.com/Rub19/ethra";
+                                    clicked => { Act.act("open:https://github.com/Rub19/ethra"); }
+                                }
+                            }
+                            Small { text: "Kairo n'est pas approuvé par Riot Games."; }
+                            AboutSlint { height: 110px; }
+                            Small { text: "Polices Barlow et Barlow Semi Condensed sous licence SIL OFL."; font-size: 11px; }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+component TUnit {
+    in property <TftUnitV> u;
+    width: 62px;
+    height: 96px;
+    VerticalLayout {
+        spacing: 3px;
+        HorizontalLayout {
+            alignment: center;
+            Rectangle {
+                width: 54px;
+                height: 54px;
+                Rectangle {
+                    border-radius: 10px;
+                    background: Theme.panel2;
+                    border-width: 2px;
+                    border-color: root.u.color;
+                    clip: true;
+                    Pic { url: root.u.icon; }
+                }
+                if root.u.core: Rectangle {
+                    x: -2px;
+                    y: -2px;
+                    width: 58px;
+                    height: 58px;
+                    border-radius: 12px;
+                    border-width: 2px;
+                    border-color: Theme.accent.transparentize(0.45);
+                }
+                Text {
+                    y: -9px;
+                    height: 12px;
+                    text: root.u.stars;
+                    font-size: 10px;
+                    color: #f6c867;
+                    horizontal-alignment: center;
+                }
+            }
+        }
+        Small { text: root.u.name; font-size: 11px; horizontal-alignment: center; }
+        HorizontalLayout {
+            spacing: 2px;
+            height: 16px;
+            alignment: center;
+            for it in root.u.items: Pic {
+                url: it;
+                width: 16px;
+                height: 16px;
+                radius: 3px;
+            }
+        }
+    }
+}
+
+component TTrait {
+    in property <TftTraitV> t;
+    min-width: tr.preferred-width;
+    height: 24px;
+    horizontal-stretch: 0;
+    Rectangle {
+        border-radius: 5px;
+        background: root.t.style == 1 ? #b0744633 : root.t.style == 2 ? #aab4c42e : root.t.style == 3 ? #e6b43c33 : root.t.style >= 4 ? @linear-gradient(90deg, #6ec8ff38, #e678ff38) : #ffffff0d;
+        tr := HorizontalLayout {
+            padding-left: 4px;
+            padding-right: 9px;
+            spacing: 5px;
+            if root.t.icon != "": VerticalLayout {
+                alignment: center;
+                Pic {
+                    url: root.t.icon;
+                    width: 18px;
+                    height: 18px;
+                    fit: contain;
+                }
+            }
+            Num { text: root.t.n; font-size: 12.5px; }
+            Small { text: root.t.name; font-size: 12.5px; }
+        }
+    }
+}
+
+component DeckCard {
+    in property <TftDeckV> k;
+    Card {
+        VerticalLayout {
+            padding: 16px;
+            spacing: 12px;
+            HorizontalLayout {
+                spacing: 12px;
+                VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        min-width: tt.preferred-width + 16px;
+                        height: 26px;
+                        border-radius: 8px;
+                        background: root.k.tier-tone == 1 ? #ff5a7a33 : root.k.tier-tone == 2 ? Theme.accent.transparentize(0.78) : root.k.tier-tone == 3 ? Theme.teal.transparentize(0.82) : Theme.panel2;
+                        tt := Text {
+                            text: root.k.tier;
+                            font-family: Theme.num;
+                            font-weight: 700;
+                            font-size: 14px;
+                            color: root.k.tier-tone == 1 ? #ff7b95 : root.k.tier-tone == 2 ? Theme.accent : root.k.tier-tone == 3 ? Theme.teal : Theme.muted;
+                        }
+                    }
+                }
+                Text {
+                    text: root.k.name;
+                    font-family: Theme.num;
+                    font-weight: 700;
+                    font-size: 18px;
+                    color: Theme.text;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                for t in root.k.tags: VerticalLayout {
+                    alignment: center;
+                    horizontal-stretch: 0;
+                    Rectangle {
+                        min-width: tg.preferred-width + 18px;
+                        height: 22px;
+                        border-radius: 5px;
+                        background: #ffffff0d;
+                        tg := Text { text: t; font-size: 12px; color: Theme.muted; }
+                    }
+                }
+            }
+            HorizontalLayout {
+                spacing: 28px;
+                alignment: start;
+                for s in root.k.stats: StatBox { s: s; }
+            }
+            for row in root.k.units: HorizontalLayout {
+                spacing: 10px;
+                alignment: start;
+                padding-top: 6px;
+                for u in row: TUnit { u: u; }
+            }
+            for row in root.k.traits: HorizontalLayout {
+                spacing: 6px;
+                alignment: start;
+                for t in row: TTrait { t: t; }
+            }
+        }
+    }
+}
+
+export component TftDecksView {
+    Page {
+        if Data.notice-title != "": VerticalLayout {
+            padding-bottom: 22px;
+            Notice { title: Data.notice-title; text: Data.notice-text; }
+        }
+        PageHead {
+            title: "Decks méta";
+            sub: Data.tft-decks.sub;
+            text: Data.tft-decks.text;
+        }
+        if Data.tft-decks.error != "": Empty { title: "Données TFT indisponibles"; text: Data.tft-decks.error; }
+        if Data.tft-decks.loading && Data.tft-decks.error == "": Skeleton { rows: 4; row-height: 200px; }
+        if !Data.tft-decks.loading && Data.tft-decks.error == "": grid := Rectangle {
+            property <int> cols: max(1, floor((self.width + 16px) / 636px));
+            property <length> cw: (self.width - (cols - 1) * 16px) / cols;
+            property <length> ch: 380px;
+            height: ceil(Data.tft-decks.decks.length / cols) * (ch + 16px);
+            for k[i] in Data.tft-decks.decks: Reveal {
+                index: i;
+                x: mod(i, grid.cols) * (grid.cw + 16px);
+                y: floor(i / grid.cols) * (grid.ch + 16px);
+                width: grid.cw;
+                height: grid.ch;
+                DeckCard { k: k; }
+            }
+        }
+    }
+}
+
+component TftGameLine {
+    in property <TftRow> g;
+    in property <int> index;
+    Reveal {
+        index: root.index;
+        Rectangle {
+            background: Theme.panel;
+            border-radius: 12px;
+            clip: true;
+            Rectangle {
+                x: 0px;
+                width: 3px;
+                background: root.g.top ? Theme.accent : Theme.line;
+            }
+            HorizontalLayout {
+                padding-left: 14px;
+                padding-right: 14px;
+                spacing: 14px;
+                HorizontalLayout {
+                    width: 58px;
+                    alignment: start;
+                    Num { text: root.g.place; font-size: 26px; font-weight: 700; color: root.g.top ? Theme.text : Theme.muted; }
+                    Small { text: "/8"; vertical-alignment: center; }
+                }
+                VerticalLayout {
+                    width: 130px;
+                    alignment: center;
+                    T { text: root.g.queue; font-weight: 700; font-size: 14px; }
+                    Small { text: root.g.when; }
+                    Small { text: root.g.level; }
+                }
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 6px;
+                    HorizontalLayout {
+                        spacing: 5px;
+                        alignment: start;
+                        for u in root.g.units: VerticalLayout {
+                            width: 36px;
+                            Text { text: u.stars; height: 11px; color: #ffcf5c; font-size: 8px; horizontal-alignment: center; }
+                            Rectangle {
+                                width: 34px;
+                                height: 34px;
+                                border-radius: 8px;
+                                border-width: 2px;
+                                border-color: u.color;
+                                background: Theme.panel2;
+                                clip: true;
+                                Pic { url: u.icon; }
+                            }
+                        }
+                    }
+                    HorizontalLayout {
+                        spacing: 10px;
+                        alignment: start;
+                        for t in root.g.traits: HorizontalLayout {
+                            spacing: 4px;
+                            horizontal-stretch: 0;
+                            if t.icon != "": VerticalLayout {
+                                alignment: center;
+                                Pic { url: t.icon; width: 14px; height: 14px; fit: contain; }
+                            }
+                            Small { text: t.n + " " + t.name; }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component TftProfileView {
+    Page {
+        if Data.tft-profile.error != "": Empty {
+            title: "Historique TFT indisponible";
+            text: Data.tft-profile.error;
+            button: "Réessayer";
+            key: "retry";
+        }
+        if Data.tft-profile.loading && Data.tft-profile.error == "": VerticalLayout {
+            PageHead { title: "Profil TFT"; }
+            Skeleton { rows: 6; }
+        }
+        if !Data.tft-profile.loading && Data.tft-profile.error == "": VerticalLayout {
+            spacing: 16px;
+            Rectangle {
+                height: 130px;
+                border-radius: 18px;
+                border-width: 1px;
+                border-color: Theme.line-soft;
+                background: Theme.panel;
+                HorizontalLayout {
+                    padding-left: 28px;
+                    padding-right: 28px;
+                    spacing: 22px;
+                    VerticalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: 84px;
+                            height: 84px;
+                            Rectangle {
+                                border-radius: 42px;
+                                border-width: 2px;
+                                border-color: Theme.accent;
+                                clip: true;
+                                Pic { url: Data.tft-profile.avatar; }
+                            }
+                            Rectangle {
+                                x: (parent.width - self.width) / 2;
+                                y: parent.height - 12px;
+                                width: lv.preferred-width + 12px;
+                                height: 18px;
+                                border-radius: 9px;
+                                background: Theme.bg;
+                                lv := Text { text: Data.tft-profile.level; font-size: 11px; color: Theme.text; }
+                            }
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 10px;
+                        HorizontalLayout {
+                            spacing: 8px;
+                            alignment: start;
+                            Text { text: Data.tft-profile.name; font-family: Theme.num; font-weight: 700; font-size: 32px; color: Theme.text; }
+                            Text { text: "#" + Data.tft-profile.tag; font-family: Theme.num; font-size: 32px; color: Theme.muted; }
+                        }
+                        HorizontalLayout {
+                            spacing: 30px;
+                            alignment: start;
+                            for s in Data.tft-profile.quick: StatBox { s: s; }
+                        }
+                    }
+                }
+            }
+            HorizontalLayout {
+                spacing: 16px;
+                VerticalLayout {
+                    width: 260px;
+                    alignment: start;
+                    Card {
+                        min-height: 84px;
+                        VerticalLayout {
+                            padding-left: 16px;
+                            padding-right: 16px;
+                            RankView { r: Data.tft-profile.rank; }
+                        }
+                    }
+                }
+                VerticalLayout {
+                    spacing: 8px;
+                    alignment: start;
+                    horizontal-stretch: 1;
+                    if Data.tft-profile.empty: Empty { title: "Aucune partie TFT"; text: "Tes parties récentes s'afficheront ici."; }
+                    for g[i] in Data.tft-profile.games: TftGameLine {
+                        g: g;
+                        index: i;
+                        height: 96px;
+                    }
+                    if Data.tft-profile.more != "": HorizontalLayout {
+                        alignment: center;
+                        padding-top: 6px;
+                        Ghost {
+                            label: Data.tft-profile.more;
+                            enabled: Data.tft-profile.more-enabled;
+                            clicked => { Act.act("tmore"); }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

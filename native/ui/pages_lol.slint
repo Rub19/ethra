@@ -1,0 +1,2209 @@
+import { Theme, Motion, Act, Api, Press, Pic, T, Small, Num, Reveal, Card, CardTitle, Ghost, Primary, LinkBtn, Seg, Select, AutoSwitch, Bar, Strip, StatBox, BadgeView, ChipView, RankView, PerfRow, Table, Skeleton, Empty, PageHead, SearchBox, Page, Opt, Chip } from "theme.slint";
+import { Data, MatchRow, PlayerChip, LpData, ChartData, ShareData, RuneTree, ItemStep, IOptRow, CounterCell, JungleData, PlayerCard, DmgBar, OvWidget, OvAlert, OvCard } from "data.slint";
+
+component PlayerName {
+    in property <PlayerChip> p;
+    in property <length> icon: 16px;
+    in property <length> size: 12px;
+    height: icon + 2px;
+    Rectangle {
+        border-radius: 5px;
+        background: pr.hover ? #ffffff0c : transparent;
+        pr := Press {
+            enabled: root.p.route != "";
+            clicked => { Act.act("go:" + root.p.route); }
+        }
+        HorizontalLayout {
+            spacing: 4px;
+            VerticalLayout {
+                alignment: center;
+                Pic {
+                    url: root.p.icon;
+                    width: root.icon;
+                    height: root.icon;
+                    radius: 3px;
+                    back: Theme.panel2;
+                }
+            }
+            T {
+                text: root.p.name;
+                font-size: root.size;
+                font-weight: root.p.me ? 600 : 400;
+                color: root.p.me || pr.hover ? Theme.text : Theme.muted;
+            }
+        }
+    }
+}
+
+export component MatchLine {
+    in property <MatchRow> m;
+    in property <int> index;
+    in property <length> avail;
+    height: 86px;
+    Reveal {
+        index: root.index;
+        Rectangle {
+            background: Theme.panel;
+            border-radius: 12px;
+            border-width: 1px;
+            border-color: p.hover ? #ffffff2a : Theme.line-soft;
+            clip: true;
+            opacity: root.m.result == 2 ? 0.75 : 1;
+            animate border-color { duration: Motion.fast; }
+            p := Press {
+                ring-radius: 12px;
+                clicked => { Act.act("go:" + root.m.route); }
+            }
+            Rectangle {
+                x: 0px;
+                width: 3px;
+                background: root.m.result == 0 ? Theme.teal : root.m.result == 1 ? Theme.loss : Theme.muted;
+            }
+            HorizontalLayout {
+                padding-left: 16px;
+                padding-right: 14px;
+                spacing: 14px;
+                VerticalLayout {
+                    width: 100px;
+                    alignment: center;
+                    Num {
+                        text: root.m.title;
+                        font-size: 15px;
+                        font-weight: 700;
+                        color: root.m.result == 0 ? Theme.teal : root.m.result == 1 ? Theme.loss : Theme.muted;
+                    }
+                    Small { text: root.m.queue; font-size: 11px; }
+                    Small { text: root.m.when; font-size: 11px; }
+                }
+                VerticalLayout {
+                    alignment: center;
+                    width: 58px;
+                    Rectangle {
+                        height: 56px;
+                        Pic {
+                            url: root.m.champ;
+                            radius: 12px;
+                            width: 56px;
+                            height: 56px;
+                            back: Theme.panel2;
+                        }
+                        Rectangle {
+                            x: 40px;
+                            y: 40px;
+                            width: 20px;
+                            height: 20px;
+                            border-radius: 10px;
+                            background: Theme.bg;
+                            border-width: 1px;
+                            border-color: Theme.line;
+                            Text {
+                                text: root.m.level;
+                                font-size: 11px;
+                                color: Theme.text;
+                            }
+                        }
+                    }
+                }
+                if root.avail > 620px: VerticalLayout {
+                    alignment: center;
+                    width: 48px;
+                    spacing: 4px;
+                    for row in [[0, 1], [2, 3]]: HorizontalLayout {
+                        spacing: 4px;
+                        for i in row: Pic {
+                            url: root.m.icons[i];
+                            width: 22px;
+                            height: 22px;
+                            radius: 5px;
+                            back: Theme.panel2;
+                        }
+                    }
+                }
+                VerticalLayout {
+                    width: 124px;
+                    alignment: center;
+                    spacing: 2px;
+                    HorizontalLayout {
+                        spacing: 4px;
+                        alignment: start;
+                        Num { text: root.m.k; font-size: 16px; }
+                        Num { text: "/"; font-size: 16px; color: Theme.muted; font-weight: 400; }
+                        Num { text: root.m.d; font-size: 16px; color: Theme.loss; }
+                        Num { text: "/"; font-size: 16px; color: Theme.muted; font-weight: 400; }
+                        Num { text: root.m.a; font-size: 16px; }
+                    }
+                    HorizontalLayout {
+                        spacing: 0px;
+                        alignment: start;
+                        Small { text: root.m.kda; color: root.m.kda-good ? Theme.teal : Theme.muted; }
+                        Small { text: root.m.kp; }
+                    }
+                }
+                if root.avail > 820px: VerticalLayout {
+                    width: 104px;
+                    alignment: center;
+                    spacing: 2px;
+                    for r in [[root.m.csmin, "CS/min"], [root.m.dmg, "dégâts"], [root.m.third-v, root.m.third-l]]: HorizontalLayout {
+                        alignment: start;
+                        spacing: 4px;
+                        Num { text: r[0]; font-size: 13px; }
+                        Small { text: r[1]; }
+                    }
+                }
+                VerticalLayout {
+                    alignment: center;
+                    width: 212px;
+                    HorizontalLayout {
+                        spacing: 3px;
+                        alignment: start;
+                        for u in root.m.items: Pic {
+                            url: u;
+                            width: 26px;
+                            height: 26px;
+                            radius: 6px;
+                            back: Theme.panel2;
+                        }
+                        Rectangle { width: 3px; }
+                        Pic {
+                            url: root.m.trinket;
+                            width: 26px;
+                            height: 26px;
+                            radius: 13px;
+                            back: Theme.panel2;
+                        }
+                    }
+                }
+                if root.avail > 620px: VerticalLayout {
+                    alignment: center;
+                    spacing: 4px;
+                    min-width: 60px;
+                    horizontal-stretch: 1;
+                    for b in root.m.badges: HorizontalLayout {
+                        alignment: start;
+                        BadgeView { b: b; }
+                    }
+                }
+                if root.avail > 1080px: HorizontalLayout {
+                    width: 236px;
+                    spacing: 8px;
+                    for team in [root.m.team1, root.m.team2]: VerticalLayout {
+                        alignment: center;
+                        width: 114px;
+                        for pl in team: PlayerName { p: pl; }
+                    }
+                }
+            }
+        }
+    }
+}
+
+component LpChart {
+    in property <LpData> lp;
+    property <int> hover: -1;
+    property <int> at: hover >= 0 ? hover : lp.points.length - 1;
+    property <bool> shown;
+    init => { shown = true; }
+    VerticalLayout {
+        spacing: 6px;
+        HorizontalLayout {
+            spacing: 8px;
+            alignment: start;
+            Num {
+                text: root.lp.total;
+                font-size: 20px;
+                color: Theme.tone(root.lp.tone);
+            }
+            Small { text: root.lp.span; }
+        }
+        Rectangle {
+            height: 60px;
+            clip: true;
+            ta := TouchArea {
+                moved => {
+                    root.hover = clamp(round(self.mouse-x / self.width * (root.lp.points.length - 1)), 0, root.lp.points.length - 1);
+                }
+                changed has-hover => {
+                    if (!self.has-hover) { root.hover = -1; }
+                }
+            }
+            Rectangle {
+                x: 0px;
+                width: root.shown ? parent.width : 0px;
+                clip: true;
+                animate width { duration: Motion.slow; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+                Path {
+                    x: 0px;
+                    width: root.width;
+                    height: 60px;
+                    viewbox-width: 260;
+                    viewbox-height: 60;
+                    commands: root.lp.path;
+                    stroke: Theme.accent;
+                    stroke-width: 2px;
+                    fill: transparent;
+                }
+            }
+            if root.lp.points.length > 0: Rectangle {
+                x: parent.width * root.lp.points[root.at].x / 260 - 4px;
+                y: 60px * root.lp.points[root.at].y / 60 - 4px;
+                width: 8px;
+                height: 8px;
+                border-radius: 4px;
+                background: Theme.accent;
+                border-width: 2px;
+                border-color: Theme.panel;
+            }
+        }
+        Small { text: root.hover < 0 ? "Survole la courbe pour voir le détail" : root.lp.points[root.hover].tip; }
+    }
+}
+
+export component ProfilePage {
+    Page {
+        if Data.profile.error != "": Empty {
+            title: "Profil indisponible";
+            text: Data.profile.error;
+            button: "Réessayer";
+            key: "retry";
+        }
+        if Data.profile.loading && Data.profile.error == "": Skeleton { rows: 7; }
+        if !Data.profile.loading && Data.profile.error == "": VerticalLayout {
+            spacing: 6px;
+            Rectangle {
+                height: 170px;
+                border-radius: 18px;
+                border-width: 1px;
+                border-color: Theme.line-soft;
+                background: Theme.panel;
+                clip: true;
+                Pic {
+                    url: Data.profile.splash;
+                    x: parent.width * 0.3;
+                    width: parent.width * 0.7;
+                }
+                Rectangle {
+                    background: @linear-gradient(90deg, #0e1220 22%, #0e1220cc 55%, #0e122055 100%);
+                }
+                HorizontalLayout {
+                    padding-left: 28px;
+                    padding-right: 28px;
+                    spacing: 22px;
+                    VerticalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: 96px;
+                            height: 96px;
+                            Rectangle {
+                                border-radius: 48px;
+                                border-width: 2px;
+                                border-color: Theme.accent;
+                                clip: true;
+                                Pic {
+                                    url: Data.profile.avatar;
+                                }
+                            }
+                            Rectangle {
+                                x: (parent.width - self.width) / 2;
+                                y: parent.height - 12px;
+                                width: lv.preferred-width + 12px;
+                                height: 18px;
+                                border-radius: 9px;
+                                background: Theme.bg;
+                                lv := Text {
+                                    text: Data.profile.level;
+                                    font-size: 11px;
+                                    color: Theme.text;
+                                }
+                            }
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 14px;
+                        HorizontalLayout {
+                            alignment: start;
+                            Rectangle {
+                                min-width: nm.preferred-width;
+                                height: nm.preferred-height;
+                                cp := Press {
+                                    clicked => { Act.act("copy-id"); }
+                                }
+                                nm := HorizontalLayout {
+                                    spacing: 8px;
+                                    Text {
+                                        text: Data.profile.name;
+                                        font-family: Theme.num;
+                                        font-weight: 700;
+                                        font-size: 32px;
+                                        color: Theme.text;
+                                    }
+                                    Text {
+                                        text: "#" + Data.profile.tag;
+                                        font-family: Theme.num;
+                                        font-size: 32px;
+                                        color: cp.hover ? Theme.text : Theme.muted;
+                                        animate color { duration: Motion.xfast; }
+                                    }
+                                }
+                            }
+                        }
+                        HorizontalLayout {
+                            spacing: 30px;
+                            alignment: start;
+                            for s in Data.profile.quick: StatBox { s: s; }
+                        }
+                    }
+                }
+            }
+            HorizontalLayout {
+                spacing: 22px;
+                height: 52px;
+                for t in Data.profile.tabs: VerticalLayout {
+                    horizontal-stretch: 0;
+                    alignment: center;
+                    Rectangle {
+                        min-width: tl.preferred-width;
+                        height: 40px;
+                        pt := Press {
+                            clicked => { Act.act(t.key); }
+                        }
+                        tl := Text {
+                            text: t.label;
+                            font-weight: 600;
+                            font-size: 14.5px;
+                            color: t.on || pt.hover ? Theme.text : Theme.muted;
+                            vertical-alignment: center;
+                            animate color { duration: Motion.xfast; }
+                        }
+                        Rectangle {
+                            y: parent.height - 2px;
+                            height: 2px;
+                            background: t.on ? Theme.accent : transparent;
+                            animate background { duration: Motion.fast; }
+                        }
+                    }
+                }
+                Rectangle { horizontal-stretch: 1; }
+                if Data.profile.show-filters: HorizontalLayout {
+                    spacing: 8px;
+                    padding-top: 8px;
+                    padding-bottom: 8px;
+                    Select {
+                        width: 180px;
+                        label: Data.profile.queue-label;
+                        options: Data.profile.queue-opts;
+                    }
+                    Select {
+                        width: 180px;
+                        label: Data.profile.champ-label;
+                        options: Data.profile.champ-opts;
+                    }
+                    Seg {
+                        options: Data.profile.results;
+                        fsize: 13.5px;
+                        pad: 11px;
+                    }
+                }
+            }
+            HorizontalLayout {
+                spacing: 16px;
+                alignment: stretch;
+                VerticalLayout {
+                    width: 300px;
+                    spacing: 12px;
+                    alignment: start;
+                    if Data.profile.show-session: Card {
+                        VerticalLayout {
+                            padding: 16px;
+                            spacing: 8px;
+                            HorizontalLayout {
+                                CardTitle { text: "Session du jour"; }
+                                if !Data.profile.session-empty: LinkBtn {
+                                    label: "Copier";
+                                    clicked => { Act.act("copy-session"); }
+                                }
+                            }
+                            if Data.profile.session-empty: Small { text: "Aucune partie aujourd'hui."; font-size: 14px; }
+                            if !Data.profile.session-empty: HorizontalLayout {
+                                spacing: 12px;
+                                for s in Data.profile.session: StatBox {
+                                    s: s;
+                                    size: 18px;
+                                    align: center;
+                                }
+                            }
+                            if !Data.profile.session-empty: Strip {
+                                items: Data.profile.session-strip;
+                                item-width: 14px;
+                                align: center;
+                            }
+                        }
+                    }
+                    Card {
+                        VerticalLayout {
+                            padding-left: 16px;
+                            padding-right: 16px;
+                            padding-top: 8px;
+                            padding-bottom: 8px;
+                            for r in Data.profile.ranks: RankView { r: r; }
+                        }
+                    }
+                    if Data.profile.has-lp: Card {
+                        VerticalLayout {
+                            padding: 16px;
+                            spacing: 8px;
+                            CardTitle { text: "Historique LP (Solo)"; }
+                            LpChart { lp: Data.profile.lp; }
+                        }
+                    }
+                    Card {
+                        VerticalLayout {
+                            padding: 16px;
+                            spacing: 6px;
+                            CardTitle { text: Data.profile.recent-title; }
+                            Bar {
+                                value: Data.profile.wr;
+                                thick: 6px;
+                                fill: Theme.teal;
+                                track: Theme.loss;
+                            }
+                            Small { text: Data.profile.wr-text; }
+                            if Data.profile.form-line != "": Text {
+                                text: Data.profile.form-line;
+                                font-weight: 600;
+                                font-size: 14px;
+                                color: Theme.tone(Data.profile.form-tone);
+                            }
+                            if Data.profile.form-strip.length > 1: Strip { items: Data.profile.form-strip; }
+                            if Data.profile.kda-line != "": Small {
+                                text: Data.profile.kda-line;
+                                wrap: word-wrap;
+                            }
+                            for f in Data.profile.perfs: PerfRow { f: f; }
+                        }
+                    }
+                }
+                lst := VerticalLayout {
+                    spacing: 8px;
+                    alignment: start;
+                    horizontal-stretch: 1;
+                    if Data.profile.games-loading: Skeleton { rows: 8; }
+                    if !Data.profile.games-loading && Data.profile.empty-title != "": Empty {
+                        title: Data.profile.empty-title;
+                        button: Data.profile.empty-filtered ? "Tout afficher" : "";
+                        key: "clear-filters";
+                    }
+                    if !Data.profile.games-loading && Data.profile.empty-title == "" && Data.profile.sub == "apercu": VerticalLayout {
+                        spacing: 8px;
+                        for m[i] in Data.matches: MatchLine {
+                            m: m;
+                            index: i;
+                            avail: lst.width;
+                        }
+                    }
+                    if !Data.profile.games-loading && Data.profile.empty-title == "" && Data.profile.sub == "pool": Table {
+                        cols: Data.profile.pool-cols;
+                        rows: Data.profile.pool-rows;
+                        row-height: 48px;
+                    }
+                    if Data.profile.more && Data.profile.sub == "apercu": HorizontalLayout {
+                        alignment: center;
+                        padding-top: 6px;
+                        Ghost {
+                            label: "Voir plus de parties";
+                            clicked => { Act.act("more"); }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component MatchChart {
+    in property <ChartData> c;
+    property <int> hover: -1;
+    property <length> l: 44px;
+    property <length> r: 80px;
+    property <length> t: 12px;
+    property <length> b: 26px;
+    property <length> h: 260px;
+    property <length> pw: root.width - l - r;
+    property <length> ph: h - t - b;
+    height: 300px;
+    Rectangle {
+        y: 0px;
+        height: 20px;
+        HorizontalLayout {
+            alignment: end;
+            spacing: 14px;
+            for s in root.c.series: HorizontalLayout {
+                spacing: 6px;
+                VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 10px;
+                        height: 10px;
+                        border-radius: 3px;
+                        background: s.color;
+                    }
+                }
+                Small { text: s.name; }
+            }
+        }
+    }
+    Rectangle {
+        y: 22px;
+        height: root.h;
+        for y in root.c.yticks: Rectangle {
+            Rectangle {
+                x: root.l;
+                width: root.pw;
+                y: root.t + (1 - y.pos) * root.ph;
+                height: 1px;
+                background: Theme.line;
+            }
+            Small {
+                x: 0px;
+                width: root.l - 6px;
+                y: root.t + (1 - y.pos) * root.ph - 8px;
+                height: 16px;
+                text: y.text;
+                font-size: 11px;
+                horizontal-alignment: right;
+            }
+        }
+        for x in root.c.xticks: Small {
+            x: root.l + x.pos * root.pw - 12px;
+            width: 24px;
+            y: root.h - 20px;
+            height: 16px;
+            text: x.text;
+            font-size: 11px;
+            horizontal-alignment: center;
+        }
+        if root.c.mark14 >= 0: Rectangle {
+            x: root.l + root.c.mark14 * root.pw;
+            y: root.t;
+            width: 1px;
+            height: root.ph;
+            background: #8b93ab66;
+        }
+        for s in root.c.series: Path {
+            x: root.l;
+            y: root.t;
+            width: root.pw;
+            height: root.ph;
+            viewbox-width: 1000;
+            viewbox-height: 1000;
+            commands: s.path;
+            stroke: s.color;
+            stroke-width: 2px;
+            fill: transparent;
+        }
+        for s in root.c.series: Text {
+            x: root.l + root.pw + 8px;
+            y: root.t + s.end-y * root.ph - 8px;
+            height: 16px;
+            text: s.name;
+            font-size: 12px;
+            font-weight: 600;
+            color: Theme.text;
+            width: root.r - 8px;
+            overflow: elide;
+        }
+        ta := TouchArea {
+            moved => {
+                root.hover = clamp(round((self.mouse-x - root.l) / root.pw * (root.c.len - 1)), 0, root.c.len - 1);
+            }
+            changed has-hover => {
+                if (!self.has-hover) { root.hover = -1; }
+            }
+        }
+        if root.hover >= 0: Rectangle {
+            x: root.l + root.hover / max(1, root.c.len - 1) * root.pw;
+            y: root.t;
+            width: 1px;
+            height: root.ph;
+            background: Theme.muted;
+        }
+        if root.hover >= 0: Rectangle {
+            for s in root.c.series: Rectangle {
+                x: root.l + root.hover / max(1, root.c.len - 1) * root.pw - 4px;
+                y: root.t + s.ys[root.hover] * root.ph - 4px;
+                width: 8px;
+                height: 8px;
+                border-radius: 4px;
+                background: s.color;
+                border-width: 2px;
+                border-color: Theme.panel;
+            }
+            Rectangle {
+                x: clamp(root.l + root.hover / max(1, root.c.len - 1) * root.pw + 10px, 0px, root.width - 150px);
+                y: 10px;
+                width: 140px;
+                height: tp.preferred-height;
+                background: Theme.bg;
+                border-width: 1px;
+                border-color: Theme.line;
+                border-radius: 8px;
+                tp := VerticalLayout {
+                    padding: 8px;
+                    spacing: 2px;
+                    Text {
+                        text: root.hover + " min";
+                        color: Theme.text;
+                        font-size: 12px;
+                        font-weight: 700;
+                    }
+                    for s in root.c.series: HorizontalLayout {
+                        spacing: 6px;
+                        VerticalLayout {
+                            alignment: center;
+                            Rectangle {
+                                width: 10px;
+                                height: 10px;
+                                border-radius: 3px;
+                                background: s.color;
+                            }
+                        }
+                        Small { text: s.name; }
+                        Text {
+                            text: s.values[root.hover];
+                            color: Theme.text;
+                            font-size: 12px;
+                            font-weight: 700;
+                            horizontal-alignment: right;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Small {
+        y: 282px;
+        height: 16px;
+        text: "Minutes de jeu. La ligne verticale marque 14 min, la fin de la phase de lane.";
+        horizontal-alignment: center;
+    }
+}
+
+export component ShareCard {
+    in property <ShareData> s;
+    in property <bool> capture;
+    in property <string> msg;
+    min-height: 340px;
+    Rectangle {
+        background: Theme.bg;
+        border-radius: 16px;
+        border-width: 1px;
+        border-color: Theme.line;
+        clip: true;
+        Pic {
+            url: root.s.splash;
+            x: parent.width * 0.3;
+            width: parent.width * 0.7;
+        }
+        Rectangle {
+            background: @linear-gradient(90deg, #0b0f17 30%, #0b0f17cc 55%, #0b0f1733 100%);
+        }
+        VerticalLayout {
+            padding-left: 30px;
+            padding-right: 30px;
+            padding-top: 26px;
+            padding-bottom: 26px;
+            spacing: 18px;
+            HorizontalLayout {
+                spacing: 14px;
+                Num { text: root.s.label; font-size: 18px; font-weight: 700; horizontal-stretch: 0; }
+                Num { text: root.s.result; font-size: 18px; font-weight: 700; color: Theme.tone(root.s.tone); horizontal-stretch: 0; }
+                if root.s.mvp: Num { text: "MVP"; font-size: 18px; font-weight: 700; color: Theme.accent; horizontal-stretch: 0; }
+                Num { text: root.s.duration; font-size: 18px; color: Theme.muted; horizontal-stretch: 0; }
+                Rectangle { horizontal-stretch: 1; }
+                Num { text: "Kairo"; font-size: 18px; color: Theme.muted; horizontal-stretch: 0; }
+            }
+            Rectangle { vertical-stretch: 1; }
+            VerticalLayout {
+                Num {
+                    text: root.s.damage;
+                    font-size: 56px;
+                    font-weight: 700;
+                }
+                Text {
+                    text: "dégâts aux champions";
+                    font-size: 16px;
+                    color: Theme.muted;
+                }
+            }
+            HorizontalLayout {
+                spacing: 34px;
+                alignment: start;
+                for x in root.s.stats: StatBox { s: x; size: 24px; }
+            }
+            HorizontalLayout {
+                spacing: 8px;
+                alignment: start;
+                for u in root.s.runes: Pic {
+                    url: u;
+                    width: 40px;
+                    height: 40px;
+                    radius: 20px;
+                    back: #0e1220aa;
+                }
+                Rectangle { width: 14px; }
+                for u in root.s.items: Pic {
+                    url: u;
+                    width: 40px;
+                    height: 40px;
+                    radius: 8px;
+                }
+            }
+        }
+        if !root.capture: HorizontalLayout {
+            x: parent.width - self.width - 24px;
+            y: parent.height - 58px;
+            height: 36px;
+            spacing: 12px;
+            if root.msg != "": Small { text: root.msg; }
+            Rectangle {
+                width: sl.preferred-width + 32px;
+                border-radius: 10px;
+                background: Theme.text;
+                transform-scale: sp.down && !Motion.reduced ? 0.97 : 1;
+                animate transform-scale { duration: Motion.xfast; }
+                sp := Press {
+                    ring-radius: 10px;
+                    clicked => { Act.act("share"); }
+                }
+                sl := Text {
+                    text: "Copier l'image";
+                    color: Theme.bg;
+                    font-weight: 700;
+                }
+            }
+        }
+    }
+}
+
+export component MatchPageView {
+    Page {
+        if Data.match.error != "": Empty { text: Data.match.error; }
+        if Data.match.loading && Data.match.error == "": Skeleton { rows: 4; row-height: 180px; }
+        if !Data.match.loading && Data.match.error == "": VerticalLayout {
+            spacing: 16px;
+            Reveal {
+                min-height: 92px;
+                Rectangle {
+                    border-radius: 14px;
+                    background: Theme.panel;
+                    border-width: 1px;
+                    border-color: Theme.line;
+                    HorizontalLayout {
+                        padding-left: 20px;
+                        padding-right: 20px;
+                        spacing: 16px;
+                        VerticalLayout {
+                            alignment: center;
+                            Pic {
+                                url: Data.match.champ;
+                                width: 56px;
+                                height: 56px;
+                                radius: 12px;
+                                back: Theme.panel2;
+                            }
+                        }
+                        VerticalLayout {
+                            alignment: center;
+                            Text {
+                                text: Data.match.title;
+                                font-family: Theme.num;
+                                font-weight: 700;
+                                font-size: 26px;
+                                color: Data.match.result == 0 ? Theme.teal : Data.match.result == 1 ? Theme.loss : Theme.text;
+                            }
+                            Small { text: Data.match.sub; }
+                        }
+                        Rectangle { horizontal-stretch: 1; }
+                        for b in Data.match.badges: VerticalLayout {
+                            alignment: center;
+                            BadgeView { b: b; }
+                        }
+                        VerticalLayout {
+                            alignment: center;
+                            Ghost {
+                                label: Data.match.build-label;
+                                clicked => { Act.act("go:" + Data.match.build-route); }
+                            }
+                        }
+                    }
+                }
+            }
+            Reveal {
+                index: 1;
+                min-height: 340px;
+                ShareCard {
+                    s: Data.match.share;
+                    msg: Data.match.share-msg;
+                }
+            }
+            Reveal {
+                index: 2;
+                min-height: 136px;
+                Card {
+                    HorizontalLayout {
+                        padding: 16px;
+                        spacing: 32px;
+                        HorizontalLayout {
+                            spacing: 10px;
+                            horizontal-stretch: 0;
+                            for x in Data.match.scores: Rectangle {
+                                width: 132px;
+                                background: Theme.panel2;
+                                border-radius: 12px;
+                                border-width: 1px;
+                                border-color: Theme.line;
+                                VerticalLayout {
+                                    padding: 12px;
+                                    padding-left: 14px;
+                                    padding-right: 14px;
+                                    spacing: 6px;
+                                    Small { text: x.k; font-size: 13px; font-weight: 600; }
+                                    HorizontalLayout {
+                                        spacing: 3px;
+                                        alignment: start;
+                                        Num { text: x.v; font-size: 28px; }
+                                        Small { text: "/100"; vertical-alignment: bottom; }
+                                    }
+                                    Bar {
+                                        value: x.value;
+                                        fill: x.color;
+                                    }
+                                    Text {
+                                        text: x.grade;
+                                        font-size: 12px;
+                                        font-weight: 600;
+                                        color: x.color;
+                                    }
+                                }
+                            }
+                        }
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 6px;
+                            Small { text: "Comparé aux 9 autres joueurs de la partie"; }
+                            HorizontalLayout {
+                                alignment: start;
+                                spacing: 6px;
+                                Text { text: "Ton point fort :"; font-size: 20px; color: Theme.text; }
+                                Text { text: Data.match.best + "."; font-size: 20px; color: Theme.accent; }
+                            }
+                            Text {
+                                text: Data.match.summary;
+                                font-size: 18px;
+                                color: Theme.text;
+                                wrap: word-wrap;
+                            }
+                        }
+                    }
+                }
+            }
+            if Data.match.has-chart: Reveal {
+                index: 3;
+                min-height: 380px;
+                Card {
+                    VerticalLayout {
+                        padding: 16px;
+                        spacing: 10px;
+                        HorizontalLayout {
+                            CardTitle { text: "Courbe de la partie"; }
+                            Seg { options: Data.match.chart.tabs; }
+                        }
+                        MatchChart { c: Data.match.chart; }
+                    }
+                }
+            }
+            HorizontalLayout {
+                spacing: 16px;
+                for t in Data.match.objs: Card {
+                    HorizontalLayout {
+                        padding: 16px;
+                        spacing: 16px;
+                        Text {
+                            text: t.title;
+                            font-weight: 700;
+                            font-size: 15px;
+                            color: t.mine ? Theme.accent : Theme.text;
+                            vertical-alignment: center;
+                        }
+                        Rectangle { horizontal-stretch: 1; }
+                        for s in t.stats: StatBox {
+                            s: s;
+                            size: 18px;
+                            align: center;
+                        }
+                    }
+                }
+            }
+            Card {
+                VerticalLayout {
+                    padding: 12px;
+                    Table {
+                        framed: false;
+                        cols: Data.match.cols;
+                        rows: Data.match.rows;
+                        row-height: 52px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component TierListView {
+    in property <bool> embedded;
+    Page {
+        if Data.notice-title != "": VerticalLayout {
+            padding-bottom: 22px;
+            Notice2 { }
+        }
+        PageHead {
+            title: "Tier list";
+            sub: "Classé Solo/Duo";
+            text: "Statistiques mondiales du patch en cours, fournies par OP.GG. Clique sur un champion pour son build.";
+        }
+        if Data.tier.error != "": Empty { title: "OP.GG ne répond pas"; text: Data.tier.error; }
+        if Data.tier.loading && Data.tier.error == "": Skeleton { rows: 10; row-height: 56px; }
+        if !Data.tier.loading && Data.tier.error == "": VerticalLayout {
+            spacing: 16px;
+            HorizontalLayout {
+                spacing: 10px;
+                alignment: start;
+                SearchBox {
+                    width: 240px;
+                    placeholder: "Rechercher un champion";
+                    key: "tier-q:";
+                    value <=> Data.tier-q;
+                }
+                Seg { options: Data.tier.fav; }
+                Seg { options: Data.tier.roles; }
+            }
+            if Data.tier.empty-title != "": Empty { title: Data.tier.empty-title; text: Data.tier.empty-text; }
+            if Data.tier.empty-title == "": Table {
+                cols: Data.tier.cols;
+                rows: Data.tier.rows;
+            }
+        }
+    }
+}
+
+component Notice2 {
+    HorizontalLayout {
+        Rectangle {
+            min-height: 62px;
+            background: Theme.panel;
+            border-width: 1px;
+            border-color: Theme.line-soft;
+            border-radius: 10px;
+            HorizontalLayout {
+                padding-left: 16px;
+                padding-right: 12px;
+                spacing: 14px;
+                VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 8px;
+                        height: 8px;
+                        border-radius: 4px;
+                        background: Theme.loss;
+                    }
+                }
+                VerticalLayout {
+                    alignment: center;
+                    Text {
+                        text: Data.notice-title;
+                        color: Theme.text;
+                        font-weight: 600;
+                        font-size: 14.5px;
+                    }
+                    Small {
+                        text: Data.notice-text;
+                        font-size: 13.5px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+export { Notice2 }
+
+export component ChampionsView {
+    Page {
+        PageHead {
+            title: "Champions";
+            text: Data.champions.text;
+        }
+        if Data.champions.loading: Skeleton { rows: 8; row-height: 56px; }
+        if !Data.champions.loading: VerticalLayout {
+            spacing: 16px;
+            HorizontalLayout {
+                spacing: 10px;
+                alignment: start;
+                SearchBox {
+                    width: 240px;
+                    placeholder: "Rechercher un champion";
+                    key: "champ-q:";
+                    value <=> Data.champ-q;
+                }
+                Seg { options: Data.champions.classes; }
+                if Data.champions.played.length > 0: Seg { options: Data.champions.played; }
+            }
+            if Data.champions.show-table: Table {
+                cols: Data.champions.cols;
+                rows: Data.champions.rows;
+            }
+            if !Data.champions.show-table: gw := Rectangle {
+                property <int> cols: max(1, floor(self.width / 96px));
+                property <length> cw: (self.width - (cols - 1) * 10px) / cols;
+                height: ceil(Data.champions.grid.length / cols) * 110px;
+                for c[i] in Data.champions.grid: Rectangle {
+                    x: mod(i, gw.cols) * (gw.cw + 10px);
+                    y: floor(i / gw.cols) * 110px;
+                    width: gw.cw;
+                    height: 104px;
+                    gp := Press {
+                        clicked => { Act.act("go:" + c.route); }
+                    }
+                    VerticalLayout {
+                        spacing: 4px;
+                        HorizontalLayout {
+                            alignment: center;
+                            Pic {
+                                url: c.icon;
+                                width: 64px;
+                                height: 64px;
+                                radius: 10px;
+                                back: Theme.panel2;
+                                transform-scale: gp.down && !Motion.reduced ? 0.96 : 1;
+                                animate transform-scale { duration: Motion.xfast; }
+                            }
+                        }
+                        Text {
+                            text: c.name;
+                            font-size: 12px;
+                            color: gp.hover ? Theme.text : Theme.muted;
+                            horizontal-alignment: center;
+                            overflow: elide;
+                        }
+                        if c.sub != "": Small {
+                            text: c.sub;
+                            font-size: 11px;
+                            horizontal-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+component IconRow {
+    in property <[ItemStep]> items;
+    HorizontalLayout {
+        spacing: 6px;
+        alignment: start;
+        for u in root.items: HorizontalLayout {
+            spacing: 6px;
+            if u.arrow: Small { text: "›"; font-size: 14px; }
+            Pic {
+                url: u.icon;
+                width: 36px;
+                height: 36px;
+                radius: 6px;
+                back: Theme.panel2;
+            }
+        }
+    }
+}
+
+component JunglePathView {
+    in property <JungleData> j;
+    Card {
+        VerticalLayout {
+            padding: 16px;
+            spacing: 10px;
+            HorizontalLayout {
+                spacing: 8px;
+                CardTitle { text: "Jungle path"; }
+                Seg { options: root.j.teams; }
+                Seg { options: root.j.starts; }
+            }
+            HorizontalLayout {
+                spacing: 24px;
+                map := Rectangle {
+                    width: 380px;
+                    height: 380px;
+                    border-radius: 14px;
+                    background: Theme.panel2;
+                    clip: true;
+                    Pic { url: root.j.map; }
+                    Path {
+                        viewbox-width: 100;
+                        viewbox-height: 100;
+                        commands: root.j.path;
+                        stroke: Theme.accent;
+                        stroke-width: 3px;
+                        fill: transparent;
+                    }
+                    for s in root.j.steps: Rectangle {
+                        x: parent.width * s.x / 100 - 12px;
+                        y: parent.height * s.y / 100 - 12px;
+                        width: 24px;
+                        height: 24px;
+                        border-radius: 12px;
+                        background: s.crab ? #5fe0c8 : Theme.accent;
+                        border-width: 2px;
+                        border-color: #0e1220;
+                        Text {
+                            text: s.n;
+                            color: #1a1405;
+                            font-family: Theme.num;
+                            font-weight: 700;
+                            font-size: 13px;
+                        }
+                    }
+                }
+                VerticalLayout {
+                    spacing: 6px;
+                    alignment: start;
+                    for s in root.j.steps: Rectangle {
+                        height: 40px;
+                        border-radius: 10px;
+                        background: #ffffff08;
+                        HorizontalLayout {
+                            padding-left: 10px;
+                            padding-right: 10px;
+                            spacing: 10px;
+                            VerticalLayout {
+                                alignment: center;
+                                Rectangle {
+                                    width: 24px;
+                                    height: 24px;
+                                    border-radius: 12px;
+                                    background: s.crab ? #5fe0c8 : Theme.accent;
+                                    Text {
+                                        text: s.n;
+                                        color: s.crab ? #06231d : Theme.on-accent;
+                                        font-family: Theme.num;
+                                        font-weight: 700;
+                                        font-size: 13px;
+                                    }
+                                }
+                            }
+                            T {
+                                text: s.name;
+                                font-weight: 700;
+                            }
+                            Small {
+                                text: s.note;
+                                horizontal-stretch: 0;
+                            }
+                        }
+                    }
+                    Text {
+                        text: root.j.text;
+                        color: Theme.muted;
+                        font-size: 14px;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component BuildsBody {
+    VerticalLayout {
+        spacing: 16px;
+        if !Data.builds.compact: Rectangle {
+            min-height: 128px;
+            border-radius: 14px;
+            border-width: 1px;
+            border-color: Theme.line;
+            background: Theme.panel;
+            clip: true;
+            Pic { url: Data.builds.splash; }
+            Rectangle { background: @linear-gradient(90deg, #0e1220 25%, #0e1220aa 60%, #0e122066 100%); }
+            HorizontalLayout {
+                padding-left: 24px;
+                padding-right: 24px;
+                spacing: 16px;
+                VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 72px;
+                        height: 72px;
+                        border-radius: 14px;
+                        border-width: 2px;
+                        border-color: Theme.accent;
+                        clip: true;
+                        Pic { url: Data.builds.champ; }
+                    }
+                }
+                VerticalLayout {
+                    alignment: center;
+                    horizontal-stretch: 0;
+                    Text {
+                        text: Data.builds.name;
+                        font-family: Theme.num;
+                        font-weight: 700;
+                        font-size: 28px;
+                        color: Theme.text;
+                    }
+                    Small { text: Data.builds.tags; }
+                }
+                if Data.builds.has-stats: HorizontalLayout {
+                    padding-left: 24px;
+                    spacing: 22px;
+                    horizontal-stretch: 0;
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 2px;
+                        Rectangle {
+                            width: 34px;
+                            height: 24px;
+                            border-radius: 6px;
+                            background: Data.builds.tier-tone == 1 ? Theme.accent.transparentize(0.85) : Data.builds.tier-tone == 2 ? Theme.teal.transparentize(0.85) : Theme.panel2;
+                            Text {
+                                text: Data.builds.tier;
+                                font-family: Theme.num;
+                                font-weight: 700;
+                                color: Data.builds.tier-tone == 1 ? Theme.accent : Data.builds.tier-tone == 2 ? Theme.teal : Theme.muted;
+                            }
+                        }
+                        Small { text: "Tier"; horizontal-alignment: center; }
+                    }
+                    for s in Data.builds.stats: VerticalLayout {
+                        alignment: center;
+                        StatBox {
+                            s: s;
+                            size: 17px;
+                            align: center;
+                        }
+                    }
+                }
+                Rectangle { horizontal-stretch: 1; }
+                VerticalLayout {
+                    alignment: center;
+                    Ghost {
+                        label: "Tier list";
+                        clicked => { Act.act("go:tierlist"); }
+                    }
+                }
+            }
+        }
+        HorizontalLayout {
+            spacing: 12px;
+            if Data.builds.compact: Rectangle {
+                width: cr.preferred-width;
+                cp := Press {
+                    clicked => { Act.act("go:" + Data.builds.route); }
+                }
+                cr := HorizontalLayout {
+                    spacing: 8px;
+                    VerticalLayout {
+                        alignment: center;
+                        Pic {
+                            url: Data.builds.champ;
+                            width: 32px;
+                            height: 32px;
+                            radius: 8px;
+                        }
+                    }
+                    T { text: Data.builds.name; font-weight: 700; }
+                }
+            }
+            Seg { options: Data.builds.sources; fsize: 13px; pad: 9px; }
+            Seg { options: Data.builds.modes; fsize: 13px; pad: 9px; }
+            if Data.builds.roles.length > 0: Seg { options: Data.builds.roles; fsize: 13px; pad: 7px; }
+            if Data.builds.ranks.length > 0: Seg { options: Data.builds.ranks; fsize: 13px; pad: 7px; }
+            Rectangle { horizontal-stretch: 1; }
+            if Data.builds.msg != "": Small { text: Data.builds.msg; }
+            Primary {
+                label: "Importer dans le client";
+                enabled: Data.builds.can-apply;
+                clicked => { Act.act("apply-build"); }
+            }
+        }
+        if Data.builds.loading: Skeleton { rows: 2; row-height: 220px; }
+        if !Data.builds.loading && Data.builds.none: Empty { text: "Aucun build disponible pour ce champion."; }
+        if !Data.builds.loading && !Data.builds.none: VerticalLayout {
+            spacing: 16px;
+            HorizontalLayout {
+                spacing: 16px;
+                Reveal {
+                    min-height: rc.preferred-height;
+                    Card {
+                        rc := VerticalLayout {
+                            padding: 16px;
+                            spacing: 10px;
+                            HorizontalLayout {
+                                CardTitle { text: "Runes"; }
+                                AutoSwitch { label: "Import auto"; key: "auto:autoRunes"; on: Data.builds.auto-runes; }
+                            }
+                            HorizontalLayout {
+                                spacing: 6px;
+                                alignment: start;
+                                for c in Data.builds.rune-chips: ChipView { c: c; }
+                            }
+                            HorizontalLayout {
+                                alignment: start;
+                                ChipView { c: { text: "Page « " + Data.builds.page-name + " »", tone: 3, pill: true }; }
+                            }
+                            HorizontalLayout {
+                                spacing: 32px;
+                                alignment: center;
+                                for tree in Data.builds.trees: VerticalLayout {
+                                    spacing: 10px;
+                                    alignment: start;
+                                    HorizontalLayout {
+                                        alignment: center;
+                                        Pic {
+                                            url: tree.icon;
+                                            width: 28px;
+                                            height: 28px;
+                                            fit: contain;
+                                        }
+                                    }
+                                    for sl in tree.slots: HorizontalLayout {
+                                        spacing: 10px;
+                                        alignment: center;
+                                        for r in sl.runes: Rectangle {
+                                            width: sl.keys ? 46px : 34px;
+                                            height: sl.keys ? 46px : 34px;
+                                            border-radius: self.width / 2;
+                                            border-width: r.on ? 2px : 0px;
+                                            border-color: Theme.accent;
+                                            Pic {
+                                                url: r.icon;
+                                                fit: contain;
+                                                dim: r.on ? 1 : 0.35;
+                                                gray: !r.on;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if Data.builds.shards.length > 0: HorizontalLayout {
+                                spacing: 10px;
+                                alignment: center;
+                                padding-top: 8px;
+                                for u in Data.builds.shards: Rectangle {
+                                    width: 30px;
+                                    height: 30px;
+                                    border-radius: 15px;
+                                    background: Theme.panel2;
+                                    border-width: 1px;
+                                    border-color: Theme.accent;
+                                    Pic {
+                                        url: u;
+                                        width: 24px;
+                                        height: 24px;
+                                        fit: contain;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Reveal {
+                    index: 1;
+                    min-height: ic.preferred-height;
+                    Card {
+                        ic := VerticalLayout {
+                            padding: 16px;
+                            spacing: 10px;
+                            HorizontalLayout {
+                                CardTitle { text: "Sorts d'invocateur"; }
+                                AutoSwitch { label: "Import auto"; key: "auto:autoSpells"; on: Data.builds.auto-spells; }
+                            }
+                            HorizontalLayout {
+                                spacing: 6px;
+                                for u in Data.builds.spells: Pic {
+                                    url: u;
+                                    width: 36px;
+                                    height: 36px;
+                                    radius: 6px;
+                                }
+                                Rectangle { horizontal-stretch: 1; }
+                                for c in Data.builds.spell-chips: VerticalLayout {
+                                    alignment: center;
+                                    ChipView { c: c; }
+                                }
+                            }
+                            Rectangle { height: 1px; background: Theme.line-soft; }
+                            HorizontalLayout {
+                                CardTitle { text: "Objets"; }
+                                AutoSwitch { label: "Item set auto"; key: "auto:autoItems"; on: Data.builds.auto-items; }
+                            }
+                            for row in Data.builds.opts: HorizontalLayout {
+                                spacing: 12px;
+                                padding-top: 4px;
+                                padding-bottom: 4px;
+                                Text {
+                                    text: row.label;
+                                    width: 100px;
+                                    font-weight: 600;
+                                    font-size: 14px;
+                                    color: Theme.text;
+                                    vertical-alignment: center;
+                                }
+                                VerticalLayout {
+                                    spacing: 8px;
+                                    for chunk in row.rows: HorizontalLayout {
+                                        spacing: 8px;
+                                        alignment: start;
+                                        for o in chunk: Rectangle {
+                                            min-width: oh.preferred-width;
+                                            min-height: oh.preferred-height;
+                                            border-radius: 12px;
+                                            background: o.best ? Theme.accent.transparentize(0.93) : #ffffff08;
+                                            border-width: 1px;
+                                            border-color: o.best ? Theme.accent.transparentize(0.6) : transparent;
+                                            oh := HorizontalLayout {
+                                                padding: 6px;
+                                                padding-right: 10px;
+                                                spacing: 10px;
+                                                IconRow { items: o.items; }
+                                                VerticalLayout {
+                                                    alignment: center;
+                                                    Num { text: o.win; font-size: 15px; font-weight: 700; color: Theme.tone(o.tone); }
+                                                    Small { text: o.pick; font-size: 11.5px; font-family: Theme.num; }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            for p in Data.builds.plain: VerticalLayout {
+                                spacing: 6px;
+                                CardTitle { text: p.title; }
+                                IconRow { items: p.items; }
+                            }
+                            if Data.builds.riot-note: Small {
+                                text: "Les objets recommandés par Riot sont déjà dans la boutique en jeu.";
+                                wrap: word-wrap;
+                            }
+                        }
+                    }
+                }
+            }
+            if Data.builds.has-skills: Reveal {
+                index: 2;
+                min-height: sc.preferred-height;
+                Card {
+                    sc := VerticalLayout {
+                        padding: 16px;
+                        spacing: 8px;
+                        HorizontalLayout {
+                            spacing: 8px;
+                            alignment: start;
+                            CardTitle { text: "Ordre des compétences"; }
+                            Small { text: Data.builds.max-line; }
+                        }
+                        if Data.builds.variants.length > 1: HorizontalLayout {
+                            spacing: 8px;
+                            alignment: start;
+                            for v in Data.builds.variants: Rectangle {
+                                min-width: vr.preferred-width;
+                                height: 40px;
+                                border-radius: 12px;
+                                border-width: 1px;
+                                border-color: v.on ? Theme.accent : #ffffff12;
+                                background: v.on ? Theme.accent.transparentize(0.91) : #ffffff08;
+                                animate background, border-color { duration: Motion.fast; }
+                                Press {
+                                    clicked => { Act.act(v.key); }
+                                }
+                                vr := HorizontalLayout {
+                                    padding-left: 12px;
+                                    padding-right: 12px;
+                                    spacing: 12px;
+                                    Num { text: v.first; font-size: 15px; }
+                                    Small { text: v.max; font-size: 12.5px; }
+                                    Num { text: v.win; font-size: 15px; font-weight: 700; color: Theme.tone(v.tone); }
+                                    Small { text: v.pick; font-family: Theme.num; }
+                                }
+                            }
+                        }
+                        for r in Data.builds.skills: HorizontalLayout {
+                            spacing: 4px;
+                            height: 28px;
+                            Pic {
+                                url: r.icon;
+                                width: 28px;
+                                height: 28px;
+                                radius: 6px;
+                            }
+                            for c in r.cells: Rectangle {
+                                height: 24px;
+                                y: 2px;
+                                border-radius: 4px;
+                                background: c.on ? Theme.accent.transparentize(0.81) : Theme.panel2;
+                                Text {
+                                    text: c.key;
+                                    font-family: Theme.num;
+                                    font-weight: 700;
+                                    font-size: 12px;
+                                    color: Theme.accent;
+                                }
+                            }
+                        }
+                        HorizontalLayout {
+                            spacing: 4px;
+                            height: 20px;
+                            Rectangle { width: 28px; }
+                            for l in Data.builds.levels: Text {
+                                text: l;
+                                font-family: Theme.num;
+                                font-size: 12px;
+                                color: Theme.muted;
+                                horizontal-alignment: center;
+                            }
+                        }
+                    }
+                }
+            }
+            if Data.builds.jungle.show: JunglePathView {
+                j: Data.builds.jungle;
+                min-height: 460px;
+            }
+            if Data.builds.has-counters: Reveal {
+                index: 3;
+                min-height: 130px;
+                Card {
+                    HorizontalLayout {
+                        padding: 16px;
+                        spacing: 24px;
+                        for side[si] in [Data.builds.weak, Data.builds.strong]: VerticalLayout {
+                            spacing: 8px;
+                            alignment: start;
+                            CardTitle { text: si == 0 ? "Matchups difficiles" : "Matchups faciles"; }
+                            HorizontalLayout {
+                                spacing: 10px;
+                                alignment: start;
+                                for k in side: Rectangle {
+                                    width: 64px;
+                                    height: 84px;
+                                    kp := Press {
+                                        clicked => { Act.act("go:" + k.route); }
+                                    }
+                                    VerticalLayout {
+                                        spacing: 2px;
+                                        HorizontalLayout {
+                                            alignment: center;
+                                            Pic {
+                                                url: k.icon;
+                                                width: 44px;
+                                                height: 44px;
+                                                radius: 10px;
+                                                back: Theme.panel2;
+                                            }
+                                        }
+                                        Num {
+                                            text: k.win;
+                                            font-size: 13px;
+                                            color: k.good ? Theme.teal : Theme.loss;
+                                            horizontal-alignment: center;
+                                        }
+                                        Small {
+                                            text: k.name;
+                                            font-size: 11px;
+                                            horizontal-alignment: center;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component BuildsView {
+    Page {
+        BuildsBody { }
+    }
+}
+
+component PCard {
+    in property <PlayerCard> c;
+    min-height: 236px;
+    Rectangle {
+        border-radius: 12px;
+        border-width: root.c.me ? 2px : 1px;
+        border-color: root.c.me || pp.hover ? Theme.accent : Theme.line;
+        background: Theme.panel;
+        clip: true;
+        animate border-color { duration: Motion.fast; }
+        Pic { url: root.c.art; }
+        Rectangle { background: @linear-gradient(180deg, #0b0f17 0%, #0b0f17aa 45%, #0b0f17ee 100%); }
+        pp := Press {
+            enabled: root.c.route != "";
+            ring-radius: 12px;
+            clicked => { Act.act("go:" + root.c.route); }
+        }
+        VerticalLayout {
+            padding: 10px;
+            HorizontalLayout {
+                spacing: 4px;
+                height: 20px;
+                alignment: start;
+                for t in root.c.tags: ChipView { c: { text: t, tone: 3, pill: true }; }
+            }
+            Rectangle { vertical-stretch: 1; }
+            VerticalLayout {
+                Num {
+                    text: root.c.rank;
+                    font-size: 15px;
+                    font-weight: 700;
+                    color: root.c.rank-color;
+                    horizontal-alignment: center;
+                }
+                if root.c.record != "": Small { text: root.c.record; horizontal-alignment: center; }
+            }
+            Rectangle { vertical-stretch: 1; }
+            VerticalLayout {
+                spacing: 2px;
+                T { text: root.c.name; font-weight: 700; horizontal-alignment: center; }
+                Small { text: root.c.sub; horizontal-alignment: center; }
+                if root.c.wr != "": Text {
+                    text: root.c.wr;
+                    font-size: 11px;
+                    color: Theme.tone(root.c.wr-tone);
+                    horizontal-alignment: center;
+                }
+                if root.c.champ-line != "": Small {
+                    text: root.c.champ-line;
+                    font-size: 11px;
+                    horizontal-alignment: center;
+                    wrap: word-wrap;
+                }
+            }
+        }
+    }
+}
+
+component DmgView {
+    in property <DmgBar> b;
+    VerticalLayout {
+        spacing: 4px;
+        Small { text: root.b.label; }
+        Rectangle {
+            height: 30px;
+            border-radius: 8px;
+            clip: true;
+            Rectangle {
+                x: 0px;
+                width: parent.width * root.b.ad;
+                background: #f0506e33;
+                animate width { duration: Motion.slow; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+                Text { text: root.b.ad-text; color: #ff7d8d; font-weight: 700; font-size: 13px; }
+            }
+            Rectangle {
+                x: parent.width * root.b.ad;
+                width: parent.width * root.b.ap;
+                background: #4c6fff33;
+                animate x, width { duration: Motion.slow; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+                Text { text: root.b.ap-text; color: #8fa6ff; font-weight: 700; font-size: 13px; }
+            }
+        }
+    }
+}
+
+export component LiveView {
+    Page {
+        if Data.live.waiting: WaitingLol { }
+        if !Data.live.waiting: VerticalLayout {
+            spacing: 12px;
+            PageHead { title: Data.live.title; }
+            if Data.live.show-build: Card {
+                VerticalLayout {
+                    padding: 16px;
+                    BuildsBody { }
+                }
+            }
+            if Data.live.build-hint: Card {
+                min-height: 54px;
+                Small {
+                    x: 16px;
+                    text: "Survole ou choisis un champion pour voir son build ici.";
+                    font-size: 14px;
+                }
+            }
+            HorizontalLayout {
+                spacing: 16px;
+                if Data.live.dmg1.show: DmgView { b: Data.live.dmg1; }
+                if Data.live.dmg2.show: DmgView { b: Data.live.dmg2; }
+            }
+            for team[ti] in [Data.live.team1, Data.live.team2]: VerticalLayout {
+                spacing: 8px;
+                if team.length > 0: Text {
+                    text: ti == 0 ? "Ton équipe" : "Équipe adverse";
+                    color: ti == 0 ? Theme.teal : Theme.loss;
+                    font-weight: 700;
+                    font-size: 14px;
+                }
+                HorizontalLayout {
+                    spacing: 10px;
+                    for c[i] in team: Reveal {
+                        index: i;
+                        min-height: 236px;
+                        PCard { c: c; }
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component WaitPanel {
+    in property <string> status;
+    in property <string> title;
+    in property <string> text;
+    in property <string> btn1;
+    in property <string> key1;
+    in property <string> btn2;
+    in property <string> key2;
+    in property <[{title: string, text: string}]> steps;
+    HorizontalLayout {
+        alignment: center;
+        padding-top: 24px;
+        Rectangle {
+            width: min(1080px, root.width);
+            min-height: 330px;
+            border-radius: 12px;
+            background: Theme.panel;
+            border-width: 1px;
+            border-color: Theme.line-soft;
+            HorizontalLayout {
+                padding: 32px;
+                spacing: 40px;
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 8px;
+                    HorizontalLayout {
+                        spacing: 8px;
+                        alignment: start;
+                        VerticalLayout {
+                            alignment: center;
+                            Rectangle {
+                                width: 8px;
+                                height: 8px;
+                                border-radius: 4px;
+                                background: Theme.accent;
+                                property <bool> dim;
+                                opacity: dim ? 0.3 : 1;
+                                animate opacity { duration: Motion.reduced ? 0ms : 800ms; easing: ease-in-out; }
+                                Timer {
+                                    interval: 800ms;
+                                    running: !Motion.reduced;
+                                    triggered => { parent.dim = !parent.dim; }
+                                }
+                            }
+                        }
+                        Small { text: root.status; font-size: 13px; font-weight: 600; }
+                    }
+                    Text {
+                        text: root.title;
+                        font-family: Theme.num;
+                        font-weight: 700;
+                        font-size: 28px;
+                        color: Theme.text;
+                        wrap: word-wrap;
+                    }
+                    Text {
+                        text: root.text;
+                        color: Theme.muted;
+                        wrap: word-wrap;
+                    }
+                    HorizontalLayout {
+                        spacing: 10px;
+                        padding-top: 14px;
+                        alignment: start;
+                        Primary {
+                            label: root.btn1;
+                            clicked => { Act.act(root.key1); }
+                        }
+                        Ghost {
+                            label: root.btn2;
+                            clicked => { Act.act(root.key2); }
+                        }
+                    }
+                }
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 4px;
+                    for s[i] in root.steps: HorizontalLayout {
+                        spacing: 12px;
+                        padding-top: 12px;
+                        padding-bottom: 12px;
+                        VerticalLayout {
+                            alignment: start;
+                            Rectangle {
+                                width: 26px;
+                                height: 26px;
+                                border-radius: 7px;
+                                background: Theme.panel2;
+                                Text {
+                                    text: i + 1;
+                                    font-family: Theme.num;
+                                    font-weight: 700;
+                                    font-size: 13px;
+                                    color: Theme.accent;
+                                }
+                            }
+                        }
+                        VerticalLayout {
+                            spacing: 2px;
+                            Text {
+                                text: s.title;
+                                color: Theme.text;
+                                font-weight: 600;
+                                font-size: 14.5px;
+                            }
+                            Small {
+                                text: s.text;
+                                font-size: 13px;
+                                wrap: word-wrap;
+                                overflow: clip;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+component WaitingLol {
+    WaitPanel {
+        status: "En attente d'une partie";
+        title: "Lance une file dans le client League";
+        text: "Kairo prend le relais dès la sélection des champions, sans rien à faire de ton côté.";
+        btn1: "Voir la tier list";
+        key1: "go:tierlist";
+        btn2: "Régler les overlays";
+        key2: "go:overlays";
+        steps: [
+            { title: "Sélection des champions", text: "Runes, sorts et item set importés quand tu verrouilles ton champion." },
+            { title: "Chargement", text: "Rang, winrate récent et champions favoris des 10 joueurs." },
+            { title: "En jeu", text: "Objectifs, ennemis morts, prochain objet, ordre des compétences et jungle path par-dessus le jeu." },
+        ];
+    }
+}
+
+export component OvRowView {
+    in property <string> icon;
+    in property <string> label;
+    in property <string> value;
+    in property <int> tone;
+    in property <float> bar: -1;
+    VerticalLayout {
+        HorizontalLayout {
+            min-height: 24px;
+            spacing: 8px;
+            if root.icon != "": VerticalLayout {
+                alignment: center;
+                Pic {
+                    url: root.icon;
+                    width: 18px;
+                    height: 18px;
+                    fit: contain;
+                }
+            }
+            Text {
+                text: root.label;
+                font-size: 13px;
+                color: #aab4c6;
+                vertical-alignment: center;
+                overflow: elide;
+            }
+            if root.tone == 3: VerticalLayout {
+                alignment: center;
+                horizontal-stretch: 0;
+                Rectangle {
+                    background: Theme.accent;
+                    border-radius: 5px;
+                    min-width: uv.preferred-width + 12px;
+                    height: 18px;
+                    uv := Text {
+                        text: root.value;
+                        font-size: 11px;
+                        font-weight: 700;
+                        color: Theme.bg;
+                    }
+                }
+            }
+            if root.tone != 3: Text {
+                text: root.value;
+                font-size: 13px;
+                font-weight: 700;
+                horizontal-stretch: 0;
+                color: root.tone == 1 ? #3ddc97 : root.tone == 2 ? #ff6b7d : Theme.text;
+                vertical-alignment: center;
+            }
+        }
+        if root.bar >= 0: Rectangle {
+            height: 3px;
+            border-radius: 2px;
+            background: #ffffff14;
+            Rectangle {
+                x: 0px;
+                width: parent.width * clamp(root.bar, 0, 1);
+                border-radius: 2px;
+                background: Theme.accent;
+            }
+        }
+    }
+}
+
+export component OvWidgetView {
+    in property <OvWidget> w;
+    Rectangle {
+        background: #090d15db;
+        border-width: 1px;
+        border-color: #ffffff17;
+        border-radius: 12px;
+        VerticalLayout {
+            padding-top: 9px;
+            padding-bottom: 10px;
+            padding-left: 12px;
+            padding-right: 12px;
+            Text {
+                text: root.w.title;
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 0.9px;
+                color: Theme.accent;
+                height: 18px;
+                overflow: elide;
+            }
+            for r in root.w.rows: OvRowView {
+                icon: r.icon;
+                label: r.label;
+                value: r.value;
+                tone: r.tone;
+                bar: r.bar;
+            }
+        }
+    }
+}
+
+export component OvAlertView {
+    in property <OvAlert> a;
+    min-width: 250px;
+    height: 58px;
+    Rectangle {
+        background: #090d15e6;
+        border-width: 1px;
+        border-color: #e8b53e8c;
+        border-radius: 14px;
+        HorizontalLayout {
+            padding-left: 14px;
+            padding-right: 14px;
+            spacing: 12px;
+            VerticalLayout {
+                alignment: center;
+                Pic {
+                    url: root.a.icon;
+                    width: 30px;
+                    height: 30px;
+                    fit: contain;
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                T { text: root.a.name; font-weight: 700; font-size: 15px; }
+                Text { text: "apparaît bientôt"; font-size: 12px; color: #aab4c6; }
+            }
+            Text {
+                text: root.a.secs;
+                font-size: 24px;
+                font-weight: 700;
+                color: Theme.accent;
+                vertical-alignment: center;
+                horizontal-stretch: 0;
+            }
+        }
+    }
+}
+
+export component OvSkillView {
+    in property <string> key-name;
+    in property <string> icon;
+    in property <string> level;
+    min-width: 170px;
+    height: 60px;
+    Rectangle {
+        background: #090d15e6;
+        border-width: 1px;
+        border-color: #e8b53e8c;
+        border-radius: 14px;
+        HorizontalLayout {
+            padding-left: 8px;
+            padding-right: 16px;
+            spacing: 12px;
+            VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 44px;
+                    height: 44px;
+                    Rectangle {
+                        border-radius: 10px;
+                        border-width: 2px;
+                        border-color: Theme.accent;
+                        clip: true;
+                        Pic { url: root.icon; }
+                    }
+                    Rectangle {
+                        x: 28px;
+                        y: 28px;
+                        width: 22px;
+                        height: 22px;
+                        border-radius: 6px;
+                        background: Theme.accent;
+                        Text {
+                            text: root.key-name;
+                            font-size: 13px;
+                            font-weight: 700;
+                            color: Theme.bg;
+                        }
+                    }
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                Text { text: root.level; font-size: 11px; color: #aab4c6; }
+                T { text: "Monte " + root.key-name; font-size: 17px; font-weight: 700; }
+            }
+        }
+    }
+}
+
+component OvCardView {
+    in property <OvCard> c;
+    Rectangle {
+        border-radius: 16px;
+        border-width: 1px;
+        border-color: Theme.line;
+        background: Theme.panel;
+        clip: true;
+        VerticalLayout {
+            Rectangle {
+                height: 160px;
+                background: #0d1a14;
+                clip: true;
+                Pic {
+                    url: "https://ddragon.leagueoflegends.com/cdn/6.8.1/img/map/map11.png";
+                    dim: 0.3;
+                }
+                HorizontalLayout {
+                    alignment: center;
+                    VerticalLayout {
+                        alignment: center;
+                        if root.c.kind == 0: OvWidgetView { w: root.c.widget; width: 210px; }
+                        if root.c.kind == 1: OvAlertView { a: root.c.alert; }
+                        if root.c.kind == 2: OvSkillView { key-name: "Q"; icon: root.c.skill-icon; level: "NIVEAU 4"; }
+                    }
+                }
+            }
+            VerticalLayout {
+                padding: 16px;
+                padding-top: 14px;
+                spacing: 6px;
+                Text {
+                    text: root.c.title;
+                    font-weight: 700;
+                    font-size: 16px;
+                    color: Theme.text;
+                }
+                Text {
+                    text: root.c.desc;
+                    color: Theme.muted;
+                    font-size: 13px;
+                    wrap: word-wrap;
+                    vertical-stretch: 1;
+                    vertical-alignment: top;
+                }
+                Rectangle {
+                    height: 40px;
+                    border-radius: 10px;
+                    background: root.c.on ? #2fd3b533 : Theme.panel2;
+                    animate background { duration: Motion.fast; }
+                    Press {
+                        ring-radius: 10px;
+                        clicked => { Act.act("ov:" + root.c.key); }
+                    }
+                    Text {
+                        text: root.c.on ? "Activé" : "Désactivé";
+                        font-weight: 700;
+                        color: root.c.on ? #3ddc84 : Theme.muted;
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component OverlaysView {
+    Page {
+        HorizontalLayout {
+            spacing: 20px;
+            PageHead {
+                title: "Overlays";
+                text: "Widgets affichés par-dessus le jeu, transparents aux clics. Mets le jeu en mode fenêtré sans bordure (Options › Vidéo).";
+            }
+            VerticalLayout {
+                alignment: start;
+                horizontal-stretch: 0;
+                Rectangle {
+                    min-width: at.preferred-width + 32px;
+                    height: 42px;
+                    border-radius: 10px;
+                    border-width: 1px;
+                    border-color: Data.overlays.enabled ? Theme.teal : Theme.line;
+                    background: Data.overlays.enabled ? #2fd3b526 : Theme.panel2;
+                    animate background, border-color { duration: Motion.fast; }
+                    Press {
+                        ring-radius: 10px;
+                        clicked => { Act.act("ov:ovEnabled"); }
+                    }
+                    at := Text {
+                        text: Data.overlays.enabled ? "Overlays activés" : "Overlays désactivés";
+                        font-weight: 700;
+                        color: Data.overlays.enabled ? Theme.teal : Theme.muted;
+                    }
+                }
+            }
+        }
+        grid := Rectangle {
+            property <int> cols: max(1, floor((self.width + 16px) / 316px));
+            property <length> cw: (self.width - (cols - 1) * 16px) / cols;
+            property <length> ch: 340px;
+            height: ceil(Data.overlays.cards.length / cols) * (ch + 16px);
+            opacity: Data.overlays.enabled ? 1 : 0.45;
+            animate opacity { duration: Motion.fast; }
+            for c[i] in Data.overlays.cards: Reveal {
+                index: i;
+                x: mod(i, grid.cols) * (grid.cw + 16px);
+                y: floor(i / grid.cols) * (grid.ch + 16px);
+                width: grid.cw;
+                height: grid.ch;
+                OvCardView { c: c; }
+            }
+        }
+    }
+}

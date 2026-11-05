@@ -1,0 +1,1153 @@
+﻿import { ScrollView } from "std-widgets.slint";
+import { Theme, Motion, Act, Api, Press, Pic, T, Small, Num, Primary, Ghost, Seg, Card, Reveal, Page, Notice, PageHead, Opt } from "theme.slint";
+import { Data, SearchOpt, ShareData, OvWidget, OvAlert, GameCard } from "data.slint";
+import { ProfilePage, MatchPageView, TierListView, ChampionsView, BuildsView, LiveView, OverlaysView, ShareCard, OvWidgetView, OvAlertView, OvSkillView } from "pages_lol.slint";
+import { VProfileView, VMatchView, VLiveView, VAgentsView } from "pages_valo.slint";
+import { SettingsView, TftDecksView, TftProfileView } from "pages_misc.slint";
+
+export { Api, Act, Motion, Theme, Data }
+
+component WinBtn {
+    in property <string> path;
+    in property <bool> close;
+    in property <string> key;
+    width: 46px;
+    height: 40px;
+    Rectangle {
+        background: p.hover ? (root.close ? #c42b1c : #ffffff14) : transparent;
+        animate background { duration: Motion.xfast; }
+        p := Press {
+            clicked => { Act.act(root.key); }
+        }
+        Path {
+            width: 10px;
+            height: 10px;
+            viewbox-width: 10;
+            viewbox-height: 10;
+            commands: root.path;
+            stroke: p.hover ? (root.close ? #ffffff : Theme.text) : Theme.muted;
+            stroke-width: 1px;
+            fill: transparent;
+            animate stroke { duration: Motion.xfast; }
+        }
+    }
+}
+
+component GameMark {
+    in property <string> game;
+    in property <length> size: 30px;
+    width: size;
+    height: size;
+    property <string> ico: game == "lol" ? Data.lol-mark : game == "tft" ? Data.tft-mark : "";
+    Rectangle {
+        border-radius: root.size * 0.26;
+        background: #0d111c;
+        border-width: 1px;
+        border-color: #ffffff1a;
+        if root.ico != "": Pic {
+            url: root.ico;
+            width: root.size * 0.84;
+            height: root.size * 0.84;
+            fit: contain;
+        }
+        if root.ico == "" && root.game == "lol": Path {
+            width: root.size * 0.68;
+            height: root.size * 0.68;
+            viewbox-width: 24;
+            viewbox-height: 24;
+            fill: #d8ab4c;
+            commands: "m1.912 0 1.212 2.474v19.053L1.912 24h14.73l1.337-4.682H8.33V0ZM12 1.516c-.913 0-1.798.112-2.648.312v1.74a9.738 9.738 0 0 1 2.648-.368c5.267 0 9.536 4.184 9.536 9.348a9.203 9.203 0 0 1-2.3 6.086l-.273.954-.602 2.112c2.952-1.993 4.89-5.335 4.89-9.122C23.25 6.468 18.213 1.516 12 1.516Zm0 2.673c-.924 0-1.814.148-2.648.414v13.713h8.817a8.246 8.246 0 0 0 2.36-5.768c0-4.617-3.818-8.359-8.529-8.359zM2.104 7.312A10.858 10.858 0 0 0 .75 12.576c0 1.906.492 3.7 1.355 5.266z";
+        }
+        if root.game == "valo": Path {
+            width: root.size * 0.72;
+            height: root.size * 0.72;
+            viewbox-width: 24;
+            viewbox-height: 24;
+            fill: #ff4655;
+            commands: "M23.792 2.152a.25.25 0 0 0-.098.083q-5.077 6.345-10.15 12.69c-.107.093-.025.288.119.265c2.439.003 4.877 0 7.316.001a.66.66 0 0 0 .552-.25l2.324-2.903a.72.72 0 0 0 .144-.49c-.002-3.077 0-6.153-.003-9.23c.016-.11-.1-.206-.204-.167zM.077 2.166c-.077.038-.074.132-.076.205q.002 4.612.001 9.225a.68.68 0 0 0 .158.463l7.64 9.55c.12.152.308.25.505.247c2.455 0 4.91.003 7.365 0c.142.02.222-.174.116-.265C10.661 15.176 5.526 8.766.4 2.35c-.08-.094-.174-.272-.322-.184z";
+        }
+        if root.ico == "" && root.game == "tft": Path {
+            width: root.size * 0.68;
+            height: root.size * 0.68;
+            viewbox-width: 24;
+            viewbox-height: 24;
+            fill: #f2c230;
+            commands: "M4 3.5h16l-1.7 4.2h-4.2v11.2L12 21l-2.1-2.1V7.7H5.7Z";
+        }
+    }
+}
+
+component Header {
+    in-out property <bool> gmenu;
+    in-out property <bool> account;
+    out property <bool> pick-hover: gp.hover;
+    out property <length> search-x: sb.absolute-position.x;
+    out property <length> search-w: sb.width;
+    out property <length> acc-right: 0px;
+    callback pick-clicked;
+    public function focus-search() {
+        ti.focus();
+        ti.select-all();
+    }
+    public function blur-search() {
+        ti.clear-focus();
+    }
+    Rectangle {
+        background: Theme.bg;
+        TouchArea {
+            pointer-event(e) => {
+                if (e.button == PointerEventButton.left && e.kind == PointerEventKind.down) {
+                    Act.act("drag");
+                }
+            }
+            double-clicked => { Act.act("win-max"); }
+        }
+        Rectangle {
+            y: parent.height - 1px;
+            height: 1px;
+            background: #ffffff0f;
+        }
+        HorizontalLayout {
+            padding-left: 16px;
+            spacing: 6px;
+            VerticalLayout {
+                alignment: center;
+                horizontal-stretch: 0;
+                Rectangle {
+                    width: 54px;
+                    height: 38px;
+                    border-radius: 12px;
+                    background: gp.hover || root.gmenu ? #ffffff0f : transparent;
+                    animate background { duration: Motion.xfast; }
+                    gp := Press {
+                        ring-radius: 12px;
+                        clicked => { root.pick-clicked(); }
+                    }
+                    GameMark {
+                        x: 4px;
+                        game: Data.game;
+                    }
+                    Text {
+                        x: 38px;
+                        text: "▾";
+                        font-size: 10px;
+                        color: Theme.muted;
+                        rotation-angle: root.gmenu ? 180deg : 0deg;
+                        animate rotation-angle { duration: Motion.normal; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+                    }
+                }
+            }
+            HorizontalLayout {
+                spacing: 8px;
+                horizontal-stretch: 0;
+                padding-left: 6px;
+                padding-right: 10px;
+                if root.width > 1200px: VerticalLayout {
+                    alignment: center;
+                    Path {
+                        width: 22px;
+                        height: 22px;
+                        viewbox-width: 32;
+                        viewbox-height: 32;
+                        commands: "M25.3 14.5A9.4 9.4 0 1 1 17.5 6.7";
+                        stroke: #2fd3b5;
+                        stroke-width: 2.5px;
+                        fill: transparent;
+                    }
+                }
+                if root.width > 1200px: Text {
+                    text: "Kairo";
+                    font-family: Theme.num;
+                    font-weight: 700;
+                    font-size: 21px;
+                    color: Theme.text;
+                    vertical-alignment: center;
+                }
+            }
+            HorizontalLayout {
+                spacing: 2px;
+                horizontal-stretch: 0;
+                padding-right: 10px;
+                for b[i] in [{ en: Data.can-back, key: "back", p: "M9 2.5 4.5 7 9 11.5" }, { en: Data.can-fwd, key: "fwd", p: "M5 2.5 9.5 7 5 11.5" }]: VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 30px;
+                        height: 30px;
+                        border-radius: 9px;
+                        background: hb.hover ? #ffffff0f : transparent;
+                        opacity: b.en ? 1 : 0.3;
+                        transform-scale: hb.down && !Motion.reduced ? 0.94 : 1;
+                        animate transform-scale { duration: Motion.xfast; }
+                        animate background { duration: Motion.xfast; }
+                        hb := Press {
+                            enabled: b.en;
+                            ring-radius: 9px;
+                            clicked => { Act.act(b.key); }
+                        }
+                        Path {
+                            width: 14px;
+                            height: 14px;
+                            viewbox-width: 14;
+                            viewbox-height: 14;
+                            commands: b.p;
+                            stroke: hb.hover ? Theme.text : Theme.muted;
+                            stroke-width: 1.8px;
+                            stroke-line-cap: round;
+                            fill: transparent;
+                        }
+                    }
+                }
+            }
+            nav := HorizontalLayout {
+                spacing: 2px;
+                horizontal-stretch: 0;
+                property <length> pad: root.width > 1280px ? 12px : root.width > 1200px ? 9px : 7px;
+                for t in Data.tabs: Rectangle {
+                    min-width: tl.preferred-width + 2 * nav.pad + (t.sub != "" ? 13px : 0px);
+                    tp := Press {
+                        ring-radius: 10px;
+                        clicked => { Act.act(t.key); }
+                    }
+                    HorizontalLayout {
+                        alignment: center;
+                        spacing: 6px;
+                        tl := Text {
+                            text: t.label;
+                            font-weight: 600;
+                            font-size: 14.5px;
+                            color: t.on || tp.hover ? Theme.text : Theme.muted;
+                            vertical-alignment: center;
+                            animate color { duration: Motion.fast; }
+                        }
+                        if t.sub != "": VerticalLayout {
+                            alignment: center;
+                            Rectangle {
+                                width: 7px;
+                                height: 7px;
+                                border-radius: 4px;
+                                background: Theme.teal;
+                                property <bool> dim;
+                                opacity: dim ? 0.3 : 1;
+                                animate opacity { duration: Motion.reduced ? 0ms : 800ms; easing: ease-in-out; }
+                                Timer {
+                                    interval: 800ms;
+                                    running: !Motion.reduced;
+                                    triggered => { parent.dim = !parent.dim; }
+                                }
+                            }
+                        }
+                    }
+                    Rectangle {
+                        y: parent.height - 2px;
+                        x: nav.pad;
+                        width: parent.width - 2 * nav.pad;
+                        height: 2px;
+                        border-radius: 2px;
+                        background: Theme.accent;
+                        opacity: t.on ? 1 : 0;
+                        transform-scale-x: t.on || Motion.still ? 1 : 0.4;
+                        animate opacity { duration: Motion.fast; }
+                        animate transform-scale-x { duration: Motion.slow; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+                    }
+                }
+            }
+            Rectangle {
+                horizontal-stretch: 1;
+                min-width: 10px;
+                TouchArea {
+                    pointer-event(e) => {
+                        if (e.button == PointerEventButton.left && e.kind == PointerEventKind.down) {
+                            Act.act("drag");
+                        }
+                    }
+                    double-clicked => { Act.act("win-max"); }
+                }
+            }
+            if !Data.searchable: Rectangle { width: 0px; }
+            sb := VerticalLayout {
+                alignment: center;
+                width: Data.searchable ? clamp(root.width * 0.24, 120px, 340px) : 0px;
+                visible: Data.searchable;
+                Rectangle {
+                    height: 38px;
+                    background: ti.has-focus ? #ffffff12 : #ffffff0d;
+                    border-width: 1px;
+                    border-color: ti.has-focus ? Theme.accent.transparentize(0.4) : #ffffff12;
+                    border-radius: 11px;
+                    animate background, border-color { duration: Motion.fast; }
+                    HorizontalLayout {
+                        padding-left: 12px;
+                        padding-right: 10px;
+                        spacing: 8px;
+                        VerticalLayout {
+                            alignment: center;
+                            Path {
+                                width: 15px;
+                                height: 15px;
+                                viewbox-width: 16;
+                                viewbox-height: 16;
+                                commands: "M12 7a5 5 0 1 1-10 0a5 5 0 1 1 10 0M11 11l3.5 3.5";
+                                stroke: Theme.muted;
+                                stroke-width: 1.7px;
+                                stroke-line-cap: round;
+                                fill: transparent;
+                            }
+                        }
+                        Rectangle {
+                            ti := TextInput {
+                                vertical-alignment: center;
+                                color: Theme.text;
+                                font-size: 14px;
+                                single-line: true;
+                                selection-background-color: Theme.accent.transparentize(0.65);
+                                text <=> Data.search-text;
+                                edited => { Act.act("search:" + self.text); }
+                                changed has-focus => { Act.act(self.has-focus ? "search-focus" : "search-blur"); }
+                                key-pressed(e) => {
+                                    if (e.text == Key.DownArrow) { Act.act("search-down"); return accept; }
+                                    if (e.text == Key.UpArrow) { Act.act("search-up"); return accept; }
+                                    if (e.text == Key.Return) { Act.act("search-enter"); return accept; }
+                                    if (e.text == Key.Escape) { self.clear-focus(); return accept; }
+                                    reject
+                                }
+                            }
+                            if ti.text == "": Text {
+                                x: 0px;
+                                text: Data.search-hint;
+                                color: Theme.muted;
+                                font-size: 14px;
+                                vertical-alignment: center;
+                                overflow: elide;
+                            }
+                        }
+                        if root.width > 1280px: VerticalLayout {
+                            alignment: center;
+                            horizontal-stretch: 0;
+                            Rectangle {
+                                width: 42px;
+                                height: 20px;
+                                border-radius: 6px;
+                                border-width: 1px;
+                                border-color: #ffffff1a;
+                                Text {
+                                    text: "Ctrl K";
+                                    font-family: Theme.num;
+                                    font-size: 11.5px;
+                                    color: Theme.muted;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            HorizontalLayout {
+                padding-left: 14px;
+                horizontal-stretch: 0;
+                if Data.has-account: VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        min-width: ac.preferred-width;
+                        height: 34px;
+                        border-radius: 5px;
+                        background: Theme.panel2;
+                        ap := Press {
+                            ring-radius: 5px;
+                            clicked => { root.account = !root.account; }
+                        }
+                        ac := HorizontalLayout {
+                            padding-left: 4px;
+                            padding-right: 8px;
+                            spacing: 8px;
+                            VerticalLayout {
+                                alignment: center;
+                                Pic {
+                                    url: Data.acc-avatar;
+                                    width: 26px;
+                                    height: 26px;
+                                    radius: 13px;
+                                }
+                            }
+                            if root.width > 1200px: HorizontalLayout {
+                                spacing: 4px;
+                                T { text: Data.acc-name; font-weight: 600; font-size: 13.5px; max-width: 120px; }
+                                Small { text: "#" + Data.acc-tag; font-size: 13.5px; }
+                            }
+                            Text {
+                                text: "▾";
+                                font-size: 10px;
+                                color: Theme.muted;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+                if !Data.has-account: HorizontalLayout {
+                    spacing: 8px;
+                    VerticalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: 8px;
+                            height: 8px;
+                            border-radius: 4px;
+                            background: Data.client-on ? Theme.teal : Theme.loss;
+                        }
+                    }
+                    if root.width > 1200px: Text {
+                        text: Data.client-text;
+                        font-size: 13.5px;
+                        color: Theme.muted;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+            HorizontalLayout {
+                padding-left: 12px;
+                horizontal-stretch: 0;
+                alignment: start;
+                VerticalLayout {
+                    alignment: start;
+                    HorizontalLayout {
+                        WinBtn {
+                            key: "win-min";
+                            path: "M0 5.5h10";
+                        }
+                        WinBtn {
+                            key: "win-max";
+                            path: Data.maximized ? "M2.5 .5h7v7M.5 2.5h7v7h-7z" : "M.5 .5h9v9h-9z";
+                        }
+                        WinBtn {
+                            key: "win-close";
+                            close: true;
+                            path: "M.5 .5l9 9M9.5 .5l-9 9";
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+component GameMenu {
+    in property <bool> open;
+    property <bool> shown: open;
+    visible: open || self.opacity > 0;
+    opacity: open ? 1 : 0;
+    animate opacity { duration: Motion.fast; easing: ease-out; }
+    Rectangle {
+        y: root.open || Motion.still ? 0px : -4px;
+        animate y { duration: Motion.normal; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+        background: Theme.panel;
+        border-width: 1px;
+        border-color: #ffffff14;
+        border-radius: 18px;
+        TouchArea { }
+        VerticalLayout {
+            padding: 10px;
+            spacing: 10px;
+            HorizontalLayout {
+                spacing: 10px;
+                for g in Data.games: Rectangle {
+                    width: 196px;
+                    height: 268px;
+                    border-radius: 12px;
+                    background: Theme.panel2;
+                    clip: true;
+                    transform-scale: cp.down && !Motion.reduced ? 0.98 : 1;
+                    animate transform-scale { duration: Motion.xfast; }
+                    Pic {
+                        url: g.art;
+                        back: g.key == "valo" ? #3a1a24 : transparent;
+                    }
+                    Rectangle { background: @linear-gradient(180deg, #00000000 38%, #080a12eb 88%); }
+                    cp := Press {
+                        ring-radius: 12px;
+                        clicked => { Act.act("game:" + g.key); }
+                    }
+                    VerticalLayout {
+                        padding: 12px;
+                        spacing: 2px;
+                        alignment: end;
+                        GameMark {
+                            game: g.key;
+                            size: 34px;
+                        }
+                        Rectangle { height: 7px; }
+                        Text { text: g.name; font-family: Theme.num; font-weight: 700; font-size: 19px; color: Theme.text; overflow: elide; }
+                        Text { text: g.sub; font-size: 12.5px; color: #c3c8d6; wrap: word-wrap; }
+                    }
+                    Rectangle {
+                        border-radius: 12px;
+                        border-width: 2px;
+                        border-color: g.on ? Theme.accent : cp.hover ? #ffffff40 : transparent;
+                        animate border-color { duration: Motion.fast; }
+                    }
+                }
+            }
+            Text {
+                text: "Kairo n'est pas approuvé par Riot Games et ne reflète pas ses opinions. League of Legends, VALORANT et Teamfight Tactics sont des marques de Riot Games, Inc.";
+                font-size: 11.5px;
+                color: Theme.muted;
+                wrap: word-wrap;
+            }
+        }
+    }
+}
+
+component SearchResults {
+    in property <bool> open;
+    if root.open: Reveal {
+        rise: false;
+        Rectangle {
+            background: Theme.panel;
+            border-width: 1px;
+            border-color: Theme.line;
+            border-radius: 12px;
+            VerticalLayout {
+                padding: 6px;
+                alignment: start;
+                if Data.search-empty != "": Text {
+                    text: Data.search-empty;
+                    font-size: 13px;
+                    color: Theme.muted;
+                    wrap: word-wrap;
+                }
+                for o in Data.search-opts: Rectangle {
+                    height: 44px;
+                    border-radius: 8px;
+                    background: o.on ? Theme.panel2 : transparent;
+                    TouchArea {
+                        mouse-cursor: pointer;
+                        pointer-event(e) => {
+                            if (e.kind == PointerEventKind.down) {
+                                Act.act(o.key);
+                            }
+                        }
+                    }
+                    HorizontalLayout {
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        spacing: 10px;
+                        VerticalLayout {
+                            alignment: center;
+                            Rectangle {
+                                width: 32px;
+                                height: 32px;
+                                border-radius: 8px;
+                                background: Theme.panel2;
+                                if o.icon != "": Pic { url: o.icon; radius: 8px; }
+                                if o.icon == "": Text { text: o.letter; color: Theme.text; font-weight: 700; }
+                            }
+                        }
+                        HorizontalLayout {
+                            spacing: 1px;
+                            T { text: o.label; font-weight: 700; font-size: 14px; horizontal-stretch: 0; }
+                            if o.tag != "": Small { text: "#" + o.tag; font-size: 14px; horizontal-stretch: 0; }
+                            Rectangle { horizontal-stretch: 1; }
+                        }
+                        Small { text: o.sub; horizontal-stretch: 0; }
+                    }
+                }
+            }
+        }
+    }
+}
+
+component AccountMenu {
+    callback closed;
+    Reveal {
+        rise: false;
+        Rectangle {
+            background: Theme.panel;
+            border-width: 1px;
+            border-color: Theme.line;
+            border-radius: 14px;
+            TouchArea { }
+            VerticalLayout {
+                padding: 6px;
+                spacing: 0px;
+                HorizontalLayout {
+                    padding: 10px;
+                    padding-bottom: 12px;
+                    spacing: 12px;
+                    Rectangle {
+                        width: 52px;
+                        height: 52px;
+                        border-radius: 26px;
+                        clip: true;
+                        av := Press {
+                            clicked => {
+                                root.closed();
+                                Act.act("picker-open");
+                            }
+                        }
+                        Pic { url: Data.acc-avatar; }
+                        Rectangle {
+                            background: #000000aa;
+                            opacity: av.hover ? 1 : 0;
+                            animate opacity { duration: Motion.fast; }
+                            Text { text: "Modifier"; font-size: 10px; font-weight: 700; color: white; }
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        T { text: Data.acc-name; font-weight: 700; }
+                        Small { text: "#" + Data.acc-tag + ", niveau " + Data.acc-level; }
+                    }
+                }
+                for it in [{ l: "Mon profil", k: "go:profil" }, { l: "Changer d'avatar", k: "picker-open" }, { l: "", k: "" }, { l: "Overlays", k: "go:overlays" }, { l: "Réglages", k: "go:reglages" }, { l: "", k: "" }]: Rectangle {
+                    height: it.l == "" ? 9px : 38px;
+                    border-radius: 8px;
+                    background: ip.hover && it.l != "" ? Theme.panel2 : transparent;
+                    if it.l == "": Rectangle {
+                        height: 1px;
+                        background: Theme.line;
+                    }
+                    ip := Press {
+                        enabled: it.l != "";
+                        clicked => {
+                            root.closed();
+                            Act.act(it.k);
+                        }
+                    }
+                    T {
+                        x: 10px;
+                        text: it.l;
+                    }
+                }
+                Small {
+                    x: 10px;
+                    height: 26px;
+                    text: "Kairo, gratuit et open source";
+                    font-size: 11px;
+                }
+            }
+        }
+    }
+}
+
+component AvatarPicker {
+    Rectangle {
+        background: #05070bd9;
+        TouchArea {
+            clicked => { Act.act("picker-close"); }
+        }
+        Reveal {
+            rise: false;
+            x: (root.width - self.width) / 2;
+            y: (root.height - self.height) / 2;
+            width: min(900px, root.width - 48px);
+            height: min(root.height * 0.82, 780px);
+            Rectangle {
+                background: #0d121c;
+                border-width: 1px;
+                border-color: Theme.line;
+                border-radius: 20px;
+                TouchArea { }
+                VerticalLayout {
+                    padding-left: 20px;
+                    padding-right: 20px;
+                    padding-top: 18px;
+                    padding-bottom: 10px;
+                    spacing: 12px;
+                    HorizontalLayout {
+                        spacing: 12px;
+                        height: 56px;
+                        Rectangle {
+                            width: 56px;
+                            border-radius: 28px;
+                            border-width: 2px;
+                            border-color: Theme.accent;
+                            clip: true;
+                            Pic { url: Data.picker.choice; }
+                        }
+                        VerticalLayout {
+                            alignment: center;
+                            Text { text: "Choisir un avatar"; font-family: Theme.num; font-weight: 700; font-size: 18px; color: Theme.text; }
+                            Small { text: Data.picker.count; }
+                        }
+                        VerticalLayout {
+                            alignment: center;
+                            horizontal-stretch: 0;
+                            Ghost { label: "Icône LoL"; clicked => { Act.act("picker-reset"); } }
+                        }
+                        VerticalLayout {
+                            alignment: center;
+                            horizontal-stretch: 0;
+                            Primary { label: "Utiliser"; clicked => { Act.act("picker-use"); } }
+                        }
+                        VerticalLayout {
+                            alignment: center;
+                            horizontal-stretch: 0;
+                            Ghost { label: "✕"; clicked => { Act.act("picker-close"); } }
+                        }
+                    }
+                    Seg { options: Data.picker.tabs; }
+                    HorizontalLayout {
+                        spacing: 8px;
+                        height: 38px;
+                        Rectangle {
+                            background: Theme.panel;
+                            border-width: 1px;
+                            border-color: pi.has-focus ? Theme.accent : Theme.line;
+                            border-radius: 19px;
+                            pi := TextInput {
+                                x: 14px;
+                                width: parent.width - 28px;
+                                vertical-alignment: center;
+                                color: Theme.text;
+                                single-line: true;
+                                text <=> Data.avatar-q;
+                                edited => { Act.act("picker-q:" + self.text); }
+                            }
+                            if pi.text == "": Text {
+                                x: 14px;
+                                text: "Rechercher une série ou un personnage";
+                                color: Theme.muted;
+                                vertical-alignment: center;
+                            }
+                        }
+                        Ghost { label: "Ma photo"; clicked => { Act.act("picker-file"); } }
+                    }
+                    ScrollView {
+                        vertical-stretch: 1;
+                        viewport-width: self.visible-width;
+                        viewport-height: al.preferred-height;
+                        al := VerticalLayout {
+                            width: parent.visible-width;
+                            spacing: 18px;
+                            alignment: start;
+                            if Data.picker.sections.length == 0: Small { text: "Aucun résultat."; horizontal-alignment: center; font-size: 14px; }
+                            for s in Data.picker.sections: VerticalLayout {
+                                spacing: 8px;
+                                HorizontalLayout {
+                                    spacing: 6px;
+                                    alignment: start;
+                                    T { text: s.title; font-weight: 700; font-size: 14px; }
+                                    Small { text: s.count; font-size: 14px; }
+                                }
+                                for row in s.rows: HorizontalLayout {
+                                    spacing: 14px;
+                                    alignment: start;
+                                    for a in row: Rectangle {
+                                        width: 84px;
+                                        height: 104px;
+                                        ap := Press {
+                                            clicked => { Act.act("picker-pick:" + a.url); }
+                                        }
+                                        VerticalLayout {
+                                            spacing: 6px;
+                                            HorizontalLayout {
+                                                alignment: center;
+                                                Rectangle {
+                                                    width: 76px;
+                                                    height: 76px;
+                                                    border-radius: 38px;
+                                                    border-width: a.on ? 3px : 1px;
+                                                    border-color: a.on ? Theme.accent : Theme.line;
+                                                    background: Theme.panel2;
+                                                    clip: true;
+                                                    transform-scale: ap.hover && !Motion.reduced ? 1.05 : 1;
+                                                    animate transform-scale { duration: Motion.fast; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+                                                    Pic { url: a.url; }
+                                                }
+                                            }
+                                            Small {
+                                                text: a.name;
+                                                font-size: 11px;
+                                                color: a.on ? Theme.text : Theme.muted;
+                                                horizontal-alignment: center;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Small {
+                        text: "Personnages et logos © leurs ayants droit respectifs";
+                        font-size: 11px;
+                        horizontal-alignment: right;
+                    }
+                }
+            }
+        }
+    }
+}
+
+component UpdateCorner {
+    Reveal {
+        Rectangle {
+            background: Theme.panel;
+            border-width: 1px;
+            border-color: #ffffff14;
+            border-radius: 12px;
+            TouchArea { }
+            VerticalLayout {
+                padding: 16px;
+                spacing: 12px;
+                HorizontalLayout {
+                    spacing: 12px;
+                    VerticalLayout {
+                        alignment: start;
+                        padding-top: 5px;
+                        Rectangle {
+                            width: 10px;
+                            height: 10px;
+                            border-radius: 5px;
+                            background: Data.update.error ? Theme.loss : #2fd3b5;
+                        }
+                    }
+                    VerticalLayout {
+                        spacing: 2px;
+                        Text { text: Data.update.title; color: Theme.text; font-size: 15px; font-weight: 600; }
+                        Small { text: Data.update.text; font-size: 13px; wrap: word-wrap; overflow: clip; }
+                    }
+                }
+                if Data.update.notes != "": Small {
+                    text: Data.update.notes;
+                    font-size: 13px;
+                    wrap: word-wrap;
+                    overflow: clip;
+                }
+                if Data.update.busy: VerticalLayout {
+                    spacing: 6px;
+                    Bar2 { value: Data.update.progress; }
+                    Small { text: Data.update.progress-text; font-family: Theme.num; font-size: 12.5px; }
+                }
+                if !Data.update.busy: HorizontalLayout {
+                    spacing: 8px;
+                    Primary {
+                        horizontal-stretch: 1;
+                        label: Data.update.primary;
+                        clicked => { Act.act("update-go"); }
+                    }
+                    Ghost { label: "Plus tard"; clicked => { Act.act("update-later"); } }
+                }
+            }
+        }
+    }
+}
+
+component Bar2 {
+    in property <float> value;
+    height: 6px;
+    Rectangle {
+        background: #ffffff14;
+        border-radius: 3px;
+        Rectangle {
+            x: 0px;
+            width: parent.width * max(0.04, root.value);
+            border-radius: 3px;
+            background: #2fd3b5;
+            animate width { duration: Motion.normal; }
+        }
+    }
+}
+
+export component ShareWindow inherits Window {
+    no-frame: true;
+    background: #0e1220;
+    width: 1100px;
+    height: 400px;
+    in property <ShareData> share;
+    ShareCard {
+        s: root.share;
+        capture: true;
+    }
+}
+
+export component AppWindow inherits Window {
+    title: "Kairo";
+    icon: @image-url("../assets/64x64.png");
+    no-frame: true;
+    background: Theme.bg;
+    min-width: 1000px;
+    min-height: 640px;
+    preferred-width: 1360px;
+    preferred-height: 860px;
+    default-font-family: "Barlow";
+    default-font-size: 15px;
+    forward-focus: root-scope;
+    in-out property <bool> gmenu;
+    in-out property <bool> gsticky;
+    in-out property <bool> account;
+    property <bool> over-menu: gm.visible && gmt.has-hover;
+    public function focus-search() {
+        head.focus-search();
+    }
+    root-scope := FocusScope {
+        capture-key-pressed(e) => {
+            if (e.modifiers.control && (e.text == "k" || e.text == "K")) {
+                Act.act("kbd");
+                head.focus-search();
+                return accept;
+            }
+            if (e.modifiers.control && (e.text == "1" || e.text == "2" || e.text == "3")) {
+                Act.act("kbd");
+                Act.act("game:" + (e.text == "1" ? "lol" : e.text == "2" ? "valo" : "tft"));
+                return accept;
+            }
+            if (e.modifiers.alt && e.text == Key.LeftArrow) {
+                Act.act("kbd");
+                Act.act("back");
+                return accept;
+            }
+            if (e.modifiers.alt && e.text == Key.RightArrow) {
+                Act.act("kbd");
+                Act.act("fwd");
+                return accept;
+            }
+            if (e.text == Key.Escape && (root.gmenu || root.account)) {
+                root.gmenu = false;
+                root.gsticky = false;
+                root.account = false;
+                return accept;
+            }
+            if (e.text == Key.Escape && Data.picker.open) {
+                Act.act("picker-close");
+                return accept;
+            }
+            if (e.text == Key.Tab) {
+                Act.act("kbd");
+            }
+            return reject;
+        }
+        VerticalLayout {
+            Rectangle { height: 60px; }
+            main := Rectangle {
+                vertical-stretch: 1;
+                if Data.view == "profil": ProfilePage { }
+                if Data.view == "match": MatchPageView { }
+                if Data.view == "tierlist": TierListView { }
+                if Data.view == "champions": ChampionsView { }
+                if Data.view == "champion": BuildsView { }
+                if Data.view == "partie": LiveView { }
+                if Data.view == "overlays": OverlaysView { }
+                if Data.view == "reglages": SettingsView { }
+                if Data.view == "v-profil": VProfileView { }
+                if Data.view == "v-match": VMatchView { }
+                if Data.view == "v-partie": VLiveView { }
+                if Data.view == "v-agents": VAgentsView { }
+                if Data.view == "t-profil": TftProfileView { }
+                if Data.view == "t-decks": TftDecksView { }
+            }
+        }
+        if root.gsticky || root.account || Data.search-open: TouchArea {
+            y: 60px;
+            height: root.height - 60px;
+            clicked => {
+                root.gmenu = false;
+                root.gsticky = false;
+                root.account = false;
+                head.blur-search();
+            }
+        }
+        head := Header {
+            y: 0px;
+            height: 60px;
+            gmenu: root.gmenu;
+            account <=> root.account;
+            pick-clicked => {
+                root.gsticky = !root.gsticky;
+                root.gmenu = root.gsticky;
+            }
+            changed pick-hover => {
+                if (self.pick-hover) {
+                    root.gmenu = true;
+                    close-timer.running = false;
+                } else if (!root.gsticky) {
+                    close-timer.running = true;
+                }
+            }
+        }
+        close-timer := Timer {
+            interval: 180ms;
+            running: false;
+            triggered => {
+                self.running = false;
+                if (!head.pick-hover && !gmt.has-hover && !root.gsticky) {
+                    root.gmenu = false;
+                }
+            }
+        }
+        gm := GameMenu {
+            x: 10px;
+            y: 52px;
+            width: 620px;
+            height: 346px;
+            open: root.gmenu;
+            gmt := TouchArea {
+                x: 0px;
+                y: 0px;
+                changed has-hover => {
+                    if (!self.has-hover && !root.gsticky) {
+                        close-timer.running = true;
+                    } else {
+                        close-timer.running = false;
+                    }
+                }
+            }
+        }
+        SearchResults {
+            x: head.search-x;
+            y: 56px;
+            width: max(head.search-w, 320px);
+            height: Data.search-opts.length * 44px + 12px + (Data.search-empty != "" ? 60px : 0px);
+            open: Data.search-open;
+        }
+        if root.account: AccountMenu {
+            x: root.width - 300px;
+            y: 56px;
+            width: 260px;
+            height: 322px;
+            closed => { root.account = false; }
+        }
+        if Data.banner: Reveal {
+            x: (root.width - self.width) / 2;
+            y: root.height - 84px;
+            width: 370px;
+            height: 64px;
+            Rectangle {
+                background: Theme.panel2;
+                border-width: 1px;
+                border-color: bb.hover ? Theme.accent.transparentize(0.6) : Theme.line;
+                border-radius: 14px;
+                animate border-color { duration: Motion.fast; }
+                bb := Press {
+                    ring-radius: 14px;
+                    clicked => { Act.act("go-live"); }
+                }
+                HorizontalLayout {
+                    padding-left: 18px;
+                    padding-right: 14px;
+                    spacing: 14px;
+                    VerticalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: 7px;
+                            height: 7px;
+                            border-radius: 4px;
+                            background: Theme.teal;
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        T { text: Data.banner-title; font-weight: 700; }
+                        Small { text: Data.banner-text; }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        horizontal-stretch: 0;
+                        Rectangle {
+                            width: 64px;
+                            height: 36px;
+                            border-radius: 10px;
+                            background: Theme.accent;
+                            Text { text: "Ouvrir"; color: Theme.on-accent; font-weight: 700; font-size: 14px; }
+                        }
+                    }
+                }
+            }
+        }
+        Rectangle {
+            property <length> w: min(tt.preferred-width + 36px, root.width - 60px);
+            x: (root.width - w) / 2;
+            width: w;
+            height: tt.preferred-height + 24px;
+            y: root.height - (Data.banner ? 90px : 20px) - self.height + (Data.toast-show || Motion.still ? 0px : 10px);
+            visible: self.opacity > 0;
+            opacity: Data.toast-show ? 1 : 0;
+            background: Theme.panel2;
+            border-width: 1px;
+            border-color: Theme.accent;
+            border-radius: 10px;
+            animate y { duration: Motion.slow; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+            animate opacity { duration: Motion.fast; easing: ease-out; }
+            TouchArea {
+                enabled: Data.toast-show;
+                mouse-cursor: pointer;
+                clicked => { Act.act("toast-close"); }
+            }
+            tt := Text {
+                x: 18px;
+                width: parent.width - 36px;
+                text: Data.toast;
+                color: Theme.text;
+                wrap: word-wrap;
+                horizontal-alignment: center;
+            }
+        }
+        if Data.picker.open: AvatarPicker { }
+        if Data.update.show: UpdateCorner {
+            x: root.width - 392px;
+            y: root.height - (Data.banner ? 96px : 20px) - 190px;
+            width: 372px;
+            height: 190px;
+        }
+        for e in [
+            { x: 0px, y: 0px, w: 6px, h: root.height, c: MouseCursor.ew-resize, k: "resize:w" },
+            { x: root.width - 6px, y: 40px, w: 6px, h: root.height - 40px, c: MouseCursor.ew-resize, k: "resize:e" },
+            { x: 0px, y: root.height - 6px, w: root.width, h: 6px, c: MouseCursor.ns-resize, k: "resize:s" },
+            { x: 0px, y: 0px, w: root.width - 140px, h: 4px, c: MouseCursor.ns-resize, k: "resize:n" },
+            { x: root.width - 12px, y: root.height - 12px, w: 12px, h: 12px, c: MouseCursor.nwse-resize, k: "resize:se" },
+            { x: 0px, y: root.height - 12px, w: 12px, h: 12px, c: MouseCursor.nesw-resize, k: "resize:sw" },
+        ]: TouchArea {
+            x: e.x;
+            y: e.y;
+            width: e.w;
+            height: e.h;
+            mouse-cursor: e.c;
+            enabled: !Data.maximized;
+            pointer-event(ev) => {
+                if (ev.button == PointerEventButton.left && ev.kind == PointerEventKind.down) {
+                    Act.act(e.k);
+                }
+            }
+        }
+    }
+}
+
+export component OverlayWindow inherits Window {
+    title: "Kairo overlay";
+    no-frame: true;
+    background: transparent;
+    always-on-top: true;
+    default-font-family: "Barlow";
+    in property <[OvWidget]> widgets;
+    in property <[OvAlert]> alerts;
+    in property <bool> skill-show;
+    in property <string> skill-key;
+    in property <string> skill-icon;
+    in property <string> skill-level;
+    in property <bool> visible-all;
+    if root.visible-all: VerticalLayout {
+        x: (root.width - 260px) / 2;
+        y: root.height * 0.09;
+        width: 260px;
+        spacing: 8px;
+        alignment: start;
+        for a in root.alerts: Reveal {
+            height: 58px;
+            OvAlertView { a: a; }
+        }
+    }
+    if root.visible-all && root.skill-show: Reveal {
+        x: (root.width - 180px) / 2;
+        y: root.height * 0.78 - 60px;
+        width: 180px;
+        height: 60px;
+        OvSkillView {
+            key-name: root.skill-key;
+            icon: root.skill-icon;
+            level: root.skill-level;
+        }
+    }
+    if root.visible-all: VerticalLayout {
+        x: root.width - 224px;
+        y: root.height * 0.34;
+        width: 210px;
+        spacing: 8px;
+        alignment: start;
+        for w in root.widgets: OvWidgetView { w: w; }
+    }
+}
