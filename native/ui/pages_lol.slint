@@ -1,4 +1,4 @@
-import { Theme, Motion, Act, Api, Press, Pic, T, Small, Num, Reveal, Card, CardTitle, Ghost, Primary, LinkBtn, Seg, Select, AutoSwitch, Bar, Strip, StatBox, BadgeView, ChipView, RankView, PerfRow, Table, Skeleton, Empty, PageHead, SearchBox, Page, Opt, Chip } from "theme.slint";
+import { Theme, Motion, Act, Api, Press, Pic, T, Small, Num, Reveal, Card, CardTitle, Ghost, Primary, LinkBtn, Seg, Select, AutoSwitch, Bar, Strip, StatBox, BadgeView, ChipView, RankView, PerfRow, Table, Skeleton, Empty, Notice, PageHead, SearchBox, Page, Opt, Chip } from "theme.slint";
 import { Data, MatchRow, PlayerChip, LpData, ChartData, ShareData, RuneTree, ItemStep, IOptRow, CounterCell, JungleData, PlayerCard, DmgBar, OvWidget, OvAlert, OvCard } from "data.slint";
 
 component PlayerName {
@@ -429,13 +429,13 @@ export component ProfilePage {
                                 for s in Data.profile.session: StatBox {
                                     s: s;
                                     size: 18px;
-                                    align: center;
+                                    align: TextHorizontalAlignment.center;
                                 }
                             }
                             if !Data.profile.session-empty: Strip {
                                 items: Data.profile.session-strip;
                                 item-width: 14px;
-                                align: center;
+                                align: LayoutAlignment.center;
                             }
                         }
                     }
@@ -498,7 +498,7 @@ export component ProfilePage {
                         for m[i] in Data.matches: MatchLine {
                             m: m;
                             index: i;
-                            avail: lst.width;
+                            avail: Theme.win-w - 372px;
                         }
                     }
                     if !Data.profile.games-loading && Data.profile.empty-title == "" && Data.profile.sub == "pool": Table {
@@ -939,7 +939,7 @@ export component MatchPageView {
                         for s in t.stats: StatBox {
                             s: s;
                             size: 18px;
-                            align: center;
+                            align: TextHorizontalAlignment.center;
                         }
                     }
                 }
@@ -964,7 +964,7 @@ export component TierListView {
     Page {
         if Data.notice-title != "": VerticalLayout {
             padding-bottom: 22px;
-            Notice2 { }
+            Notice { title: Data.notice-title; text: Data.notice-text; }
         }
         PageHead {
             title: "Tier list";
@@ -995,47 +995,6 @@ export component TierListView {
         }
     }
 }
-
-component Notice2 {
-    HorizontalLayout {
-        Rectangle {
-            min-height: 62px;
-            background: Theme.panel;
-            border-width: 1px;
-            border-color: Theme.line-soft;
-            border-radius: 10px;
-            HorizontalLayout {
-                padding-left: 16px;
-                padding-right: 12px;
-                spacing: 14px;
-                VerticalLayout {
-                    alignment: center;
-                    Rectangle {
-                        width: 8px;
-                        height: 8px;
-                        border-radius: 4px;
-                        background: Theme.loss;
-                    }
-                }
-                VerticalLayout {
-                    alignment: center;
-                    Text {
-                        text: Data.notice-title;
-                        color: Theme.text;
-                        font-weight: 600;
-                        font-size: 14.5px;
-                    }
-                    Small {
-                        text: Data.notice-text;
-                        font-size: 13.5px;
-                    }
-                }
-            }
-        }
-    }
-}
-
-export { Notice2 }
 
 export component ChampionsView {
     Page {
@@ -1288,7 +1247,7 @@ export component BuildsBody {
                         StatBox {
                             s: s;
                             size: 17px;
-                            align: center;
+                            align: TextHorizontalAlignment.center;
                         }
                     }
                 }
@@ -1372,7 +1331,7 @@ export component BuildsBody {
                                             url: tree.icon;
                                             width: 28px;
                                             height: 28px;
-                                            fit: contain;
+                                            fit: ImageFit.contain;
                                         }
                                     }
                                     for sl in tree.slots: HorizontalLayout {
@@ -1386,7 +1345,7 @@ export component BuildsBody {
                                             border-color: Theme.accent;
                                             Pic {
                                                 url: r.icon;
-                                                fit: contain;
+                                                fit: ImageFit.contain;
                                                 dim: r.on ? 1 : 0.35;
                                                 gray: !r.on;
                                             }
@@ -1409,7 +1368,7 @@ export component BuildsBody {
                                         url: u;
                                         width: 24px;
                                         height: 24px;
-                                        fit: contain;
+                                        fit: ImageFit.contain;
                                     }
                                 }
                             }
@@ -1723,52 +1682,6 @@ component DmgView {
     }
 }
 
-export component LiveView {
-    Page {
-        if Data.live.waiting: WaitingLol { }
-        if !Data.live.waiting: VerticalLayout {
-            spacing: 12px;
-            PageHead { title: Data.live.title; }
-            if Data.live.show-build: Card {
-                VerticalLayout {
-                    padding: 16px;
-                    BuildsBody { }
-                }
-            }
-            if Data.live.build-hint: Card {
-                min-height: 54px;
-                Small {
-                    x: 16px;
-                    text: "Survole ou choisis un champion pour voir son build ici.";
-                    font-size: 14px;
-                }
-            }
-            HorizontalLayout {
-                spacing: 16px;
-                if Data.live.dmg1.show: DmgView { b: Data.live.dmg1; }
-                if Data.live.dmg2.show: DmgView { b: Data.live.dmg2; }
-            }
-            for team[ti] in [Data.live.team1, Data.live.team2]: VerticalLayout {
-                spacing: 8px;
-                if team.length > 0: Text {
-                    text: ti == 0 ? "Ton équipe" : "Équipe adverse";
-                    color: ti == 0 ? Theme.teal : Theme.loss;
-                    font-weight: 700;
-                    font-size: 14px;
-                }
-                HorizontalLayout {
-                    spacing: 10px;
-                    for c[i] in team: Reveal {
-                        index: i;
-                        min-height: 236px;
-                        PCard { c: c; }
-                    }
-                }
-            }
-        }
-    }
-}
-
 export component WaitPanel {
     in property <string> status;
     in property <string> title;
@@ -1782,7 +1695,7 @@ export component WaitPanel {
         alignment: center;
         padding-top: 24px;
         Rectangle {
-            width: min(1080px, root.width);
+            width: min(1080px, Theme.win-w - 56px);
             min-height: 330px;
             border-radius: 12px;
             background: Theme.panel;
@@ -1905,6 +1818,52 @@ component WaitingLol {
     }
 }
 
+export component LiveView {
+    Page {
+        if Data.live.waiting: WaitingLol { }
+        if !Data.live.waiting: VerticalLayout {
+            spacing: 12px;
+            PageHead { title: Data.live.title; }
+            if Data.live.show-build: Card {
+                VerticalLayout {
+                    padding: 16px;
+                    BuildsBody { }
+                }
+            }
+            if Data.live.build-hint: Card {
+                min-height: 54px;
+                Small {
+                    x: 16px;
+                    text: "Survole ou choisis un champion pour voir son build ici.";
+                    font-size: 14px;
+                }
+            }
+            HorizontalLayout {
+                spacing: 16px;
+                if Data.live.dmg1.show: DmgView { b: Data.live.dmg1; }
+                if Data.live.dmg2.show: DmgView { b: Data.live.dmg2; }
+            }
+            for team[ti] in [Data.live.team1, Data.live.team2]: VerticalLayout {
+                spacing: 8px;
+                if team.length > 0: Text {
+                    text: ti == 0 ? "Ton équipe" : "Équipe adverse";
+                    color: ti == 0 ? Theme.teal : Theme.loss;
+                    font-weight: 700;
+                    font-size: 14px;
+                }
+                HorizontalLayout {
+                    spacing: 10px;
+                    for c[i] in team: Reveal {
+                        index: i;
+                        min-height: 236px;
+                        PCard { c: c; }
+                    }
+                }
+            }
+        }
+    }
+}
+
 export component OvRowView {
     in property <string> icon;
     in property <string> label;
@@ -1921,7 +1880,7 @@ export component OvRowView {
                     url: root.icon;
                     width: 18px;
                     height: 18px;
-                    fit: contain;
+                    fit: ImageFit.contain;
                 }
             }
             Text {
@@ -2021,7 +1980,7 @@ export component OvAlertView {
                     url: root.a.icon;
                     width: 30px;
                     height: 30px;
-                    fit: contain;
+                    fit: ImageFit.contain;
                 }
             }
             VerticalLayout {

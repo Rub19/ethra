@@ -288,7 +288,7 @@ component TTrait {
                     url: root.t.icon;
                     width: 18px;
                     height: 18px;
-                    fit: contain;
+                    fit: ImageFit.contain;
                 }
             }
             Num { text: root.t.n; font-size: 12.5px; }
@@ -452,7 +452,7 @@ component TftGameLine {
                             horizontal-stretch: 0;
                             if t.icon != "": VerticalLayout {
                                 alignment: center;
-                                Pic { url: t.icon; width: 14px; height: 14px; fit: contain; }
+                                Pic { url: t.icon; width: 14px; height: 14px; fit: ImageFit.contain; }
                             }
                             Small { text: t.n + " " + t.name; }
                         }

@@ -48,7 +48,7 @@ component GameMark {
             url: root.ico;
             width: root.size * 0.84;
             height: root.size * 0.84;
-            fit: contain;
+            fit: ImageFit.contain;
         }
         if root.ico == "" && root.game == "lol": Path {
             width: root.size * 0.68;
@@ -132,8 +132,8 @@ component Header {
                         text: "▾";
                         font-size: 10px;
                         color: Theme.muted;
-                        rotation-angle: root.gmenu ? 180deg : 0deg;
-                        animate rotation-angle { duration: Motion.normal; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+                        transform-rotation: root.gmenu ? 180deg : 0deg;
+                        animate transform-rotation { duration: Motion.normal; easing: cubic-bezier(0.23, 1, 0.32, 1); }
                     }
                 }
             }
@@ -142,7 +142,7 @@ component Header {
                 horizontal-stretch: 0;
                 padding-left: 6px;
                 padding-right: 10px;
-                if root.width > 1200px: VerticalLayout {
+                if Theme.win-w > 1200px: VerticalLayout {
                     alignment: center;
                     Path {
                         width: 22px;
@@ -155,7 +155,7 @@ component Header {
                         fill: transparent;
                     }
                 }
-                if root.width > 1200px: Text {
+                if Theme.win-w > 1200px: Text {
                     text: "Kairo";
                     font-family: Theme.num;
                     font-weight: 700;
@@ -201,7 +201,7 @@ component Header {
             nav := HorizontalLayout {
                 spacing: 2px;
                 horizontal-stretch: 0;
-                property <length> pad: root.width > 1280px ? 12px : root.width > 1200px ? 9px : 7px;
+                property <length> pad: Theme.win-w > 1280px ? 12px : Theme.win-w > 1200px ? 9px : 7px;
                 for t in Data.tabs: Rectangle {
                     min-width: tl.preferred-width + 2 * nav.pad + (t.sub != "" ? 13px : 0px);
                     tp := Press {
@@ -266,7 +266,7 @@ component Header {
             if !Data.searchable: Rectangle { width: 0px; }
             sb := VerticalLayout {
                 alignment: center;
-                width: Data.searchable ? clamp(root.width * 0.24, 120px, 340px) : 0px;
+                width: Data.searchable ? clamp(Theme.win-w * 0.24, 120px, 340px) : 0px;
                 visible: Data.searchable;
                 Rectangle {
                     height: 38px;
@@ -320,7 +320,7 @@ component Header {
                                 overflow: elide;
                             }
                         }
-                        if root.width > 1280px: VerticalLayout {
+                        if Theme.win-w > 1280px: VerticalLayout {
                             alignment: center;
                             horizontal-stretch: 0;
                             Rectangle {
@@ -367,7 +367,7 @@ component Header {
                                     radius: 13px;
                                 }
                             }
-                            if root.width > 1200px: HorizontalLayout {
+                            if Theme.win-w > 1200px: HorizontalLayout {
                                 spacing: 4px;
                                 T { text: Data.acc-name; font-weight: 600; font-size: 13.5px; max-width: 120px; }
                                 Small { text: "#" + Data.acc-tag; font-size: 13.5px; }
@@ -392,7 +392,7 @@ component Header {
                             background: Data.client-on ? Theme.teal : Theme.loss;
                         }
                     }
-                    if root.width > 1200px: Text {
+                    if Theme.win-w > 1200px: Text {
                         text: Data.client-text;
                         font-size: 13.5px;
                         color: Theme.muted;
@@ -440,7 +440,7 @@ component GameMenu {
         border-width: 1px;
         border-color: #ffffff14;
         border-radius: 18px;
-        TouchArea { }
+        @children
         VerticalLayout {
             padding: 10px;
             spacing: 10px;
@@ -710,8 +710,8 @@ component AvatarPicker {
                     }
                     ScrollView {
                         vertical-stretch: 1;
-                        viewport-width: self.visible-width;
-                        viewport-height: al.preferred-height;
+                        content-width: self.visible-width;
+                        content-height: al.preferred-height;
                         al := VerticalLayout {
                             width: parent.visible-width;
                             spacing: 18px;
@@ -774,6 +774,22 @@ component AvatarPicker {
     }
 }
 
+component Bar2 {
+    in property <float> value;
+    height: 6px;
+    Rectangle {
+        background: #ffffff14;
+        border-radius: 3px;
+        Rectangle {
+            x: 0px;
+            width: parent.width * max(0.04, root.value);
+            border-radius: 3px;
+            background: #2fd3b5;
+            animate width { duration: Motion.normal; }
+        }
+    }
+}
+
 component UpdateCorner {
     Reveal {
         Rectangle {
@@ -828,22 +844,6 @@ component UpdateCorner {
     }
 }
 
-component Bar2 {
-    in property <float> value;
-    height: 6px;
-    Rectangle {
-        background: #ffffff14;
-        border-radius: 3px;
-        Rectangle {
-            x: 0px;
-            width: parent.width * max(0.04, root.value);
-            border-radius: 3px;
-            background: #2fd3b5;
-            animate width { duration: Motion.normal; }
-        }
-    }
-}
-
 export component ShareWindow inherits Window {
     no-frame: true;
     background: #0e1220;
@@ -875,6 +875,8 @@ export component AppWindow inherits Window {
     public function focus-search() {
         head.focus-search();
     }
+    init => { Theme.win-w = root.width; }
+    changed width => { Theme.win-w = root.width; }
     root-scope := FocusScope {
         capture-key-pressed(e) => {
             if (e.modifiers.control && (e.text == "k" || e.text == "K")) {

@@ -29,6 +29,7 @@ export global Motion {
 
 export global Theme {
     in property <string> game: "lol";
+    in-out property <length> win-w: 1360px;
     out property <color> bg: #0e1220;
     out property <color> panel: #151a2a;
     out property <color> panel2: #1c2236;
@@ -97,7 +98,7 @@ export component Press {
 export component Pic {
     in property <string> url;
     in property <length> radius: 0px;
-    in property <image-fit> fit: cover;
+    in property <ImageFit> fit: ImageFit.cover;
     in property <color> back: transparent;
     in property <float> dim: 1;
     in property <bool> gray: false;
@@ -360,8 +361,8 @@ export component Select {
             border-radius: 10px;
             clip: true;
             ScrollView {
-                viewport-height: list.preferred-height;
-                viewport-width: self.visible-width;
+                content-height: list.preferred-height;
+                content-width: self.visible-width;
                 list := VerticalLayout {
                     padding: 6px;
                     width: root.list-width - 2px;
@@ -529,7 +530,7 @@ export component Bar {
 export component Strip {
     in property <[bool]> items;
     in property <length> item-width: 10px;
-    in property <Alignment> align: start;
+    in property <LayoutAlignment> align: LayoutAlignment.start;
     height: 6px;
     HorizontalLayout {
         alignment: root.align;
@@ -686,10 +687,10 @@ export component PerfRow {
 
 component CellView {
     in property <Cell> c;
-    in property <bool> center;
+    in property <bool> centered;
     in property <bool> head;
     HorizontalLayout {
-        alignment: root.center ? center : start;
+        alignment: root.centered ? center : start;
         spacing: 8px;
         padding-left: 8px;
         padding-right: 8px;
@@ -713,11 +714,11 @@ component CellView {
                 font-weight: root.c.on ? 700 : 500;
                 color: root.c.use-color ? root.c.color : Theme.tone(root.c.tone);
                 overflow: elide;
-                horizontal-alignment: root.center ? center : left;
+                horizontal-alignment: root.centered ? center : left;
             }
             if root.c.sub != "": Small {
                 text: root.c.sub;
-                horizontal-alignment: root.center ? center : left;
+                horizontal-alignment: root.centered ? center : left;
             }
             if root.c.bar >= 0: Bar {
                 value: root.c.bar;
@@ -866,7 +867,7 @@ export component Table {
                         min-width: root.cols[i].px;
                         max-width: root.cols[i].px > 0 ? root.cols[i].px : 100000px;
                         horizontal-stretch: root.cols[i].px > 0 ? 0 : 1;
-                        center: root.cols[i].px > 0;
+                        centered: root.cols[i].px > 0;
                     }
                 }
             }
@@ -1039,8 +1040,8 @@ export component SearchBox {
 export component Page {
     in property <length> max: 1560px;
     ScrollView {
-        viewport-width: self.visible-width;
-        viewport-height: inner.preferred-height;
+        content-width: self.visible-width;
+        content-height: inner.preferred-height;
         inner := VerticalLayout {
             width: parent.visible-width;
             padding-top: 22px;
@@ -1049,7 +1050,7 @@ export component Page {
             HorizontalLayout {
                 alignment: center;
                 VerticalLayout {
-                    width: min(root.max, root.width - 44px);
+                    width: min(root.max, Theme.win-w - 56px);
                     alignment: start;
                     spacing: 0px;
                     @children
