@@ -117,7 +117,8 @@ pub async fn ddragon() -> Result<Arc<DD>, String> {
         let vs = json_url("https://ddragon.leagueoflegends.com/api/versions.json").await?;
         let v = vs[0].as_str().ok_or("version Data Dragon absente")?.to_string();
         let file = |f: &str| format!("{CDN}/{v}/data/fr_FR/{f}.json");
-        let (c, i, st, s, perks) = tokio::join!(json_url(&file("champion")), json_url(&file("item")), json_url(&file("runesReforged")), json_url(&file("summoner")), json_url(&format!("{CD}v1/perks.json")));
+        let (uc, ui, us, uz, up) = (file("champion"), file("item"), file("runesReforged"), file("summoner"), format!("{CD}v1/perks.json"));
+        let (c, i, st, s, perks) = tokio::join!(json_url(&uc), json_url(&ui), json_url(&us), json_url(&uz), json_url(&up));
         Ok::<_, String>(Arc::new(parse_dd(v.clone(), &c?, &i?, &st?, &s?, &perks.unwrap_or(Value::Null))))
     })
     .await

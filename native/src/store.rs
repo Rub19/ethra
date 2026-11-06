@@ -195,3 +195,16 @@ mod tests {
         assert_eq!(s.rank_filter, "all");
     }
 }
+
+#[cfg(test)]
+mod real {
+    #[test]
+    #[ignore]
+    fn migrate_real_profile() {
+        let src = std::path::Path::new(&std::env::var("LOCALAPPDATA").unwrap()).join("dev.ethone.ethra").join("EBWebView").join("Default").join("Local Storage").join("leveldb");
+        let m = super::migrate(&src).expect("lecture leveldb");
+        let keys: Vec<String> = m.iter().map(|(k, v)| format!("{k}={}o", v.len())).collect();
+        println!("{}", keys.join("\n"));
+        assert!(!m.is_empty());
+    }
+}

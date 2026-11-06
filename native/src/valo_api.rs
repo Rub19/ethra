@@ -139,7 +139,8 @@ pub async fn v_rank(puuid: &str) -> VRank {
     if let Some(r) = cache.lock().unwrap().get(puuid) {
         return *r;
     }
-    let (r, a) = tokio::join!(valo("pd", "GET", &format!("/mmr/v1/players/{puuid}"), None), current_act());
+    let path = format!("/mmr/v1/players/{puuid}");
+    let (r, a) = tokio::join!(valo("pd", "GET", &path, None), current_act());
     let out = match (r, a) {
         (Ok(r), Ok(a)) => parse_rank(&r, &a),
         _ => VRank::default(),

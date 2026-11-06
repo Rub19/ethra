@@ -17,9 +17,10 @@ image = { version = "0.25", default-features = false, features = ["png", "jpeg",
 arboard = { version = "3", default-features = false, features = ["image-data"] }
 rusty-leveldb = "4"
 minisign-verify = "0.2"
-rfd = "0.15"
+rfd = { version = "0.15", default-features = false, features = ["common-controls-v6"] }
 base64 = "0.22"
-windows-sys = { version = "0.59", features = ["Win32_UI_WindowsAndMessaging", "Win32_Foundation", "Win32_Graphics_Dwm"] }
+windows-sys = { version = "0.59", features = ["Win32_UI_WindowsAndMessaging", "Win32_Foundation", "Win32_System_Diagnostics_ToolHelp"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 
 [build-dependencies]
 slint-build = "=1.18.1"
