@@ -16,6 +16,7 @@ mod page_valo;
 mod store;
 mod text;
 mod tft_api;
+mod tray;
 mod update;
 mod valo_api;
 
@@ -609,6 +610,7 @@ fn main() {
         ui.window().set_position(slint::PhysicalPosition::new(-20000, -20000));
     }
     ui.show().unwrap();
+    let _tray = if offscreen() { None } else { tray::start() };
     slint::run_event_loop_until_quit().unwrap();
 }
 

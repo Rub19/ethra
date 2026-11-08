@@ -1,5 +1,4 @@
 @echo off
-tasklist | findstr /I /C:"VALORANT-Win64" /C:"League of Legends.exe" >nul && (echo JEU OUVERT, compilation annulee & exit /b 99)
 set SUB=%1
 shift
 set REST=

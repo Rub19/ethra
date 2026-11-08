@@ -5,5 +5,5 @@ fn main() {
     res.set_icon("assets/icon.ico");
     res.set("ProductName", "Kairo");
     res.set("FileDescription", "Kairo");
-    let _ = res.compile();
+    res.compile().unwrap();
 }

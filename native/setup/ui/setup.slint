@@ -1,0 +1,189 @@
+import "../../assets/fonts/Barlow-Regular.ttf";
+import "../../assets/fonts/Barlow-SemiBold.ttf";
+import "../../assets/fonts/BarlowSemiCondensed-Bold.ttf";
+
+component Check {
+    in property <string> label;
+    in-out property <bool> on;
+    height: 38px;
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => { root.on = !root.on; }
+    }
+    HorizontalLayout {
+        Text { text: root.label; color: #eef0f7; vertical-alignment: center; }
+        VerticalLayout {
+            alignment: center;
+            horizontal-stretch: 0;
+            Rectangle {
+                width: 40px;
+                height: 22px;
+                border-radius: 11px;
+                background: root.on ? #2fd3b533 : #1c2236;
+                border-width: 1px;
+                border-color: root.on ? #2fd3b5 : #262d44;
+                animate background, border-color { duration: 160ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+                Rectangle {
+                    x: root.on ? 20px : 2px;
+                    y: 2px;
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 8px;
+                    background: root.on ? #2fd3b5 : #8b93ab;
+                    animate x, background { duration: 160ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+                }
+            }
+        }
+    }
+}
+
+component Btn {
+    in property <string> label;
+    in property <bool> primary: true;
+    callback clicked;
+    min-width: lb.preferred-width + 36px;
+    height: 42px;
+    horizontal-stretch: 0;
+    Rectangle {
+        border-radius: 10px;
+        background: root.primary ? (ta.has-hover ? #49e0c4 : #2fd3b5) : transparent;
+        border-width: root.primary ? 0px : 1px;
+        border-color: ta.has-hover ? #2fd3b5 : #262d44;
+        animate background, border-color { duration: 140ms; }
+        transform-scale: ta.pressed ? 0.97 : 1;
+        animate transform-scale { duration: 120ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+        ta := TouchArea {
+            mouse-cursor: pointer;
+            clicked => { root.clicked(); }
+        }
+        lb := Text {
+            text: root.label;
+            color: root.primary ? #06231d : #eef0f7;
+            font-weight: 600;
+        }
+    }
+}
+
+export component SetupWindow inherits Window {
+    title: "Installation de Kairo";
+    icon: @image-url("../../assets/logo-256.png");
+    no-frame: true;
+    background: #0e1220;
+    width: 760px;
+    height: 460px;
+    default-font-family: "Barlow";
+    default-font-size: 15px;
+    in property <string> title-text;
+    in property <string> sub;
+    in property <string> lead;
+    in property <string> go-label;
+    in property <string> alt-label;
+    in property <bool> show-opts;
+    in property <bool> uninstalling;
+    in property <bool> busy;
+    in property <bool> failed;
+    in property <float> progress;
+    in-out property <bool> desktop: true;
+    in-out property <bool> open-after: true;
+    in-out property <bool> purge: false;
+    callback go;
+    callback alt;
+    callback drag;
+    callback minimize;
+    callback close;
+    TouchArea {
+        pointer-event(e) => {
+            if (e.button == PointerEventButton.left && e.kind == PointerEventKind.down) {
+                root.drag();
+            }
+        }
+    }
+    if !root.busy: HorizontalLayout {
+        x: root.width - 92px;
+        y: 0px;
+        width: 92px;
+        height: 36px;
+        for b[i] in [{ p: "M0 5.5h10" }, { p: "M.5 .5l9 9M9.5 .5l-9 9" }]: Rectangle {
+            background: wb.has-hover ? (i == 1 ? #c42b1c : #ffffff14) : transparent;
+            wb := TouchArea {
+                clicked => {
+                    if (i == 0) { root.minimize(); } else { root.close(); }
+                }
+            }
+            Path {
+                width: 10px;
+                height: 10px;
+                viewbox-width: 10;
+                viewbox-height: 10;
+                commands: b.p;
+                stroke: #eef0f7;
+                stroke-width: 1px;
+                fill: transparent;
+            }
+        }
+    }
+    HorizontalLayout {
+        padding-bottom: 34px;
+        Rectangle {
+            width: 340px;
+            Image {
+                width: 190px;
+                height: 190px;
+                source: @image-url("../../assets/logo-512.png");
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            spacing: 14px;
+            padding-right: 44px;
+            VerticalLayout {
+                Text {
+                    text: root.title-text;
+                    font-family: "Barlow Semi Condensed";
+                    font-weight: 700;
+                    font-size: 46px;
+                    color: #eef0f7;
+                    wrap: word-wrap;
+                }
+                if root.sub != "": Text { text: root.sub; font-size: 13.5px; color: #8b93ab; }
+            }
+            if root.lead != "": Text {
+                text: root.lead;
+                color: root.failed ? #f0506e : #8b93ab;
+                wrap: word-wrap;
+            }
+            if root.busy: Rectangle {
+                height: 6px;
+                border-radius: 3px;
+                background: #ffffff14;
+                Rectangle {
+                    x: 0px;
+                    width: parent.width * max(root.progress, 0.02);
+                    border-radius: 3px;
+                    background: #2fd3b5;
+                    animate width { duration: 200ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+                }
+            }
+            if root.show-opts && !root.uninstalling: VerticalLayout {
+                Check { label: "Raccourci sur le Bureau"; on <=> root.desktop; }
+                Check { label: "Ouvrir Kairo à la fin"; on <=> root.open-after; }
+            }
+            if root.show-opts && root.uninstalling: Check { label: "Supprimer aussi mes réglages"; on <=> root.purge; }
+            if root.go-label != "": HorizontalLayout {
+                spacing: 10px;
+                alignment: start;
+                Btn { label: root.go-label; clicked => { root.go(); } }
+                if root.alt-label != "": Btn { label: root.alt-label; primary: false; clicked => { root.alt(); } }
+            }
+        }
+    }
+    Text {
+        x: 20px;
+        y: root.height - 26px;
+        width: root.width - 40px;
+        text: "Kairo n'est pas approuvé par Riot Games. League of Legends, VALORANT et Teamfight Tactics sont des marques de Riot Games, Inc.";
+        font-size: 11px;
+        color: #5b6379;
+        overflow: elide;
+    }
+}
