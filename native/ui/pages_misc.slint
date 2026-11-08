@@ -12,6 +12,7 @@ component SetLine {
         col := VerticalLayout {
             alignment: center;
             spacing: 2px;
+            horizontal-stretch: 1;
             Text { text: root.r.title; color: Theme.text; font-weight: 600; }
             Small { text: root.r.help; wrap: word-wrap; overflow: clip; }
         }
@@ -304,10 +305,13 @@ component DeckCard inherits Rectangle {
         VerticalLayout {
             padding: 16px;
             spacing: 12px;
+            alignment: start;
             HorizontalLayout {
                 spacing: 12px;
+                height: 30px;
                 VerticalLayout {
                     alignment: center;
+                    horizontal-stretch: 0;
                     Rectangle {
                         min-width: tt.preferred-width + 16px;
                         height: 26px;
@@ -330,6 +334,7 @@ component DeckCard inherits Rectangle {
                     color: Theme.text;
                     vertical-alignment: center;
                     overflow: elide;
+                    horizontal-stretch: 1;
                 }
                 for t in root.k.tags: VerticalLayout {
                     alignment: center;

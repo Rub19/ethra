@@ -103,9 +103,19 @@ async fn read(res: reqwest::Response) -> Result<Value, String> {
     Ok(serde_json::from_str(&text).unwrap_or(Value::Null))
 }
 
+fn fake(key: &str) -> Option<Result<Value, String>> {
+    let path = std::env::var("KAIRO_FAKE").ok()?;
+    static DATA: OnceLock<Value> = OnceLock::new();
+    let d = DATA.get_or_init(|| std::fs::read_to_string(&path).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or(Value::Null));
+    Some(d.get(key).cloned().ok_or_else(|| format!("404 {key}")))
+}
+
 pub async fn lcu(method: &str, path: &str, body: Option<Value>) -> Result<Value, String> {
     if method != "GET" && readonly() {
         return Err("LECTURE_SEULE".into());
+    }
+    if let Some(r) = fake(&format!("lcu:{path}")) {
+        return r;
     }
     let n = net();
     let cached = n.lcu.lock().unwrap().clone();
@@ -178,6 +188,9 @@ async fn valo_conn() -> Result<Valo, String> {
 pub async fn valo(host: &str, method: &str, path: &str, body: Option<Value>) -> Result<Value, String> {
     if method != "GET" && !path.starts_with("/name-service/") && readonly() {
         return Err("LECTURE_SEULE".into());
+    }
+    if let Some(r) = fake(&format!("valo:{host}:{path}")) {
+        return r;
     }
     let n = net();
     let v = valo_conn().await?;

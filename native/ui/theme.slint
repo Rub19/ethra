@@ -138,7 +138,6 @@ export component Pic inherits Rectangle {
     in property <ImageFit> fit: ImageFit.cover;
     in property <color> back: transparent;
     in property <float> dim: 1;
-    in property <bool> gray: false;
     Rectangle {
         background: root.back;
         border-radius: root.radius;
@@ -148,7 +147,6 @@ export component Pic inherits Rectangle {
             height: 100%;
             source: root.url == "" ? @image-url("") : Api.img(root.url, Api.rev);
             image-fit: root.fit;
-            colorize: root.gray ? #8b93ab : transparent;
             opacity: self.source.width > 0 ? root.dim : 0;
             animate opacity { duration: Motion.fast; easing: ease-out; }
         }

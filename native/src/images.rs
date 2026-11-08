@@ -59,9 +59,24 @@ fn looks_svg(bytes: &[u8]) -> bool {
     t.contains("<svg") || t.trim_start().starts_with("<?xml")
 }
 
-async fn fetch(url: String) -> Option<Decoded> {
+fn grayscale(b: &SharedPixelBuffer<Rgba8Pixel>) -> SharedPixelBuffer<Rgba8Pixel> {
+    let mut out = b.clone();
+    for p in out.make_mut_slice() {
+        let l = (0.3 * p.r as f32 + 0.59 * p.g as f32 + 0.11 * p.b as f32) as u8;
+        p.r = l;
+        p.g = l;
+        p.b = l;
+    }
+    out
+}
+
+async fn fetch(full: String) -> Option<Decoded> {
     static GATE: OnceLock<Semaphore> = OnceLock::new();
     let _permit = GATE.get_or_init(|| Semaphore::new(8)).acquire().await.ok()?;
+    let (gray, url) = match full.strip_prefix("gray:") {
+        Some(u) => (true, u.to_string()),
+        None => (false, full),
+    };
     let bytes = if url.starts_with("data:") {
         parse_data_url(&url)?
     } else if let Some(game) = url.strip_prefix("local:") {
@@ -87,7 +102,7 @@ async fn fetch(url: String) -> Option<Decoded> {
     if looks_svg(&bytes) {
         return Some(Decoded::Svg(bytes));
     }
-    tokio::task::spawn_blocking(move || decode_bytes(&bytes).map(Decoded::Rgba)).await.ok().flatten()
+    tokio::task::spawn_blocking(move || decode_bytes(&bytes).map(|b| Decoded::Rgba(if gray { grayscale(&b) } else { b }))).await.ok().flatten()
 }
 
 pub fn img(url: &str) -> Image {

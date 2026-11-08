@@ -501,7 +501,7 @@ pub fn render_builds(a: &mut App) {
                 .iter()
                 .skip(if i > 0 { 1 } else { 0 })
                 .enumerate()
-                .map(|(k, sl)| RuneSlot { keys: k == 0 && i == 0, runes: ms(sl.iter().map(|r| RuneCell { icon: ss(img_rune(&d, r.id)), on: b.perks.contains(&r.id), name: ss(&r.name) }).collect()) })
+                .map(|(k, sl)| RuneSlot { keys: k == 0 && i == 0, runes: ms(sl.iter().map(|r| RuneCell { icon: ss(if b.perks.contains(&r.id) { img_rune(&d, r.id) } else { format!("gray:{}", img_rune(&d, r.id)) }), on: b.perks.contains(&r.id), name: ss(&r.name) }).collect()) })
                 .collect();
             trees.push(RuneTree { icon: ss(img_rune(&d, *sid)), name: ss(&style.rune.name), slots: ms(slots) });
         }

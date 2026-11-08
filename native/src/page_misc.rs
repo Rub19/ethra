@@ -417,7 +417,7 @@ pub fn deck_view(k: &Value, t: &TftData) -> TftDeckV {
         tags: ms(tags),
         stats: ms(vec![stat(format!("{:.2}", f("avgPlacement")), "Place moyenne", 0), stat(pct1(f("top4Rate")), "Top 4", good(f("top4Rate") >= 0.5)), stat(pct1(f("winRate")), "1re place", 0), stat(pct1(f("pickRate")), "Popularité", 0)]),
         units: ms(uv.chunks(9).map(|c| ms(c.to_vec())).collect()),
-        traits: ms(tv.chunks(5).map(|c| ms(c.to_vec())).collect()),
+        traits: ms(tv.chunks(4).map(|c| ms(c.to_vec())).collect()),
     }
 }
 
@@ -715,6 +715,18 @@ pub fn action(a: &mut App, key: &str) -> bool {
         if crate::net::open_url(u).is_err() {
             a.toast("Impossible d'ouvrir le lien");
         }
+    } else if let Some(xy) = key.strip_prefix("click:").filter(|_| std::env::var("KAIRO_SNAP").is_ok()) {
+        use slint::platform::{PointerEventButton, WindowEvent};
+        let (x, y) = xy.split_once(',').unwrap_or(("0", "0"));
+        let position = slint::LogicalPosition::new(x.parse().unwrap_or(0.0), y.parse().unwrap_or(0.0));
+        let win = a.ui.as_weak();
+        slint::Timer::single_shot(Duration::from_millis(1), move || {
+            if let Some(ui) = win.upgrade() {
+                ui.window().dispatch_event(WindowEvent::PointerMoved { position });
+                ui.window().dispatch_event(WindowEvent::PointerPressed { position, button: PointerEventButton::Left });
+                ui.window().dispatch_event(WindowEvent::PointerReleased { position, button: PointerEventButton::Left });
+            }
+        });
     } else if key == "tmore" {
         tft_more(a);
     } else if key == "picker-open" {

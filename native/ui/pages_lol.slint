@@ -1193,7 +1193,7 @@ export component BuildsBody inherits Rectangle {
     VerticalLayout {
         spacing: 16px;
         if !Data.builds.compact: Rectangle {
-            min-height: 128px;
+            height: 128px;
             border-radius: 14px;
             border-width: 1px;
             border-color: Theme.line;
@@ -1355,7 +1355,6 @@ export component BuildsBody inherits Rectangle {
                                                 url: r.icon;
                                                 fit: ImageFit.contain;
                                                 dim: r.on ? 1 : 0.35;
-                                                gray: !r.on;
                                             }
                                         }
                                     }
@@ -1901,6 +1900,7 @@ export component OvRowView {
                 color: #aab4c6;
                 vertical-alignment: center;
                 overflow: elide;
+                horizontal-stretch: 1;
             }
             if root.tone == 3: VerticalLayout {
                 alignment: center;
@@ -2136,6 +2136,7 @@ export component OverlaysView inherits Rectangle {
         HorizontalLayout {
             spacing: 20px;
             PageHead {
+                horizontal-stretch: 1;
                 title: "Overlays";
                 text: "Widgets affichés par-dessus le jeu, transparents aux clics. Mets le jeu en mode fenêtré sans bordure (Options › Vidéo).";
             }
