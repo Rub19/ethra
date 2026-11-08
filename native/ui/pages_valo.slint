@@ -54,7 +54,7 @@ component Em {
     }
 }
 
-export component VLine {
+export component VLine inherits Rectangle {
     in property <VRowV> r;
     in property <int> index;
     in property <length> avail;
@@ -201,7 +201,7 @@ export component VLine {
     }
 }
 
-export component VProfileView {
+export component VProfileView inherits Rectangle {
     Page {
         width: 100%;
         height: 100%;
@@ -444,7 +444,7 @@ export component VProfileView {
     }
 }
 
-export component VMatchView {
+export component VMatchView inherits Rectangle {
     Page {
         width: 100%;
         height: 100%;
@@ -599,7 +599,7 @@ export component VMatchView {
     }
 }
 
-component VLiveRowView {
+component VLiveRowView inherits Rectangle {
     in property <VLiveRow> p;
     height: 68px;
     Rectangle {
@@ -715,7 +715,7 @@ component VLiveRowView {
     }
 }
 
-export component VLiveView {
+export component VLiveView inherits Rectangle {
     Page {
         width: 100%;
         height: 100%;
@@ -826,7 +826,7 @@ export component VLiveView {
     }
 }
 
-export component VAgentsView {
+export component VAgentsView inherits Rectangle {
     Page {
         width: 100%;
         height: 100%;

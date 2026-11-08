@@ -788,6 +788,7 @@ fn share_image(a: &mut App) {
 pub fn copy_rgba(w: usize, h: usize, rgba: &[u8]) -> Result<(), String> {
     if let Ok(dir) = std::env::var("KAIRO_SNAP") {
         let _ = image::save_buffer(format!("{dir}/share.png"), rgba, w as u32, h as u32, image::ColorType::Rgba8);
+        return Ok(());
     }
     let mut c = arboard::Clipboard::new().map_err(|e| e.to_string())?;
     c.set_image(arboard::ImageData { width: w, height: h, bytes: rgba.into() }).map_err(|e| e.to_string())

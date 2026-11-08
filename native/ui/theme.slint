@@ -99,7 +99,7 @@ export component Stars {
     }
 }
 
-export component Press {
+export component Press inherits Rectangle {
     in property <bool> enabled: true;
     in property <MouseCursor> cursor: pointer;
     in property <length> ring-radius: 8px;
@@ -132,15 +132,13 @@ export component Press {
     }
 }
 
-export component Pic {
+export component Pic inherits Rectangle {
     in property <string> url;
     in property <length> radius: 0px;
     in property <ImageFit> fit: ImageFit.cover;
     in property <color> back: transparent;
     in property <float> dim: 1;
     in property <bool> gray: false;
-    preferred-width: 32px;
-    preferred-height: 32px;
     Rectangle {
         background: root.back;
         border-radius: root.radius;
@@ -178,7 +176,7 @@ export component Num inherits Text {
     overflow: elide;
 }
 
-export component Reveal {
+export component Reveal inherits Rectangle {
     in property <int> index: 0;
     in property <bool> rise: true;
     property <bool> shown;
@@ -202,6 +200,7 @@ export component Card inherits Rectangle {
 }
 
 export component CardTitle inherits Text {
+    horizontal-stretch: 1;
     color: Theme.text;
     font-size: 14.5px;
     font-weight: 600;
@@ -720,7 +719,7 @@ export component PerfRow {
     }
 }
 
-component CellView {
+component CellView inherits Rectangle {
     in property <Cell> c;
     in property <bool> centered;
     in property <bool> head;
@@ -864,7 +863,7 @@ component CellView {
     }
 }
 
-export component Table {
+export component Table inherits Rectangle {
     in property <[Col]> cols;
     in property <[TRow]> rows;
     in property <length> row-height: 56px;
@@ -938,7 +937,7 @@ export component Table {
     }
 }
 
-export component Skeleton {
+export component Skeleton inherits Rectangle {
     in property <int> rows: 6;
     in property <length> row-height: 76px;
     property <float> pulse;
@@ -961,7 +960,7 @@ export component Skeleton {
     }
 }
 
-export component Empty {
+export component Empty inherits Rectangle {
     in property <string> title;
     in property <string> text;
     in property <string> button;
@@ -995,7 +994,7 @@ export component Empty {
     }
 }
 
-export component Notice {
+export component Notice inherits Rectangle {
     in property <string> title;
     in property <string> text;
     min-height: 62px;
@@ -1034,7 +1033,7 @@ export component Notice {
     }
 }
 
-export component PageHead {
+export component PageHead inherits Rectangle {
     in property <string> title;
     in property <string> sub;
     in property <string> text;
@@ -1100,7 +1099,7 @@ export component SearchBox {
     }
 }
 
-export component Page {
+export component Page inherits Rectangle {
     in property <length> max-w: 1560px;
     property <length> w: root.width - 14px;
     sv := ScrollView {

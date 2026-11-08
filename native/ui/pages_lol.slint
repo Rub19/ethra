@@ -35,7 +35,7 @@ component PlayerName {
     }
 }
 
-export component MatchLine {
+export component MatchLine inherits Rectangle {
     in property <MatchRow> m;
     in property <int> index;
     in property <length> avail;
@@ -197,7 +197,7 @@ export component MatchLine {
     }
 }
 
-component LpChart {
+component LpChart inherits Rectangle {
     in property <LpData> lp;
     property <int> hover: -1;
     property <int> at: hover >= 0 ? hover : lp.points.length - 1;
@@ -258,7 +258,7 @@ component LpChart {
     }
 }
 
-export component ProfilePage {
+export component ProfilePage inherits Rectangle {
     Page {
         width: 100%;
         height: 100%;
@@ -522,7 +522,7 @@ export component ProfilePage {
     }
 }
 
-export component MatchChart {
+export component MatchChart inherits Rectangle {
     in property <ChartData> c;
     property <int> hover: -1;
     property <length> l: 44px;
@@ -690,7 +690,7 @@ export component MatchChart {
     }
 }
 
-export component ShareCard {
+export component ShareCard inherits Rectangle {
     in property <ShareData> s;
     in property <bool> capture;
     in property <string> msg;
@@ -787,7 +787,7 @@ export component ShareCard {
     }
 }
 
-export component MatchPageView {
+export component MatchPageView inherits Rectangle {
     Page {
         width: 100%;
         height: 100%;
@@ -963,7 +963,7 @@ export component MatchPageView {
     }
 }
 
-export component TierListView {
+export component TierListView inherits Rectangle {
     in property <bool> embedded;
     Page {
         width: 100%;
@@ -1002,7 +1002,7 @@ export component TierListView {
     }
 }
 
-export component ChampionsView {
+export component ChampionsView inherits Rectangle {
     Page {
         width: 100%;
         height: 100%;
@@ -1093,7 +1093,7 @@ component IconRow {
     }
 }
 
-component JunglePathView {
+component JunglePathView inherits Rectangle {
     in property <JungleData> j;
     Card {
         VerticalLayout {
@@ -1189,7 +1189,7 @@ component JunglePathView {
     }
 }
 
-export component BuildsBody {
+export component BuildsBody inherits Rectangle {
     VerticalLayout {
         spacing: 16px;
         if !Data.builds.compact: Rectangle {
@@ -1599,7 +1599,7 @@ export component BuildsBody {
     }
 }
 
-export component BuildsView {
+export component BuildsView inherits Rectangle {
     Page {
         width: 100%;
         height: 100%;
@@ -1607,7 +1607,7 @@ export component BuildsView {
     }
 }
 
-component PCard {
+component PCard inherits Rectangle {
     in property <PlayerCard> c;
     min-height: 236px;
     Rectangle {
@@ -1692,7 +1692,7 @@ component DmgView {
     }
 }
 
-export component WaitPanel {
+export component WaitPanel inherits Rectangle {
     in property <string> status;
     in property <string> title;
     in property <string> text;
@@ -1811,7 +1811,7 @@ export component WaitPanel {
     }
 }
 
-component WaitingLol {
+component WaitingLol inherits Rectangle {
     WaitPanel {
         status: "En attente d'une partie";
         title: "Lance une file dans le client League";
@@ -1828,7 +1828,7 @@ component WaitingLol {
     }
 }
 
-export component LiveView {
+export component LiveView inherits Rectangle {
     Page {
         width: 100%;
         height: 100%;
@@ -1941,7 +1941,7 @@ export component OvRowView {
     }
 }
 
-export component OvWidgetView {
+export component OvWidgetView inherits Rectangle {
     in property <OvWidget> w;
     Rectangle {
         background: #090d15db;
@@ -1973,7 +1973,7 @@ export component OvWidgetView {
     }
 }
 
-export component OvAlertView {
+export component OvAlertView inherits Rectangle {
     in property <OvAlert> a;
     min-width: 250px;
     height: 58px;
@@ -2012,7 +2012,7 @@ export component OvAlertView {
     }
 }
 
-export component OvSkillView {
+export component OvSkillView inherits Rectangle {
     in property <string> key-name;
     in property <string> icon;
     in property <string> level;
@@ -2064,7 +2064,7 @@ export component OvSkillView {
     }
 }
 
-component OvCardView {
+component OvCardView inherits Rectangle {
     in property <OvCard> c;
     Rectangle {
         border-radius: 16px;
@@ -2129,7 +2129,7 @@ component OvCardView {
     }
 }
 
-export component OverlaysView {
+export component OverlaysView inherits Rectangle {
     Page {
         width: 100%;
         height: 100%;

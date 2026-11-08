@@ -260,7 +260,7 @@ component Header {
             if !Data.searchable: Rectangle { width: 0px; }
             sb := VerticalLayout {
                 alignment: center;
-                width: Data.searchable ? clamp(Theme.win-w * 0.24, 120px, 340px) : 0px;
+                width: Data.searchable ? clamp(Theme.win-w - 1180px, 120px, 340px) : 0px;
                 visible: Data.searchable;
                 Rectangle {
                     height: 38px;
@@ -419,7 +419,7 @@ component Header {
     }
 }
 
-component GameMenu {
+component GameMenu inherits Rectangle {
     in property <bool> open;
     property <bool> shown: open;
     visible: open || self.opacity > 0;
@@ -485,7 +485,7 @@ component GameMenu {
     }
 }
 
-component SearchResults {
+component SearchResults inherits Rectangle {
     in property <bool> open;
     if root.open: Reveal {
         rise: false;
@@ -544,7 +544,7 @@ component SearchResults {
     }
 }
 
-component AccountMenu {
+component AccountMenu inherits Rectangle {
     callback closed;
     Reveal {
         rise: false;
@@ -617,7 +617,7 @@ component AccountMenu {
     }
 }
 
-component AvatarPicker {
+component AvatarPicker inherits Rectangle {
     Rectangle {
         background: #05070bd9;
         TouchArea {
@@ -782,7 +782,7 @@ component Bar2 {
     }
 }
 
-component UpdateCorner {
+component UpdateCorner inherits Rectangle {
     Reveal {
         Rectangle {
             background: Theme.panel;
