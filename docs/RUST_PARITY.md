@@ -3,6 +3,19 @@
 Crate natif : `native/` (binaire `ethra.exe`, identifiant `dev.ethone.ethra`).
 `[x]` porté et compilé. `[v]` porté et vu marcher dans le vrai exe. `[ ]` pas encore porté.
 
+## État au 8 novembre 2026 (travail interrompu)
+
+Tout compile, 44 tests passent, mais la parité n'est pas atteinte : les cases ci-dessous n'ont pas encore été cochées.
+
+Bugs vus dans le vrai exe, à corriger d'abord :
+- `Pic` sans largeur ni hauteur reste à 32 px : avatar du profil, splash des en-têtes et carte de partage.
+- Liste des parties LoL vide sur le profil, alors que le panneau de gauche est rempli.
+- Carte de partage non pleine largeur, bouton « Copier l'image » mal placé.
+- Onglets CS, Or, XP trop larges.
+- Bouton de fenêtre coupé à droite quand le compte est affiché.
+
+Reste à faire : installeur natif jamais compilé, zone de notification et overlay jamais vus, VALORANT et TFT à relire, nouvelles fonctions, comparaison mémoire et taille en release.
+
 ## src-tauri/src/main.rs
 
 - [ ] `lcu` : trouver `LeagueClientUx.exe`, port, token, requête HTTPS locale, oubli de la connexion en cas d'échec

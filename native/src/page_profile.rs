@@ -835,6 +835,12 @@ pub fn action(a: &mut App, key: &str) -> bool {
                 copy_text(a, &t, "Résumé");
             }
             "share" => share_image(a),
+            "first-match" if std::env::var("KAIRO_SNAP").is_ok() => {
+                if let Some(r) = a.profile.rows.as_ref().and_then(|m| m.row_data(0)) {
+                    let route = r.route.to_string();
+                    a.go(&route);
+                }
+            }
             "copy-id" if a.game == "lol" => {
                 let t = format!("{}#{}", a.profile.sum.game_name, a.profile.sum.tag_line);
                 copy_text(a, &t, "Riot ID");
