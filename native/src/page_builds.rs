@@ -116,10 +116,10 @@ fn render_tier(a: &mut App) {
             let mut cells = vec![toned((i + 1).to_string(), 4), role, iconed(name, img_champ(&d, r.champ)), tier_cell(r.tier), toned(pct1(r.win_rate), good(r.win_rate >= 0.5)), txt(pct1(r.pick_rate)), txt(pct1(r.ban_rate)), txt(format!("{:.2}", r.kda)), txt(fr(r.play))];
             cells.insert(3, star);
             if moves {
-                cells.push(if delta > 0 {
-                    toned(format!("▲ {delta}"), 1)
-                } else if delta < 0 {
-                    toned(format!("▼ {}", -delta), 2)
+                cells.push(if delta != 0 {
+                    let mut c = toned(delta.abs().to_string(), if delta > 0 { 1 } else { 2 });
+                    c.kind = 6;
+                    c
                 } else {
                     toned("–", 4)
                 });

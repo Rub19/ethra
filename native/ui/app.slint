@@ -1,5 +1,5 @@
 ﻿import { ScrollView } from "std-widgets.slint";
-import { Theme, Motion, Act, Api, Press, Pic, T, Small, Num, Primary, Ghost, Seg, Card, Reveal, Page, Notice, PageHead, Opt } from "theme.slint";
+import { Theme, Motion, Act, Api, Chevron, Press, Pic, T, Small, Num, Primary, Ghost, Seg, Card, Reveal, Page, Notice, PageHead, Opt } from "theme.slint";
 import { Data, SearchOpt, ShareData, OvWidget, OvAlert, GameCard } from "data.slint";
 import { ProfilePage, MatchPageView, TierListView, ChampionsView, BuildsView, LiveView, OverlaysView, ShareCard, OvWidgetView, OvAlertView, OvSkillView } from "pages_lol.slint";
 import { VProfileView, VMatchView, VLiveView, VAgentsView } from "pages_valo.slint";
@@ -127,11 +127,9 @@ component Header {
                         x: 4px;
                         game: Data.game;
                     }
-                    Text {
+                    Chevron {
                         x: 38px;
-                        text: "▾";
-                        font-size: 10px;
-                        color: Theme.muted;
+                        y: 14px;
                         transform-rotation: root.gmenu ? 180deg : 0deg;
                         animate transform-rotation { duration: Motion.normal; easing: cubic-bezier(0.23, 1, 0.32, 1); }
                     }
@@ -372,11 +370,9 @@ component Header {
                                 T { text: Data.acc-name; font-weight: 600; font-size: 13.5px; max-width: 120px; }
                                 Small { text: "#" + Data.acc-tag; font-size: 13.5px; }
                             }
-                            Text {
-                                text: "▾";
-                                font-size: 10px;
-                                color: Theme.muted;
-                                vertical-alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                Chevron { }
                             }
                         }
                     }
@@ -678,7 +674,7 @@ component AvatarPicker {
                         VerticalLayout {
                             alignment: center;
                             horizontal-stretch: 0;
-                            Ghost { label: "✕"; clicked => { Act.act("picker-close"); } }
+                            Ghost { label: "Fermer"; clicked => { Act.act("picker-close"); } }
                         }
                     }
                     Seg { options: Data.picker.tabs; }
@@ -918,20 +914,20 @@ export component AppWindow inherits Window {
             Rectangle { height: 60px; }
             main := Rectangle {
                 vertical-stretch: 1;
-                if Data.view == "profil": ProfilePage { }
-                if Data.view == "match": MatchPageView { }
-                if Data.view == "tierlist": TierListView { }
-                if Data.view == "champions": ChampionsView { }
-                if Data.view == "champion": BuildsView { }
-                if Data.view == "partie": LiveView { }
-                if Data.view == "overlays": OverlaysView { }
-                if Data.view == "reglages": SettingsView { }
-                if Data.view == "v-profil": VProfileView { }
-                if Data.view == "v-match": VMatchView { }
-                if Data.view == "v-partie": VLiveView { }
-                if Data.view == "v-agents": VAgentsView { }
-                if Data.view == "t-profil": TftProfileView { }
-                if Data.view == "t-decks": TftDecksView { }
+                if Data.view == "profil": ProfilePage { width: 100%; height: 100%; }
+                if Data.view == "match": MatchPageView { width: 100%; height: 100%; }
+                if Data.view == "tierlist": TierListView { width: 100%; height: 100%; }
+                if Data.view == "champions": ChampionsView { width: 100%; height: 100%; }
+                if Data.view == "champion": BuildsView { width: 100%; height: 100%; }
+                if Data.view == "partie": LiveView { width: 100%; height: 100%; }
+                if Data.view == "overlays": OverlaysView { width: 100%; height: 100%; }
+                if Data.view == "reglages": SettingsView { width: 100%; height: 100%; }
+                if Data.view == "v-profil": VProfileView { width: 100%; height: 100%; }
+                if Data.view == "v-match": VMatchView { width: 100%; height: 100%; }
+                if Data.view == "v-partie": VLiveView { width: 100%; height: 100%; }
+                if Data.view == "v-agents": VAgentsView { width: 100%; height: 100%; }
+                if Data.view == "t-profil": TftProfileView { width: 100%; height: 100%; }
+                if Data.view == "t-decks": TftDecksView { width: 100%; height: 100%; }
             }
         }
         if root.gsticky || root.account || Data.search-open: TouchArea {
@@ -945,7 +941,9 @@ export component AppWindow inherits Window {
             }
         }
         head := Header {
+            x: 0px;
             y: 0px;
+            width: root.width;
             height: 60px;
             gmenu: root.gmenu;
             account <=> root.account;

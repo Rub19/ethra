@@ -1,5 +1,5 @@
 import { AboutSlint } from "std-widgets.slint";
-import { Theme, Motion, Act, Press, Pic, T, Small, Num, Card, CardTitle, Ghost, Primary, LinkBtn, Select, Toggle, Bar, StatBox, RankView, Skeleton, Empty, Notice, PageHead, Page, Reveal } from "theme.slint";
+import { Theme, Motion, Act, Stars, Press, Pic, T, Small, Num, Card, CardTitle, Ghost, Primary, LinkBtn, Select, Toggle, Bar, StatBox, RankView, Skeleton, Empty, Notice, PageHead, Page, Reveal } from "theme.slint";
 import { Data, SetRow, TftDeckV, TftUnitV, TftTraitV, TftRow } from "data.slint";
 
 component SetLine {
@@ -30,7 +30,9 @@ component SetLine {
 
 export component SettingsView {
     Page {
-        max: 1180px;
+        width: 100%;
+        height: 100%;
+        max-w: 1180px;
         PageHead {
             title: "Réglages";
             text: "Kairo est gratuit. Il lit tes clients Riot sur ce PC, la méta sur OP.GG et les images sur Data Dragon, CommunityDragon et valorant-api.com.";
@@ -245,13 +247,12 @@ component TUnit {
                     border-width: 2px;
                     border-color: Theme.accent.transparentize(0.45);
                 }
-                Text {
-                    y: -9px;
-                    height: 12px;
-                    text: root.u.stars;
-                    font-size: 10px;
-                    color: #f6c867;
-                    horizontal-alignment: center;
+                Stars {
+                    y: -10px;
+                    width: parent.width;
+                    height: 10px;
+                    count: root.u.stars.character-count;
+                    size: 10px;
                 }
             }
         }
@@ -364,6 +365,8 @@ component DeckCard {
 
 export component TftDecksView {
     Page {
+        width: 100%;
+        height: 100%;
         if Data.notice-title != "": VerticalLayout {
             padding-bottom: 22px;
             Notice { title: Data.notice-title; text: Data.notice-text; }
@@ -431,7 +434,7 @@ component TftGameLine {
                         alignment: start;
                         for u in root.g.units: VerticalLayout {
                             width: 36px;
-                            Text { text: u.stars; height: 11px; color: #ffcf5c; font-size: 8px; horizontal-alignment: center; }
+                            Stars { height: 11px; count: u.stars.character-count; size: 8px; color: #ffcf5c; }
                             Rectangle {
                                 width: 34px;
                                 height: 34px;
@@ -465,6 +468,8 @@ component TftGameLine {
 
 export component TftProfileView {
     Page {
+        width: 100%;
+        height: 100%;
         if Data.tft-profile.error != "": Empty {
             title: "Historique TFT indisponible";
             text: Data.tft-profile.error;

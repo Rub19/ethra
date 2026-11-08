@@ -251,7 +251,9 @@ fn ensure_window() {
         slint::Timer::single_shot(Duration::from_millis(30), move || {
             let Some(win) = weak.upgrade() else { return };
             win.window().with_winit_window(|w: &winit::window::Window| {
-                if let Some(m) = w.primary_monitor() {
+                if crate::offscreen() {
+                    w.set_outer_position(winit::dpi::PhysicalPosition::new(-20000, -20000));
+                } else if let Some(m) = w.primary_monitor() {
                     w.set_outer_position(m.position());
                     let _ = w.request_inner_size(m.size());
                 }

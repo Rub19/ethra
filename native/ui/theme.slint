@@ -62,6 +62,43 @@ export struct Col { label: string, px: length, sort: string, active: bool, desc:
 export struct TRow { cells: [Cell], route: string, me: bool, header: bool }
 export struct Chip { text: string, tone: int, pill: bool }
 
+export component Chevron {
+    in property <bool> up;
+    in property <color> color: Theme.muted;
+    in property <length> size: 10px;
+    width: size;
+    height: size;
+    Path {
+        width: root.size;
+        height: root.size;
+        viewbox-width: 10;
+        viewbox-height: 10;
+        commands: root.up ? "M2 6.5 5 3.5 8 6.5" : "M2 3.5 5 6.5 8 3.5";
+        stroke: root.color;
+        stroke-width: 1.6px;
+        stroke-line-cap: round;
+        fill: transparent;
+    }
+}
+
+export component Stars {
+    in property <int> count;
+    in property <length> size: 9px;
+    in property <color> color: #f6c867;
+    HorizontalLayout {
+        alignment: center;
+        spacing: 0px;
+        for i in root.count: Path {
+            width: root.size;
+            height: root.size;
+            viewbox-width: 24;
+            viewbox-height: 24;
+            commands: "M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z";
+            fill: root.color;
+        }
+    }
+}
+
 export component Press {
     in property <bool> enabled: true;
     in property <MouseCursor> cursor: pointer;
@@ -340,12 +377,10 @@ export component Select {
                 text: root.label;
                 font-size: 13.5px;
             }
-            Text {
-                text: "▾";
-                color: Theme.muted;
-                font-size: 10px;
-                vertical-alignment: center;
+            VerticalLayout {
+                alignment: center;
                 horizontal-stretch: 0;
+                Chevron { }
             }
         }
     }
@@ -795,6 +830,28 @@ component CellView {
                 Small { text: root.c.text; font-size: 14px; }
             }
         }
+        if root.c.kind == 6: HorizontalLayout {
+            alignment: center;
+            spacing: 4px;
+            VerticalLayout {
+                alignment: center;
+                Path {
+                    width: 8px;
+                    height: 7px;
+                    viewbox-width: 8;
+                    viewbox-height: 7;
+                    commands: root.c.tone == 1 ? "M4 0 8 7H0z" : "M0 0h8L4 7z";
+                    fill: Theme.tone(root.c.tone);
+                }
+            }
+            Text {
+                text: root.c.text;
+                font-family: Theme.num;
+                font-size: 15px;
+                color: Theme.tone(root.c.tone);
+                vertical-alignment: center;
+            }
+        }
         if root.c.kind == 5: VerticalLayout {
             alignment: center;
             Pic {
@@ -832,10 +889,16 @@ export component Table {
                         ring-radius: 6px;
                         clicked => { Act.act(c.sort); }
                     }
-                    Text {
+                    if c.active: Chevron {
+                        x: c.px > 0 ? (parent.width + hl.preferred-width) / 2 + 2px : hl.preferred-width + 12px;
+                        y: (parent.height - 10px) / 2;
+                        up: !c.desc;
+                        color: Theme.text;
+                    }
+                    hl := Text {
                         x: c.px > 0 ? 0px : 8px;
                         width: c.px > 0 ? parent.width : parent.width - 8px;
-                        text: c.label + (c.active ? (c.desc ? " ▾" : " ▴") : "");
+                        text: c.label;
                         font-size: 12.5px;
                         font-weight: 600;
                         color: c.active ? Theme.text : Theme.muted;
@@ -1038,24 +1101,23 @@ export component SearchBox {
 }
 
 export component Page {
-    in property <length> max: 1560px;
-    ScrollView {
-        content-width: self.visible-width;
+    in property <length> max-w: 1560px;
+    property <length> w: root.width - 14px;
+    sv := ScrollView {
+        width: root.width;
+        height: root.height;
+        content-width: root.w;
         content-height: inner.preferred-height;
         inner := VerticalLayout {
-            width: parent.visible-width;
+            x: 0px;
+            y: 0px;
+            width: root.w;
             padding-top: 22px;
             padding-bottom: 40px;
+            padding-left: max(22px, (root.w - root.max-w) / 2);
+            padding-right: max(22px, (root.w - root.max-w) / 2);
             alignment: start;
-            HorizontalLayout {
-                alignment: center;
-                VerticalLayout {
-                    width: min(root.max, Theme.win-w - 56px);
-                    alignment: start;
-                    spacing: 0px;
-                    @children
-                }
-            }
+            @children
         }
     }
 }

@@ -260,6 +260,8 @@ component LpChart {
 
 export component ProfilePage {
     Page {
+        width: 100%;
+        height: 100%;
         if Data.profile.error != "": Empty {
             title: "Profil indisponible";
             text: Data.profile.error;
@@ -787,6 +789,8 @@ export component ShareCard {
 
 export component MatchPageView {
     Page {
+        width: 100%;
+        height: 100%;
         if Data.match.error != "": Empty { text: Data.match.error; }
         if Data.match.loading && Data.match.error == "": Skeleton { rows: 4; row-height: 180px; }
         if !Data.match.loading && Data.match.error == "": VerticalLayout {
@@ -962,6 +966,8 @@ export component MatchPageView {
 export component TierListView {
     in property <bool> embedded;
     Page {
+        width: 100%;
+        height: 100%;
         if Data.notice-title != "": VerticalLayout {
             padding-bottom: 22px;
             Notice { title: Data.notice-title; text: Data.notice-text; }
@@ -998,6 +1004,8 @@ export component TierListView {
 
 export component ChampionsView {
     Page {
+        width: 100%;
+        height: 100%;
         PageHead {
             title: "Champions";
             text: Data.champions.text;
@@ -1593,6 +1601,8 @@ export component BuildsBody {
 
 export component BuildsView {
     Page {
+        width: 100%;
+        height: 100%;
         BuildsBody { }
     }
 }
@@ -1820,6 +1830,8 @@ component WaitingLol {
 
 export component LiveView {
     Page {
+        width: 100%;
+        height: 100%;
         if Data.live.waiting: WaitingLol { }
         if !Data.live.waiting: VerticalLayout {
             spacing: 12px;
@@ -2119,6 +2131,8 @@ component OvCardView {
 
 export component OverlaysView {
     Page {
+        width: 100%;
+        height: 100%;
         HorizontalLayout {
             spacing: 20px;
             PageHead {

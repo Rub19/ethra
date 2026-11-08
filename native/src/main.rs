@@ -467,6 +467,10 @@ async fn with_self_missing() -> bool {
     rx.await.unwrap_or(false)
 }
 
+pub fn offscreen() -> bool {
+    std::env::var("KAIRO_OFFSCREEN").is_ok()
+}
+
 fn reduced_motion() -> bool {
     use windows_sys::Win32::UI::WindowsAndMessaging::{SystemParametersInfoW, SPI_GETCLIENTAREAANIMATION};
     let mut on: i32 = 1;
@@ -485,7 +489,7 @@ fn main() {
     RT.set(tokio::runtime::Builder::new_multi_thread().worker_threads(3).enable_all().build().unwrap()).ok();
     slint::BackendSelector::new()
         .with_winit_window_attributes_hook(|attrs| {
-            if OVERLAY_NEXT.load(Ordering::SeqCst) {
+            if OVERLAY_NEXT.load(Ordering::SeqCst) || offscreen() {
                 use winit::platform::windows::WindowAttributesExtWindows;
                 attrs.with_skip_taskbar(true).with_active(false).with_window_level(winit::window::WindowLevel::AlwaysOnTop).with_transparent(true).with_decorations(false)
             } else {
@@ -601,6 +605,9 @@ fn main() {
         });
     });
     page_misc::start_script();
+    if offscreen() {
+        ui.window().set_position(slint::PhysicalPosition::new(-20000, -20000));
+    }
     ui.show().unwrap();
     slint::run_event_loop_until_quit().unwrap();
 }
