@@ -15,7 +15,7 @@ export struct ProfileData {
     show-session: bool, session-empty: bool, session: [Stat], session-strip: [bool],
     ranks: [RankRow], has-lp: bool, lp: LpData,
     recent-title: string, wr: float, wr-text: string, form-line: string, form-tone: int, form-strip: [bool], kda-line: string, perfs: [Perf],
-    games-loading: bool, empty-title: string, empty-filtered: bool, more: bool, pool-cols: [Col], pool-rows: [TRow],
+    games-loading: bool, empty-title: string, empty-filtered: bool, more: bool, pool-cols: [Col], pool-rows: [TRow], queues: [Perf], mastery: [Perf],
 }
 export struct Score { k: string, v: string, value: float, grade: string, color: color }
 export struct ChartSeries { name: string, color: color, path: string, end-y: float, values: [string], ys: [float] }
@@ -71,7 +71,7 @@ export struct TftTraitV { icon: string, n: string, name: string, style: int }
 export struct TftDeckV { tier: string, tier-tone: int, name: string, tags: [string], stats: [Stat], units: [[TftUnitV]], traits: [[TftTraitV]] }
 export struct TftDecksData { loading: bool, error: string, sub: string, text: string, decks: [TftDeckV] }
 export struct TftRow { place: string, top: bool, queue: string, when: string, level: string, units: [TftUnitV], traits: [TftTraitV] }
-export struct TftProfileData { loading: bool, error: string, avatar: string, level: string, name: string, tag: string, quick: [Stat], rank: RankRow, games: [TftRow], empty: bool, more: string, more-enabled: bool }
+export struct TftProfileData { loading: bool, error: string, avatar: string, level: string, name: string, tag: string, quick: [Stat], rank: RankRow, top-traits: [Perf], top-units: [Perf], games: [TftRow], empty: bool, more: string, more-enabled: bool }
 export struct VRowV {
     id: string, route: string, state: int, result: int, title: string, queue: string, when: string, duration: string, face: string, tier: string,
     mvp: string, multi: string, rr: string, rr-up: bool, promo: string, promo-up: bool, map: string, map-name: string, score: string, kda-k: string, kda-d: string, kda-a: string, kd: string, kd-good: bool,

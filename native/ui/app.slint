@@ -288,6 +288,7 @@ component Header {
                             }
                         }
                         Rectangle {
+                            clip: true;
                             ti := TextInput {
                                 vertical-alignment: center;
                                 color: Theme.text;
@@ -899,6 +900,10 @@ export component AppWindow inherits Window {
             }
             if (e.text == Key.Escape && Data.picker.open) {
                 Act.act("picker-close");
+                return accept;
+            }
+            if (e.text == Key.F5) {
+                Act.act("retry");
                 return accept;
             }
             if (e.text == Key.Tab) {

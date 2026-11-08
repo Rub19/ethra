@@ -1,4 +1,4 @@
-use crate::history::{champs_in, counted, cs, filter_games, form_of, is_remake, kda, merge_games, n, queues_in, win, Game, HistoryFilter, Participant};
+use crate::history::{by_queue, champs_in, counted, cs, filter_games, form_of, is_remake, kda, merge_games, n, queues_in, win, Game, HistoryFilter, Participant};
 use crate::lol::*;
 use crate::text::*;
 use crate::{good, ms, on_ui, opt, spawn, ss, stat, store, with_app, App};
@@ -31,6 +31,7 @@ pub struct ProfileState {
     pub shown: Vec<i64>,
     pub ready: bool,
     pub session_copy: String,
+    pub mastery: Vec<(i64, i64, i64)>,
 }
 
 #[derive(Clone, Serialize, Deserialize, Default)]
@@ -172,6 +173,21 @@ pub fn open_profile(a: &mut App, puuid: Option<String>) {
     a.data().set_profile(ProfileData { loading: true, games_loading: true, ..Default::default() });
     a.data().set_matches(ms(vec![]));
     let gen = a.gen;
+    if puuid.is_none() {
+        spawn(async move {
+            let Ok(v) = crate::net::get("/lol-champion-mastery/v1/local-player/champion-mastery").await else { return };
+            let mut list: Vec<(i64, i64, i64)> = v.as_array().into_iter().flatten().map(|m| (m["championId"].as_i64().unwrap_or(0), m["championLevel"].as_i64().unwrap_or(0), m["championPoints"].as_i64().unwrap_or(0))).collect();
+            list.sort_by_key(|x| std::cmp::Reverse(x.2));
+            on_ui(move |a| {
+                if a.gen == gen {
+                    a.profile.mastery = list;
+                    if a.profile.ready {
+                        render(a, false);
+                    }
+                }
+            });
+        });
+    }
     spawn(async move {
         let r: Result<_, String> = async {
             let s = match &puuid {
@@ -392,6 +408,19 @@ pub fn render(a: &mut App, rebuild_rows: bool) {
         empty_title: ss(if !shown.is_empty() { "" } else if games.is_empty() { "Aucune partie" } else { "Aucune partie avec ces filtres" }),
         empty_filtered: filtered && !games.is_empty(),
         more: st.sub == "apercu" && shown.len() > st.visible,
+        queues: ms(by_queue(&shown)
+            .iter()
+            .map(|(q, t)| {
+                let wr = t.wins as f64 / t.games as f64;
+                Perf { icon: ss(""), title: ss(queue_label(*q)), sub: ss(format!("{:.1} KDA", t.kda / t.games as f64)), right: ss(pct0(wr)), right_sub: ss(format!("{} parties", t.games)), tone: good(wr >= 0.5), route: ss("") }
+            })
+            .collect()),
+        mastery: ms(st
+            .mastery
+            .iter()
+            .take(5)
+            .map(|(c, level, points)| Perf { icon: ss(img_champ(&dd, *c)), title: ss(cname(*c)), sub: ss(format!("Niveau {level}")), right: ss(fr(*points)), right_sub: ss("points"), tone: 0, route: ss(format!("champion/{c}")) })
+            .collect()),
         pool_cols: ms(vec![col("Champion", 0.0), col("Parties", 90.0), col("Winrate", 90.0), col("KDA", 90.0), col("CS/min", 90.0)]),
         pool_rows: ms(pool_rows),
     };

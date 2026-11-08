@@ -202,6 +202,9 @@ fn do_uninstall(purge: bool, report: &dyn Fn(u8, &str)) -> Result<(), String> {
         fs::remove_file(&exe).map_err(|e| format!("Suppression impossible : {e}"))?;
     }
     let _ = hkcu().delete_subkey_all(UNINST_KEY);
+    if let Ok(k) = hkcu().open_subkey_with_flags(r"Software\Microsoft\Windows\CurrentVersion\Run", winreg::enums::KEY_SET_VALUE) {
+        let _ = k.delete_value("Kairo");
+    }
     if purge {
         report(80, "Suppression des réglages");
         for var in ["LOCALAPPDATA", "APPDATA"] {

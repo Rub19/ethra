@@ -142,6 +142,7 @@ pub struct Settings {
     pub rank_filter: String,
     pub jungle_route: String,
     pub auto_open_live: bool,
+    pub close_to_tray: bool,
 }
 
 impl Default for Settings {
@@ -165,6 +166,7 @@ impl Default for Settings {
             rank_filter: "emerald_plus".into(),
             jungle_route: "red".into(),
             auto_open_live: true,
+            close_to_tray: false,
         }
     }
 }

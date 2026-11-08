@@ -1,5 +1,5 @@
 import { AboutSlint } from "std-widgets.slint";
-import { Theme, Motion, Act, Stars, Press, Pic, T, Small, Num, Card, CardTitle, Ghost, Primary, LinkBtn, Select, Toggle, Bar, StatBox, RankView, Skeleton, Empty, Notice, PageHead, Page, Reveal } from "theme.slint";
+import { Theme, Motion, Act, Stars, PerfRow, Press, Pic, T, Small, Num, Card, CardTitle, Ghost, Primary, LinkBtn, Select, Toggle, Bar, StatBox, RankView, Skeleton, Empty, Notice, PageHead, Page, Reveal } from "theme.slint";
 import { Data, SetRow, TftDeckV, TftUnitV, TftTraitV, TftRow } from "data.slint";
 
 component SetLine {
@@ -542,12 +542,29 @@ export component TftProfileView inherits Rectangle {
                 VerticalLayout {
                     width: 260px;
                     alignment: start;
+                    spacing: 12px;
                     Card {
                         min-height: 84px;
                         VerticalLayout {
                             padding-left: 16px;
                             padding-right: 16px;
                             RankView { r: Data.tft-profile.rank; }
+                        }
+                    }
+                    if Data.tft-profile.top-traits.length > 0: Card {
+                        VerticalLayout {
+                            padding: 16px;
+                            spacing: 6px;
+                            CardTitle { text: "Tes traits les plus joués"; }
+                            for f in Data.tft-profile.top-traits: PerfRow { f: f; }
+                        }
+                    }
+                    if Data.tft-profile.top-units.length > 0: Card {
+                        VerticalLayout {
+                            padding: 16px;
+                            spacing: 6px;
+                            CardTitle { text: "Tes unités les plus jouées"; }
+                            for f in Data.tft-profile.top-units: PerfRow { f: f; }
                         }
                     }
                 }

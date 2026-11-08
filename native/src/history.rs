@@ -159,6 +159,67 @@ pub fn form_of(games: &[Game], kda_of: impl Fn(&Game) -> f64) -> Form {
     }
 }
 
+pub fn games_csv(games: &[Game], champ: impl Fn(i64) -> String, queue: impl Fn(i64) -> String, date: impl Fn(i64) -> String) -> String {
+    let esc = |s: String| if s.contains([';', '"', '\n']) { format!("\"{}\"", s.replace('"', "\"\"")) } else { s };
+    let mut out = String::from("\u{feff}Date;Mode;Champion;Résultat;Kills;Morts;Assists;CS;Dégâts;Or;Vision;Durée (s)\r\n");
+    for g in games {
+        let p = g.me();
+        let s = &p.stats;
+        let result = if is_remake(g) { "Remake" } else if win(p) { "Victoire" } else { "Défaite" };
+        let line = [esc(date(g.game_creation)), esc(queue(g.queue_id)), esc(champ(p.champion_id)), result.to_string(), n(s, "kills").to_string(), n(s, "deaths").to_string(), n(s, "assists").to_string(), cs(s).to_string(), n(s, "totalDamageDealtToChampions").to_string(), n(s, "goldEarned").to_string(), n(s, "visionScore").to_string(), g.game_duration.to_string()].join(";");
+        out += &line;
+        out += "\r\n";
+    }
+    out
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Tally {
+    pub games: usize,
+    pub wins: usize,
+    pub kda: f64,
+}
+
+pub fn by_queue(games: &[Game]) -> Vec<(i64, Tally)> {
+    let mut out: Vec<(i64, Tally)> = vec![];
+    for g in counted(games) {
+        let p = g.me();
+        let i = out.iter().position(|x| x.0 == g.queue_id).unwrap_or_else(|| {
+            out.push((g.queue_id, Tally::default()));
+            out.len() - 1
+        });
+        let t = &mut out[i].1;
+        t.games += 1;
+        t.wins += win(p) as usize;
+        t.kda += kda(&p.stats);
+    }
+    out.sort_by_key(|x| std::cmp::Reverse(x.1.games));
+    out
+}
+
+pub fn tft_top(games: &[TftGame], keys: impl Fn(&TftGame) -> Vec<String>) -> Vec<(String, usize, f64)> {
+    let mut out: Vec<(String, usize, f64)> = vec![];
+    for g in games {
+        let mut seen: Vec<String> = keys(g);
+        seen.sort();
+        seen.dedup();
+        for k in seen {
+            match out.iter_mut().find(|x| x.0 == k) {
+                Some(x) => {
+                    x.1 += 1;
+                    x.2 += g.placement as f64;
+                }
+                None => out.push((k, 1, g.placement as f64)),
+            }
+        }
+    }
+    for x in &mut out {
+        x.2 /= x.1 as f64;
+    }
+    out.sort_by(|a, b| b.1.cmp(&a.1).then(a.2.total_cmp(&b.2)));
+    out
+}
+
 #[derive(Clone, Debug, Default, Deserialize)]
 #[serde(default)]
 pub struct TftUnit {
@@ -297,6 +358,20 @@ mod tests {
         assert_eq!(m.iter().map(|g| (g.game_id, g.map_id)).collect::<Vec<_>>(), vec![(3, 1), (2, 1), (1, 2)]);
         assert_eq!(ids(&merge_games(vec![old(3, 30, 0)], vec![old(2, 20, 0), old(1, 10, 0)], 2)), vec![3, 2]);
         assert!(merge_games(vec![], vec![], 5).is_empty());
+    }
+
+    #[test]
+    fn extras() {
+        let g = games();
+        let q = by_queue(&g);
+        assert_eq!(q[0].0, 420);
+        assert_eq!((q[0].1.games, q[0].1.wins), (2, 1));
+        let csv = games_csv(&g[..1], |_| "Kai;Sa".into(), |_| "Solo".into(), |_| "1 nov".into());
+        assert!(csv.contains("\"Kai;Sa\""));
+        assert!(csv.contains("Victoire"));
+        let t = vec![TftGame { placement: 1, traits: vec![TftTrait { name: "A".into(), num_units: 2, style: 1 }], ..Default::default() }, TftGame { placement: 5, traits: vec![TftTrait { name: "A".into(), num_units: 2, style: 1 }], ..Default::default() }];
+        let top = tft_top(&t, |g| g.traits.iter().map(|x| x.name.clone()).collect());
+        assert_eq!(top, vec![("A".to_string(), 2, 3.0)]);
     }
 
     #[test]

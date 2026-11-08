@@ -1,4 +1,4 @@
-use crate::history::{parse_tft_games, tft_queue, tft_summary, TftGame};
+use crate::history::{games_csv, parse_tft_games, tft_queue, tft_summary, tft_top, Game, TftGame};
 use crate::lol::*;
 use crate::opgg::RANK_FILTERS;
 use crate::overlay::{icon_baron, icon_dragon, icon_inhib, row as ov_row, widget};
@@ -10,7 +10,7 @@ use crate::tft_api::*;
 use crate::update;
 use crate::valo_api::seen_players;
 use crate::{good, ms, on_ui, opt, spawn, ss, stat, with_app, App};
-use crate::{AvatarItem, AvatarSection, GameCard, KeyLine, Opt, OvAlert, OvCard, OverlaysData, PickerData, RankRow, SearchOpt, SetRow, SettingsData, TftDeckV, TftDecksData, TftProfileData, TftRow, TftTraitV, TftUnitV};
+use crate::{AvatarItem, AvatarSection, GameCard, KeyLine, Opt, Perf, OvAlert, OvCard, OverlaysData, PickerData, RankRow, SearchOpt, SetRow, SettingsData, TftDeckV, TftDecksData, TftProfileData, TftRow, TftTraitV, TftUnitV};
 use serde_json::Value;
 use slint::{Color, ComponentHandle};
 use std::sync::Arc;
@@ -223,6 +223,7 @@ fn toggle_setting(s: &mut Settings, key: &str) {
         "autoRunes" => &mut s.auto_runes,
         "autoSpells" => &mut s.auto_spells,
         "autoItems" => &mut s.auto_items,
+        "closeToTray" => &mut s.close_to_tray,
         _ => return,
     };
     *f = !*f;
@@ -231,6 +232,37 @@ fn toggle_setting(s: &mut Settings, key: &str) {
 pub fn open_settings(a: &mut App) {
     a.settings.armed.clear();
     render_settings(a);
+}
+
+const RUN_KEY: &str = r"Software\Microsoft\Windows\CurrentVersion\Run";
+
+fn startup_enabled() -> bool {
+    use winreg::{enums::HKEY_CURRENT_USER, RegKey};
+    RegKey::predef(HKEY_CURRENT_USER).open_subkey(RUN_KEY).and_then(|k| k.get_value::<String, _>("Kairo")).is_ok()
+}
+
+fn set_startup(on: bool) -> Result<(), String> {
+    use winreg::{enums::HKEY_CURRENT_USER, RegKey};
+    let (k, _) = RegKey::predef(HKEY_CURRENT_USER).create_subkey(RUN_KEY).map_err(|e| e.to_string())?;
+    if on {
+        let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+        k.set_value("Kairo", &format!("\"{}\"", exe.display())).map_err(|e| e.to_string())
+    } else {
+        k.delete_value("Kairo").map_err(|e| e.to_string())
+    }
+}
+
+fn export_csv(a: &mut App) {
+    let mut all: Vec<Game> = store::keys_with("rw-games-").iter().flat_map(|k| store::load::<Vec<Game>>(k).unwrap_or_default()).collect();
+    all.sort_by_key(|g| std::cmp::Reverse(g.game_creation));
+    let Some(path) = rfd::FileDialog::new().set_file_name("kairo-parties.csv").add_filter("CSV", &["csv"]).save_file() else { return };
+    let d = a.d.clone();
+    let queues = a.profile.queues.clone();
+    let text = games_csv(&all, |c| d.as_ref().and_then(|d| d.champs.get(&c)).map(|x| x.name.clone()).unwrap_or_else(|| c.to_string()), |q| queues.get(&q).cloned().unwrap_or_else(|| q.to_string()), date_long_time);
+    match std::fs::write(&path, text) {
+        Ok(()) => a.toast(format!("{} parties exportées", all.len())),
+        Err(e) => a.toast(format!("Export impossible : {e}")),
+    }
 }
 
 fn kept_games() -> usize {
@@ -262,6 +294,8 @@ pub fn render_settings(a: &mut App) {
         general: ms(vec![
             gopt("autoOpenLive", "Ouvrir la partie en cours automatiquement", "Kairo passe sur la page de la partie dès la sélection des champions ou des agents.", s.auto_open_live),
             gopt("autoAccept", "Accepter la partie automatiquement", "Clique sur « Accepter » à ta place quand une partie League est trouvée.", s.auto_accept),
+            gopt("startup", "Lancer Kairo avec Windows", "Kairo démarre à l'ouverture de ta session.", startup_enabled()),
+            gopt("closeToTray", "Réduire dans la zone de notification", "Fermer la fenêtre garde Kairo actif près de l'horloge, pour les overlays et l'import auto.", s.close_to_tray),
         ]),
         lol: ms(vec![
             gopt("autoRunes", "Importer les runes", "Crée une page « Kairo : Champion Rôle » dès que tu verrouilles ton champion.", s.auto_runes),
@@ -273,11 +307,12 @@ pub fn render_settings(a: &mut App) {
         rank_label: ss(rank_label),
         rank_opts: ms(RANK_FILTERS.iter().map(|(k, l)| opt(format!("setrank:{k}"), l, s.rank_filter == *k)).collect()),
         seen: setrow("Joueurs croisés".into(), format!("{seen} joueurs mémorisés pour la recherche. Ils restent sur ce PC."), "Oublier", "clear:seen", seen > 0),
-        keys: ms([("Ctrl K", "Rechercher un joueur ou un champion"), ("Ctrl 1, 2, 3", "Passer sur League, VALORANT ou TFT"), ("Alt ← et Alt →", "Page précédente et suivante"), ("Boutons latéraux", "Page précédente et suivante")].iter().map(|(k, t)| KeyLine { key: ss(k), text: ss(t) }).collect()),
+        keys: ms([("Ctrl K", "Rechercher un joueur ou un champion"), ("Ctrl 1, 2, 3", "Passer sur League, VALORANT ou TFT"), ("Alt ← et Alt →", "Page précédente et suivante"), ("Boutons latéraux", "Page précédente et suivante"), ("F5", "Recharger la page")].iter().map(|(k, t)| KeyLine { key: ss(k), text: ss(t) }).collect()),
         data_rows: ms(vec![
             setrow("Cache TFT".into(), "Noms et icônes du set en cours, rechargés une fois par jour.".into(), "Vider", "clear:tft", true),
             setrow("Images".into(), format!("{} d'images gardées sur ce PC pour aller plus vite.", human(crate::images::disk_cache_size())), "Vider", "clear:images", true),
             setrow("Parties conservées".into(), format!("{games} parties League gardées sur ce PC, au-delà des 20 du client."), "Effacer", "clear:games", games > 0),
+            setrow("Exporter mes parties".into(), "Enregistre tes parties conservées dans un fichier CSV pour Excel.".into(), "Exporter", "export-csv", games > 0),
             setrow("Historique LP".into(), if lp > 0 { "La courbe de LP de tes comptes repart de zéro si tu l'effaces.".into() } else { "Aucune courbe enregistrée.".to_string() }, "Effacer", "clear:lp", lp > 0),
             setrow("Recherches récentes".into(), format!("{recent} joueur{} proposé{} dans la recherche.", if recent > 1 { "s" } else { "" }, if recent > 1 { "s" } else { "" }), "Oublier", "clear:recent", recent > 0),
         ]),
@@ -542,6 +577,22 @@ fn render_tft_profile(a: &mut App) {
             color: if placed { tier_color(&q.unwrap().tier) } else { Color::from_rgb_u8(0xee, 0xf0, 0xf7) },
             sub: ss(q.filter(|x| x.wins + x.losses > 0).map(|x| format!("{} top 1, {} parties", x.wins, x.wins + x.losses)).unwrap_or_default()),
         },
+        top_traits: ms(tft_top(games, |g| g.traits.iter().map(|x| x.name.clone()).collect())
+            .iter()
+            .take(5)
+            .map(|(k, n, avg)| {
+                let info = t.as_ref().and_then(|y| y.traits.get(k));
+                Perf { icon: ss(info.map(|i| i.icon.clone()).unwrap_or_default()), title: ss(info.map(|i| i.name.clone()).unwrap_or_else(|| trim_prefix(k))), sub: ss(format!("{n} parties")), right: ss(format!("{avg:.2}")), right_sub: ss("place moy."), tone: good(*avg <= 4.5), route: ss("") }
+            })
+            .collect()),
+        top_units: ms(tft_top(games, |g| g.units.iter().map(|x| x.character_id.clone()).collect())
+            .iter()
+            .take(5)
+            .map(|(k, n, avg)| {
+                let info = t.as_ref().and_then(|y| y.units.get(k));
+                Perf { icon: ss(info.map(|i| i.icon.clone()).unwrap_or_default()), title: ss(info.map(|i| i.name.clone()).unwrap_or_else(|| trim_prefix(k))), sub: ss(format!("{n} parties")), right: ss(format!("{avg:.2}")), right_sub: ss("place moy."), tone: good(*avg <= 4.5), route: ss("") }
+            })
+            .collect()),
         empty: games.is_empty(),
         games: ms(rows),
         more: ss(if games.is_empty() || more == "end" {
@@ -679,6 +730,13 @@ pub fn action(a: &mut App, key: &str) -> bool {
         toggle_setting(&mut s, k);
         save_settings(&s);
         render_overlays(a);
+    } else if key == "set:startup" {
+        if let Err(e) = set_startup(!startup_enabled()) {
+            a.toast(format!("Réglage impossible : {e}"));
+        }
+        render_settings(a);
+    } else if key == "export-csv" {
+        export_csv(a);
     } else if let Some(k) = key.strip_prefix("set:") {
         let mut s = settings();
         toggle_setting(&mut s, k);

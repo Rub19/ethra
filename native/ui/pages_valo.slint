@@ -58,7 +58,7 @@ export component VLine inherits Rectangle {
     in property <VRowV> r;
     in property <int> index;
     in property <length> avail;
-    height: root.r.state == 0 ? 112px : 76px;
+    height: root.r.state == 0 ? 124px : 76px;
     if root.r.state == 2: Rectangle {
         background: Theme.panel;
         border-radius: 16px;
@@ -491,7 +491,7 @@ export component VMatchView inherits Rectangle {
                             spacing: 0px;
                             VerticalLayout {
                                 spacing: 4px;
-                                width: 38px;
+                                width: 44px;
                                 alignment: start;
                                 HorizontalLayout {
                                     alignment: center;
@@ -519,7 +519,7 @@ export component VMatchView inherits Rectangle {
                                 }
                                 Text {
                                     text: r.eco;
-                                    font-size: 9.5px;
+                                    font-size: 9px;
                                     font-weight: 600;
                                     horizontal-alignment: center;
                                     overflow: elide;

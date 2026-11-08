@@ -484,6 +484,22 @@ export component ProfilePage inherits Rectangle {
                             for f in Data.profile.perfs: PerfRow { f: f; }
                         }
                     }
+                    if Data.profile.queues.length > 0: Card {
+                        VerticalLayout {
+                            padding: 16px;
+                            spacing: 6px;
+                            CardTitle { text: "Par mode de jeu"; }
+                            for f in Data.profile.queues: PerfRow { f: f; }
+                        }
+                    }
+                    if Data.profile.mastery.length > 0: Card {
+                        VerticalLayout {
+                            padding: 16px;
+                            spacing: 6px;
+                            CardTitle { text: "Maîtrise des champions"; }
+                            for f in Data.profile.mastery: PerfRow { f: f; }
+                        }
+                    }
                 }
                 lst := VerticalLayout {
                     spacing: 8px;
@@ -1190,6 +1206,7 @@ component JunglePathView inherits Rectangle {
 }
 
 export component BuildsBody inherits Rectangle {
+    property <bool> two-rows: Data.builds.compact || Theme.win-w < 1360px;
     VerticalLayout {
         spacing: 16px;
         if !Data.builds.compact: Rectangle {
@@ -1292,8 +1309,8 @@ export component BuildsBody inherits Rectangle {
             }
             Seg { options: Data.builds.sources; fsize: 13px; pad: 9px; }
             Seg { options: Data.builds.modes; fsize: 13px; pad: 9px; }
-            if Data.builds.roles.length > 0: Seg { options: Data.builds.roles; fsize: 13px; pad: 7px; }
-            if Data.builds.ranks.length > 0: Seg { options: Data.builds.ranks; fsize: 13px; pad: 7px; }
+            if !root.two-rows && Data.builds.roles.length > 0: Seg { options: Data.builds.roles; fsize: 13px; pad: 7px; }
+            if !root.two-rows && Data.builds.ranks.length > 0: Seg { options: Data.builds.ranks; fsize: 13px; pad: 7px; }
             Rectangle { horizontal-stretch: 1; }
             if Data.builds.msg != "": Small { text: Data.builds.msg; }
             Primary {
@@ -1301,6 +1318,12 @@ export component BuildsBody inherits Rectangle {
                 enabled: Data.builds.can-apply;
                 clicked => { Act.act("apply-build"); }
             }
+        }
+        if root.two-rows: HorizontalLayout {
+            spacing: 12px;
+            alignment: start;
+            if Data.builds.roles.length > 0: Seg { options: Data.builds.roles; fsize: 13px; pad: 7px; }
+            if Data.builds.ranks.length > 0: Seg { options: Data.builds.ranks; fsize: 13px; pad: 7px; }
         }
         if Data.builds.loading: Skeleton { rows: 2; row-height: 220px; }
         if !Data.builds.loading && Data.builds.none: Empty { text: "Aucun build disponible pour ce champion."; }

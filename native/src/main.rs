@@ -412,7 +412,11 @@ fn dispatch(a: &mut App, key: &str) {
             a.data().set_maximized(m);
         }
         "win-close" => {
-            let _ = slint::quit_event_loop();
+            if store::settings().close_to_tray && !offscreen() {
+                let _ = a.ui.hide();
+            } else {
+                let _ = slint::quit_event_loop();
+            }
         }
         "go-live" => {
             let r = if a.game == "valo" { "v-partie" } else { "partie" };
