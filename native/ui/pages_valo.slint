@@ -802,7 +802,7 @@ export component VLiveView inherits Rectangle {
                         spacing: 12px;
                         height: 30px;
                         Text { text: team.title; font-weight: 600; font-size: 17px; color: Theme.text; vertical-alignment: center; horizontal-stretch: 0; }
-                        for c in team.parties: VerticalLayout { alignment: center; ChipView { c: c; } }
+                        for c in team.parties: VerticalLayout { alignment: center; Em { text: c.text; fg: c.color; } }
                         Rectangle { horizontal-stretch: 1; }
                         if team.avg != "": HorizontalLayout {
                             spacing: 6px;

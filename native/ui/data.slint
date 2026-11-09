@@ -89,7 +89,8 @@ export struct VMatchData {
     loading: bool, error: string, splash: string, map: string, queue: string, quick: [Stat], has-rounds: bool, rounds: [VRoundBtn], selected: bool, detail-title: string, detail-won: bool, detail-result: string, detail-eco: string, spike: string, kills: [VKillV], cols: [Col], rows: [TRow],
 }
 export struct VLiveRow { me: bool, hidden: bool, route: string, face: string, hover: bool, role-icon: string, name: string, tag: string, sub: string, party: string, party-color: color, in-party: bool, locked: bool, level: string, loaded: bool, rank-icon: string, rank: string, rank-color: color, peak: string, wr: string, wr-tone: int, games: string, form: [int], net: string, net-tone: int }
-export struct VLiveTeam { title: string, mine: bool, parties: [Chip], avg-icon: string, avg: string, avg-color: color, rows: [VLiveRow] }
+export struct VParty { text: string, color: color }
+export struct VLiveTeam { title: string, mine: bool, parties: [VParty], avg-icon: string, avg: string, avg-color: color, rows: [VLiveRow] }
 export struct VLiveData { waiting: bool, status: string, splash: string, pre: bool, phase: string, map: string, queue: string, text: string, teams: [VLiveTeam] }
 export struct VAgentsData { loading: bool, error: string, sub: string, roles: [Opt], cols: [Col], rows: [TRow] }
 export struct SearchOpt { label: string, tag: string, sub: string, icon: string, letter: string, key: string, on: bool }

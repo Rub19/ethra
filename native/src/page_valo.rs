@@ -5,7 +5,7 @@ use crate::store::settings;
 use crate::text::*;
 use crate::valo_api::*;
 use crate::{good, ms, on_ui, opt, spawn, ss, stat, App};
-use crate::{Chip, Opt, Perf, PlayerChip, RankRow, VAgentsData, VKillV, VLiveData, VLiveRow, VLiveTeam, VMatchData, VProfileData, VRoundBtn, VRowV, VWeapon};
+use crate::{VParty, Opt, Perf, PlayerChip, RankRow, VAgentsData, VKillV, VLiveData, VLiveRow, VLiveTeam, VMatchData, VProfileData, VRoundBtn, VRowV, VWeapon};
 use serde_json::Value;
 use slint::{Color, Model, ModelRc, VecModel};
 use std::collections::{HashMap, HashSet};
@@ -1035,7 +1035,7 @@ pub fn render_live(a: &mut App) {
                 if let Some(x) = party.get(&p.puuid) {
                     if !seen.contains(&x.1) {
                         seen.push(x.1);
-                        parties.push(Chip { text: ss(x.0), tone: 3, pill: true });
+                        parties.push(VParty { text: ss(x.0), color: party_color(x.1) });
                     }
                 }
             }
