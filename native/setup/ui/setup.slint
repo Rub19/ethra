@@ -1,189 +1,428 @@
-import "../../assets/fonts/Barlow-Regular.ttf";
-import "../../assets/fonts/Barlow-SemiBold.ttf";
-import "../../assets/fonts/BarlowSemiCondensed-Bold.ttf";
+global Look {
+    out property <color> bg: #070b16;
+        out property <color> line: #ffffff1a;
+    out property <color> fg: #f4f6fb;
+    out property <color> muted: #9aa3b8;
+    out property <color> accent: #13917b;
+    out property <color> accent-hover: #17a88f;
+    out property <color> glow-a: #17ad92;
+    out property <color> glow-b: #3a6df0;
+    out property <color> ok: #30d158;
+    out property <color> bad: #ff453a;
+}
 
-component Check {
-    in property <string> label;
-    in-out property <bool> on;
-    height: 38px;
-    TouchArea {
-        mouse-cursor: pointer;
-        clicked => { root.on = !root.on; }
+component Glow inherits Rectangle {
+    in property <color> ink;
+    in property <float> strength;
+    background: @radial-gradient(circle, ink.with-alpha(strength) 0%, ink.with-alpha(0) 70%);
+}
+
+component Action inherits Rectangle {
+    in property <string> text;
+    in property <bool> primary;
+    in property <bool> enabled: true;
+    callback clicked();
+    height: 40px;
+    min-width: 120px;
+    border-radius: 10px;
+    background: !root.enabled ? Look.line : root.primary ? (touch.has-hover ? Look.accent-hover : Look.accent) : (touch.has-hover ? #ffffff26 : #ffffff14);
+    animate background { duration: 120ms; }
+    accessible-role: button;
+    accessible-label: root.text;
+    accessible-action-default => { root.clicked(); }
+    Text {
+        text: root.text;
+        color: root.enabled ? Look.fg : Look.muted;
+        font-size: 14px;
+        font-weight: 600;
+        horizontal-alignment: center;
+        vertical-alignment: center;
     }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => { root.clicked(); }
+    }
+}
+
+component Check inherits Rectangle {
+    in property <string> text;
+    in-out property <bool> checked;
+    height: 30px;
     HorizontalLayout {
-        Text { text: root.label; color: #eef0f7; vertical-alignment: center; }
+        spacing: 10px;
+        alignment: start;
         VerticalLayout {
             alignment: center;
-            horizontal-stretch: 0;
             Rectangle {
-                width: 40px;
+                width: 36px;
                 height: 22px;
                 border-radius: 11px;
-                background: root.on ? #2fd3b533 : #1c2236;
-                border-width: 1px;
-                border-color: root.on ? #2fd3b5 : #262d44;
-                animate background, border-color { duration: 160ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+                background: root.checked ? Look.ok : #ffffff26;
+                animate background { duration: 150ms; }
                 Rectangle {
-                    x: root.on ? 20px : 2px;
-                    y: 2px;
+                    x: root.checked ? parent.width - self.width - 3px : 3px;
+                    y: 3px;
                     width: 16px;
                     height: 16px;
                     border-radius: 8px;
-                    background: root.on ? #2fd3b5 : #8b93ab;
-                    animate x, background { duration: 160ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+                    background: white;
+                    animate x { duration: 180ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
                 }
             }
         }
+        Text {
+            text: root.text;
+            color: Look.fg;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
     }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => { root.checked = !root.checked; }
+    }
+    accessible-role: checkbox;
+    accessible-checked: root.checked;
+    accessible-label: root.text;
 }
 
-component Btn {
-    in property <string> label;
-    in property <bool> primary: true;
-    callback clicked;
-    min-width: lb.preferred-width + 36px;
-    height: 42px;
-    horizontal-stretch: 0;
-    Rectangle {
-        border-radius: 10px;
-        background: root.primary ? (ta.has-hover ? #49e0c4 : #2fd3b5) : transparent;
-        border-width: root.primary ? 0px : 1px;
-        border-color: ta.has-hover ? #2fd3b5 : #262d44;
-        animate background, border-color { duration: 140ms; }
-        transform-scale: ta.pressed ? 0.97 : 1;
-        animate transform-scale { duration: 120ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
-        ta := TouchArea {
-            mouse-cursor: pointer;
-            clicked => { root.clicked(); }
-        }
-        lb := Text {
-            text: root.label;
-            color: root.primary ? #06231d : #eef0f7;
-            font-weight: 600;
-        }
-    }
+component Screen inherits Rectangle {
+    in property <bool> shown;
+    in property <bool> reduced;
+    opacity: root.shown ? 1 : 0;
+    visible: self.opacity > 0.01;
+    animate opacity { duration: root.reduced ? 0ms : 240ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
 }
 
 export component SetupWindow inherits Window {
-    title: "Installation de Kairo";
+    title: root.window-title;
     icon: @image-url("../../assets/logo-256.png");
     no-frame: true;
-    background: #0e1220;
-    width: 760px;
-    height: 460px;
-    default-font-family: "Barlow";
-    default-font-size: 15px;
-    in property <string> title-text;
-    in property <string> sub;
-    in property <string> lead;
-    in property <string> go-label;
-    in property <string> alt-label;
-    in property <bool> show-opts;
-    in property <bool> uninstalling;
-    in property <bool> busy;
-    in property <bool> failed;
+    width: 520px;
+    height: 440px;
+    background: Look.bg;
+    default-font-size: 13px;
+    default-font-family: "Segoe UI Variable Text";
+
+    in property <string> window-title;
+    in property <string> screen: "welcome";
+    in property <bool> reduced;
+    in property <string> heading;
+    in property <string> detail;
+    in property <string> path-label: "Emplacement";
+    in property <string> path;
+    in property <string> primary-label;
+    in property <string> secondary-label: "Annuler";
+    in property <string> desktop-label: "Ajouter un raccourci sur le bureau";
+    in property <string> autostart-label: "Lancer Kairo au démarrage de Windows";
+    in property <bool> show-options;
+    in property <bool> show-purge;
+    in-out property <bool> purge;
+    in property <string> purge-label: "Supprimer aussi mes réglages et l'historique enregistré";
+    in-out property <bool> desktop;
+    in-out property <bool> autostart;
     in property <float> progress;
-    in-out property <bool> desktop: true;
-    in-out property <bool> open-after: true;
-    in-out property <bool> purge: false;
-    callback go;
-    callback alt;
-    callback drag;
-    callback minimize;
-    callback close;
+    in property <string> status;
+    in property <string> done-heading;
+    in property <string> done-detail;
+    in property <string> open-label: "Ouvrir Kairo";
+    in property <string> close-label: "Fermer";
+    in property <bool> can-open;
+    in property <string> error-text;
+    in property <string> retry-label: "Réessayer";
+    in property <string> version-label;
+
+    callback primary();
+    
+    callback open-app();
+    callback close-window();
+    callback minimize();
+    callback drag();
+    callback retry();
+
+    Glow {
+        x: parent.width * 0.35;
+        y: -parent.height * 0.45;
+        width: parent.width;
+        height: parent.width;
+        ink: Look.glow-a;
+        strength: 0.30;
+    }
+    Glow {
+        x: -parent.width * 0.45;
+        y: parent.height * 0.45;
+        width: parent.width;
+        height: parent.width;
+        ink: Look.glow-b;
+        strength: 0.26;
+    }
+    Rectangle {
+        border-width: 1.5px;
+        border-radius: 8px;
+        property <angle> turn: root.reduced ? 45deg : mod(animation-tick(), 9s) / 9s * 360deg;
+        border-color: @linear-gradient(self.turn, root.screen == "done" ? Look.ok : Look.glow-a 0%, #ffffff00 45%, #ffffff00 55%, root.screen == "done" ? Look.ok : Look.glow-b 100%);
+    }
     TouchArea {
-        pointer-event(e) => {
-            if (e.button == PointerEventButton.left && e.kind == PointerEventKind.down) {
+        y: 0;
+        height: 40px;
+        pointer-event(event) => {
+            if (event.kind == PointerEventKind.down && event.button == PointerEventButton.left) {
                 root.drag();
             }
         }
     }
-    if !root.busy: HorizontalLayout {
-        x: root.width - 92px;
-        y: 0px;
-        width: 92px;
+    HorizontalLayout {
+        y: 0;
         height: 36px;
-        for b[i] in [{ p: "M0 5.5h10" }, { p: "M.5 .5l9 9M9.5 .5l-9 9" }]: Rectangle {
-            background: wb.has-hover ? (i == 1 ? #c42b1c : #ffffff14) : transparent;
-            wb := TouchArea {
-                clicked => {
-                    if (i == 0) { root.minimize(); } else { root.close(); }
-                }
-            }
+        alignment: end;
+        padding-right: 6px;
+        for item[index] in ["min", "close"]: Rectangle {
+            width: 40px;
+            border-radius: 6px;
+            background: control.has-hover ? (item == "close" ? #e81123 : #ffffff1a) : transparent;
             Path {
                 width: 10px;
                 height: 10px;
+                commands: item == "close" ? "M 0 0 L 10 10 M 10 0 L 0 10" : "M 0 5 L 10 5";
+                stroke: Look.fg;
+                stroke-width: 1.2px;
                 viewbox-width: 10;
                 viewbox-height: 10;
-                commands: b.p;
-                stroke: #eef0f7;
-                stroke-width: 1px;
-                fill: transparent;
+            }
+            control := TouchArea {
+                clicked => {
+                    if (item == "close") {
+                        root.close-window();
+                    } else {
+                        root.minimize();
+                    }
+                }
             }
         }
     }
-    HorizontalLayout {
-        padding-bottom: 34px;
-        Rectangle {
-            width: 340px;
-            Image {
-                width: 190px;
-                height: 190px;
-                source: @image-url("../../assets/logo-512.png");
-            }
-        }
-        VerticalLayout {
+
+    VerticalLayout {
+        padding: 32px;
+        padding-top: 40px;
+        spacing: 14px;
+        HorizontalLayout {
             alignment: center;
-            spacing: 14px;
-            padding-right: 44px;
-            VerticalLayout {
-                Text {
-                    text: root.title-text;
-                    font-family: "Barlow Semi Condensed";
-                    font-weight: 700;
-                    font-size: 46px;
-                    color: #eef0f7;
-                    wrap: word-wrap;
+            logo := Rectangle {
+                width: 72px;
+                height: 72px;
+                property <float> pulse: root.reduced || root.screen != "progress" ? 0 : (1 + sin(mod(animation-tick(), 1600ms) / 1600ms * 360deg)) / 2;
+                drop-shadow-blur: 24px + 14px * self.pulse;
+                drop-shadow-color: Look.glow-a.with-alpha(0.45);
+                border-radius: 20px;
+                Image {
+                    width: 100%;
+                    height: 100%;
+                    source: @image-url("../../assets/logo-256.png");
+                    image-fit: contain;
                 }
-                if root.sub != "": Text { text: root.sub; font-size: 13.5px; color: #8b93ab; }
-            }
-            if root.lead != "": Text {
-                text: root.lead;
-                color: root.failed ? #f0506e : #8b93ab;
-                wrap: word-wrap;
-            }
-            if root.busy: Rectangle {
-                height: 6px;
-                border-radius: 3px;
-                background: #ffffff14;
                 Rectangle {
-                    x: 0px;
-                    width: parent.width * max(root.progress, 0.02);
-                    border-radius: 3px;
-                    background: #2fd3b5;
-                    animate width { duration: 200ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+                    visible: root.screen == "done";
+                    x: parent.width - 22px;
+                    y: parent.height - 22px;
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 14px;
+                    background: Look.ok;
+                    border-width: 3px;
+                    border-color: Look.bg;
+                    transform-scale: root.screen == "done" ? 1 : 0.4;
+                    animate transform-scale { duration: root.reduced ? 0ms : 320ms; easing: cubic-bezier(0.34, 1.56, 0.64, 1); }
+                    Text {
+                        text: "✓";
+                        color: white;
+                        font-size: 14px;
+                        font-weight: 800;
+                    }
                 }
-            }
-            if root.show-opts && !root.uninstalling: VerticalLayout {
-                Check { label: "Raccourci sur le Bureau"; on <=> root.desktop; }
-                Check { label: "Ouvrir Kairo à la fin"; on <=> root.open-after; }
-            }
-            if root.show-opts && root.uninstalling: Check { label: "Supprimer aussi mes réglages"; on <=> root.purge; }
-            if root.go-label != "": HorizontalLayout {
-                spacing: 10px;
-                alignment: start;
-                Btn { label: root.go-label; clicked => { root.go(); } }
-                if root.alt-label != "": Btn { label: root.alt-label; primary: false; clicked => { root.alt(); } }
             }
         }
-    }
-    Text {
-        x: 20px;
-        y: root.height - 26px;
-        width: root.width - 40px;
-        text: "Kairo n'est pas approuvé par Riot Games. League of Legends, VALORANT et Teamfight Tactics sont des marques de Riot Games, Inc.";
-        font-size: 11px;
-        color: #5b6379;
-        overflow: elide;
+        Rectangle {
+            vertical-stretch: 1;
+            Screen {
+                shown: root.screen == "welcome" || root.screen == "uninstall";
+                reduced: root.reduced;
+                VerticalLayout {
+                    spacing: 10px;
+                    Text {
+                        text: root.heading;
+                        color: Look.fg;
+                        font-size: 22px;
+                        font-weight: 700;
+                        horizontal-alignment: center;
+                    }
+                    Text {
+                        text: root.detail;
+                        color: Look.muted;
+                        font-size: 13px;
+                        horizontal-alignment: center;
+                        wrap: word-wrap;
+                    }
+                    Rectangle { height: 4px; }
+                    Rectangle {
+                        border-radius: 10px;
+                        background: #ffffff0d;
+                        border-width: 1px;
+                        border-color: Look.line;
+                        height: 48px;
+                        VerticalLayout {
+                            padding-left: 14px;
+                            padding-right: 14px;
+                            alignment: center;
+                            Text {
+                                text: root.path-label;
+                                color: Look.muted;
+                                font-size: 11px;
+                            }
+                            Text {
+                                text: root.path;
+                                color: Look.fg;
+                                font-size: 12px;
+                                overflow: elide;
+                            }
+                        }
+                    }
+                    if root.show-purge: Check {
+                        text: root.purge-label;
+                        checked <=> root.purge;
+                    }
+                    if root.show-options: VerticalLayout {
+                        spacing: 2px;
+                        Check {
+                            text: root.desktop-label;
+                            checked <=> root.desktop;
+                        }
+                        Check {
+                            text: root.autostart-label;
+                            checked <=> root.autostart;
+                        }
+                    }
+                    Rectangle { vertical-stretch: 1; }
+                }
+            }
+            Screen {
+                shown: root.screen == "progress";
+                reduced: root.reduced;
+                VerticalLayout {
+                    spacing: 14px;
+                    alignment: center;
+                    Text {
+                        text: root.heading;
+                        color: Look.fg;
+                        font-size: 20px;
+                        font-weight: 700;
+                        horizontal-alignment: center;
+                    }
+                    Rectangle {
+                        height: 8px;
+                        border-radius: 4px;
+                        background: #ffffff1a;
+                        clip: true;
+                        Rectangle {
+                            x: 0;
+                            width: parent.width * clamp(root.progress, 0, 1);
+                            border-radius: 4px;
+                            background: @linear-gradient(90deg, Look.glow-a 0%, Look.glow-b 100%);
+                            animate width { duration: root.reduced ? 0ms : 200ms; easing: cubic-bezier(0.23, 1, 0.32, 1); }
+                        }
+                    }
+                    HorizontalLayout {
+                        Text {
+                            text: root.status;
+                            color: Look.muted;
+                            font-size: 12px;
+                            horizontal-stretch: 1;
+                        }
+                        Text {
+                            text: round(clamp(root.progress, 0, 1) * 100) + " %";
+                            color: Look.muted;
+                            font-size: 12px;
+                        }
+                    }
+                }
+            }
+            Screen {
+                shown: root.screen == "done";
+                reduced: root.reduced;
+                VerticalLayout {
+                    spacing: 10px;
+                    alignment: center;
+                    Text {
+                        text: root.done-heading;
+                        color: Look.fg;
+                        font-size: 22px;
+                        font-weight: 700;
+                        horizontal-alignment: center;
+                    }
+                    Text {
+                        text: root.done-detail;
+                        color: Look.muted;
+                        font-size: 13px;
+                        horizontal-alignment: center;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+            Screen {
+                shown: root.screen == "error";
+                reduced: root.reduced;
+                VerticalLayout {
+                    spacing: 10px;
+                    alignment: center;
+                    Text {
+                        text: root.heading;
+                        color: Look.bad;
+                        font-size: 20px;
+                        font-weight: 700;
+                        horizontal-alignment: center;
+                    }
+                    Text {
+                        text: root.error-text;
+                        color: Look.muted;
+                        font-size: 13px;
+                        horizontal-alignment: center;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+        }
+        HorizontalLayout {
+            spacing: 10px;
+            Text {
+                text: root.version-label;
+                color: Look.muted;
+                font-size: 11px;
+                vertical-alignment: center;
+                horizontal-stretch: 1;
+            }
+            if root.screen == "welcome" || root.screen == "uninstall": Action {
+                text: root.secondary-label;
+                clicked => { root.close-window(); }
+            }
+            if root.screen == "welcome" || root.screen == "uninstall": Action {
+                text: root.primary-label;
+                primary: true;
+                clicked => { root.primary(); }
+            }
+            if root.screen == "done" || root.screen == "error": Action {
+                text: root.close-label;
+                clicked => { root.close-window(); }
+            }
+            if root.screen == "done" && root.can-open: Action {
+                text: root.open-label;
+                primary: true;
+                clicked => { root.open-app(); }
+            }
+            if root.screen == "error": Action {
+                text: root.retry-label;
+                primary: true;
+                clicked => { root.retry(); }
+            }
+        }
     }
 }

@@ -1,432 +1,365 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod engine;
+
+use engine::{Choices, Target};
+use slint::winit_030::WinitWindowAccessor;
+use slint::ComponentHandle;
+use std::rc::Rc;
+
 slint::include_modules!();
 
-use flate2::read::GzDecoder;
-use slint::winit_030::{winit, WinitWindowAccessor};
-use slint::ComponentHandle;
-use std::cell::RefCell;
-use std::io::{Read, Write};
-use std::os::windows::process::CommandExt;
-use std::path::{Path, PathBuf};
-use std::process::Command;
-use std::rc::Rc;
-use std::time::Duration;
-use std::{env, fs, thread};
-use winreg::enums::{HKEY_CURRENT_USER, KEY_READ};
-use winreg::RegKey;
+#[derive(Clone, Copy, PartialEq)]
+enum Mode {
+    Install,
+    Uninstall,
+}
 
-#[cfg(not(test))]
-const PAYLOAD: &[u8] = include_bytes!("../payload/ethra.exe.gz");
-#[cfg(test)]
-const PAYLOAD: &[u8] = &[];
-const VERSION: &str = env!("KAIRO_VERSION");
-const EXE: &str = "ethra.exe";
-const UNINSTALLER: &str = "uninstall.exe";
-const UNINST_KEY: &str = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\Kairo";
-const OLD_KEY: &str = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\Ethra";
-const DATA_ID: &str = "dev.ethone.ethra";
-const NO_WINDOW: u32 = 0x0800_0000;
-
-#[derive(Clone, Default)]
+#[derive(Clone)]
 struct Args {
+    mode: Mode,
     silent: bool,
     passive: bool,
-    update: bool,
-    restart: bool,
-    uninstall: bool,
+    relaunch: bool,
     purge: bool,
     app_args: Vec<String>,
 }
 
-fn parse_args(list: impl Iterator<Item = String>) -> Args {
-    let mut a = Args::default();
-    let mut rest = list;
-    while let Some(x) = rest.next() {
-        match x.as_str() {
-            "/S" => a.silent = true,
-            "/P" => a.passive = true,
-            "/UPDATE" => a.update = true,
-            "/R" => a.restart = true,
-            "--uninstall" => a.uninstall = true,
-            "--purge" => a.purge = true,
-            "/ARGS" => a.app_args = rest.by_ref().collect(),
-            _ => {}
-        }
-    }
-    a
-}
-
-fn hkcu() -> RegKey {
-    RegKey::predef(HKEY_CURRENT_USER)
-}
-
-fn read_location(key: &str) -> Option<PathBuf> {
-    let k = hkcu().open_subkey_with_flags(key, KEY_READ).ok()?;
-    let v: String = k.get_value("InstallLocation").ok()?;
-    let v = v.trim().trim_matches('"');
-    (!v.is_empty()).then(|| PathBuf::from(v))
-}
-
-fn install_dir() -> PathBuf {
-    read_location(UNINST_KEY).unwrap_or_else(|| Path::new(&env::var("LOCALAPPDATA").unwrap_or_default()).join("Kairo"))
-}
-
-fn installed_version() -> Option<String> {
-    hkcu().open_subkey_with_flags(UNINST_KEY, KEY_READ).ok()?.get_value("DisplayVersion").ok()
-}
-
-fn hidden(cmd: &str) -> Command {
-    let mut c = Command::new(cmd);
-    c.creation_flags(NO_WINDOW);
-    c
-}
-
-fn close_app() {
-    let _ = hidden("taskkill").args(["/F", "/IM", EXE]).output();
-    thread::sleep(Duration::from_millis(300));
-}
-
-fn remove_old_ethra() {
-    let Some(dir) = read_location(OLD_KEY) else { return };
-    let un = dir.join(UNINSTALLER);
-    if un.exists() {
-        let _ = hidden(un.to_str().unwrap_or_default()).arg("/S").arg(format!("_?={}", dir.display())).output();
-        let _ = fs::remove_file(&un);
-        let _ = fs::remove_dir(&dir);
-    }
-    let _ = hkcu().delete_subkey_all(OLD_KEY);
-}
-
-fn extract(gz_data: &[u8], dir: &Path, report: &dyn Fn(u8, &str)) -> Result<(), String> {
-    if gz_data.len() < 4 {
-        return Err("Fichier d'installation vide".into());
-    }
-    let total = u32::from_le_bytes(gz_data[gz_data.len() - 4..].try_into().unwrap()) as u64;
-    let tmp = dir.join(format!("{EXE}.new"));
-    let mut out = fs::File::create(&tmp).map_err(|e| format!("Impossible d'écrire dans {} : {e}", dir.display()))?;
-    let mut gz = GzDecoder::new(gz_data);
-    let mut buf = vec![0u8; 256 * 1024];
-    let (mut done, mut last) = (0u64, 0u8);
-    loop {
-        let n = gz.read(&mut buf).map_err(|e| format!("Fichier d'installation corrompu : {e}"))?;
-        if n == 0 {
-            break;
-        }
-        out.write_all(&buf[..n]).map_err(|e| format!("Écriture impossible : {e}"))?;
-        done += n as u64;
-        let pct = 8 + (done * 80 / total.max(1)).min(80) as u8;
-        if pct != last {
-            last = pct;
-            report(pct, "Copie des fichiers");
-        }
-    }
-    drop(out);
-    let target = dir.join(EXE);
-    for attempt in 0..40 {
-        match fs::rename(&tmp, &target) {
-            Ok(()) => return Ok(()),
-            Err(e) if attempt == 39 => {
-                let _ = fs::remove_file(&tmp);
-                return Err(format!("Kairo est encore ouvert, ferme-le puis réessaie ({e})"));
-            }
-            Err(_) => thread::sleep(Duration::from_millis(250)),
-        }
-    }
-    Ok(())
-}
-
-fn powershell(script: &str) -> Result<(), String> {
-    let out = hidden("powershell").args(["-NoProfile", "-NonInteractive", "-Command", script]).output().map_err(|e| e.to_string())?;
-    if out.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&out.stderr).trim().to_string())
+fn parse(args: &[String], exe_name: &str) -> Args {
+    let split = args.iter().position(|arg| arg.eq_ignore_ascii_case("/ARGS")).unwrap_or(args.len());
+    let (own, rest) = args.split_at(split);
+    let has = |flag: &str| own.iter().any(|arg| arg.eq_ignore_ascii_case(flag));
+    let uninstall = has("--uninstall") || exe_name.eq_ignore_ascii_case("uninstall.exe");
+    Args {
+        mode: if uninstall { Mode::Uninstall } else { Mode::Install },
+        silent: has("/S"),
+        passive: has("/P") || has("/UPDATE"),
+        relaunch: has("/R"),
+        purge: has("--purge"),
+        app_args: rest.iter().skip(1).map(|arg| arg.trim_matches('"').to_string()).filter(|arg| !arg.is_empty()).collect(),
     }
 }
 
-fn create_shortcuts(dir: &Path, desktop: bool) -> Result<(), String> {
-    let target = dir.join(EXE).display().to_string().replace('\'', "''");
-    let work = dir.display().to_string().replace('\'', "''");
-    let places = if desktop { "[Environment]::GetFolderPath('Programs'),[Environment]::GetFolderPath('Desktop')" } else { "[Environment]::GetFolderPath('Programs')" };
-    powershell(&format!("$s=New-Object -ComObject WScript.Shell;foreach($d in {places}){{$l=$s.CreateShortcut((Join-Path $d 'Kairo.lnk'));$l.TargetPath='{target}';$l.IconLocation='{target},0';$l.WorkingDirectory='{work}';$l.Save()}}"))
+fn reduced_motion() -> bool {
+    use windows::Win32::UI::WindowsAndMessaging::{SystemParametersInfoW, SPI_GETCLIENTAREAANIMATION, SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS};
+    let mut enabled = windows::core::BOOL(1);
+    let ok = unsafe { SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION, 0, Some(&mut enabled as *mut _ as *mut _), SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS(0)) };
+    ok.is_ok() && !enabled.as_bool()
 }
 
-fn write_registry(dir: &Path) -> Result<(), String> {
-    let (k, _) = hkcu().create_subkey(UNINST_KEY).map_err(|e| e.to_string())?;
-    let exe = dir.join(EXE).display().to_string();
-    let un = dir.join(UNINSTALLER).display().to_string();
-    let set = |name: &str, value: &str| k.set_value(name, &value).map_err(|e| e.to_string());
-    set("DisplayName", "Kairo")?;
-    set("DisplayVersion", VERSION)?;
-    set("Publisher", "Rub19")?;
-    set("DisplayIcon", &exe)?;
-    set("InstallLocation", &dir.display().to_string())?;
-    set("UninstallString", &format!("\"{un}\" --uninstall"))?;
-    set("QuietUninstallString", &format!("\"{un}\" --uninstall /S"))?;
-    let size = fs::metadata(dir.join(EXE)).map(|m| m.len() / 1024).unwrap_or(0) as u32;
-    k.set_value("EstimatedSize", &size).map_err(|e| e.to_string())?;
-    k.set_value("NoModify", &1u32).map_err(|e| e.to_string())?;
-    k.set_value("NoRepair", &1u32).map_err(|e| e.to_string())
-}
-
-fn do_install(desktop: bool, update: bool, report: &dyn Fn(u8, &str)) -> Result<(), String> {
-    report(2, "Préparation");
-    close_app();
-    remove_old_ethra();
-    let dir = install_dir();
-    fs::create_dir_all(&dir).map_err(|e| format!("Impossible de créer {} : {e}", dir.display()))?;
-    report(8, "Copie des fichiers");
-    extract(PAYLOAD, &dir, report)?;
-    report(90, "Finalisation");
-    let me = env::current_exe().map_err(|e| e.to_string())?;
-    fs::copy(&me, dir.join(UNINSTALLER)).map_err(|e| format!("Copie du désinstalleur impossible : {e}"))?;
-    if !update {
-        report(94, "Création des raccourcis");
-        create_shortcuts(&dir, desktop)?;
-    }
-    write_registry(&dir)?;
-    report(100, "Terminé");
-    Ok(())
-}
-
-fn do_uninstall(purge: bool, report: &dyn Fn(u8, &str)) -> Result<(), String> {
-    report(10, "Fermeture de Kairo");
-    close_app();
-    report(35, "Suppression des raccourcis");
-    powershell("foreach($d in [Environment]::GetFolderPath('Programs'),[Environment]::GetFolderPath('Desktop')){Remove-Item (Join-Path $d 'Kairo.lnk') -ErrorAction SilentlyContinue};exit 0")?;
-    report(60, "Suppression des fichiers");
-    let dir = install_dir();
-    let exe = dir.join(EXE);
-    if exe.exists() {
-        fs::remove_file(&exe).map_err(|e| format!("Suppression impossible : {e}"))?;
-    }
-    let _ = hkcu().delete_subkey_all(UNINST_KEY);
-    if let Ok(k) = hkcu().open_subkey_with_flags(r"Software\Microsoft\Windows\CurrentVersion\Run", winreg::enums::KEY_SET_VALUE) {
-        let _ = k.delete_value("Kairo");
-    }
-    if purge {
-        report(80, "Suppression des réglages");
-        for var in ["LOCALAPPDATA", "APPDATA"] {
-            if let Ok(base) = env::var(var) {
-                let _ = fs::remove_dir_all(Path::new(&base).join(DATA_ID));
-            }
-        }
-    }
-    report(100, "Terminé");
-    Ok(())
-}
-
-fn remove_self_later() {
-    let Ok(me) = env::current_exe() else { return };
-    if me.file_name().and_then(|n| n.to_str()) != Some(UNINSTALLER) {
-        return;
-    }
-    let dir = me.parent().map(|p| p.display().to_string()).unwrap_or_default();
-    let line = format!("ping -n 3 127.0.0.1 >nul & del /f /q \"{}\" & rmdir \"{dir}\"", me.display());
-    let _ = hidden("cmd").arg("/C").raw_arg(&line).spawn();
-}
-
-fn launch(args: &[String]) {
-    let dir = install_dir();
-    let _ = Command::new(dir.join(EXE)).args(args).current_dir(&dir).spawn();
-}
-
-#[derive(Clone, Copy, PartialEq)]
-enum Stage {
-    Ready,
-    Busy,
-    Done,
-    Failed,
-}
-
-struct Ui {
-    win: SetupWindow,
-    args: Args,
-    stage: RefCell<Stage>,
-}
-
-impl Ui {
-    fn show_ready(&self) {
-        let w = &self.win;
-        w.set_busy(false);
-        w.set_failed(false);
-        w.set_show_opts(true);
-        w.set_uninstalling(self.args.uninstall);
-        if self.args.uninstall {
-            w.set_title_text("Désinstaller Kairo".into());
-            w.set_lead("Kairo sera retiré de cet ordinateur.".into());
-            w.set_go_label("Désinstaller".into());
-        } else {
-            let old = installed_version();
-            w.set_title_text("Kairo".into());
-            w.set_sub(format!("Version {VERSION}").into());
-            w.set_lead(install_dir().display().to_string().into());
-            w.set_go_label(if old.is_some() { "Mettre à jour" } else { "Installer" }.into());
-        }
-        w.set_alt_label("Annuler".into());
-    }
-
-    fn run(self: &Rc<Self>) {
-        *self.stage.borrow_mut() = Stage::Busy;
-        let w = &self.win;
-        w.set_busy(true);
-        w.set_show_opts(false);
-        w.set_go_label("".into());
-        w.set_alt_label("".into());
-        w.set_sub("".into());
-        w.set_progress(0.0);
-        w.set_lead("Préparation".into());
-        w.set_title_text(if self.args.uninstall { "Désinstallation" } else if self.args.update { "Mise à jour" } else { "Installation" }.into());
-        let (uninstall, update, purge, desktop) = (self.args.uninstall, self.args.update, w.get_purge(), w.get_desktop());
-        let weak = w.as_weak();
-        let me = self.clone();
-        let report = move |pct: u8, label: &str| {
-            let (weak, label) = (weak.clone(), label.to_string());
-            let _ = weak.upgrade_in_event_loop(move |w| {
-                w.set_progress(pct as f32 / 100.0);
-                w.set_lead(label.into());
-            });
-        };
-        let done_weak = w.as_weak();
-        thread::spawn(move || {
-            let result = if uninstall { do_uninstall(purge, &report) } else { do_install(desktop, update, &report) };
-            let _ = done_weak.upgrade_in_event_loop(move |_| finished(result));
-        });
-        UI.with(|u| *u.borrow_mut() = Some(me));
+fn status_text(step: &str, mode: Mode) -> &'static str {
+    match step {
+        "stop" => "Fermeture de Kairo…",
+        "copy" => "Copie de l'application…",
+        "register" if mode == Mode::Uninstall => "Nettoyage de Windows…",
+        "register" => "Inscription dans Windows…",
+        "remove" => "Suppression de l'application…",
+        "shortcut" => "Création des raccourcis…",
+        "legacy" => "Retrait de l'ancienne version…",
+        "purge" => "Suppression des réglages…",
+        _ => "Terminé",
     }
 }
 
-thread_local! {
-    static UI: RefCell<Option<Rc<Ui>>> = const { RefCell::new(None) };
-}
-
-fn finished(result: Result<(), String>) {
-    let Some(ui) = UI.with(|u| u.borrow().clone()) else { return };
-    let w = &ui.win;
-    w.set_busy(false);
+fn run_headless(args: &Args, target: &Target) -> i32 {
+    let result = match args.mode {
+        Mode::Install => engine::install(target, &Choices { desktop: target.desktop_link(), autostart: None }, &|_, _| {}),
+        Mode::Uninstall => engine::uninstall(target, args.purge, &|_, _| {}),
+    };
     match result {
         Ok(()) => {
-            *ui.stage.borrow_mut() = Stage::Done;
-            if ui.args.uninstall {
-                w.set_title_text("Kairo est désinstallé".into());
-                w.set_lead("".into());
-                w.set_go_label("Fermer".into());
-            } else if ui.args.passive || ui.args.update {
-                if ui.args.restart {
-                    launch(&ui.args.app_args);
-                }
-                let _ = slint::quit_event_loop();
-            } else {
-                w.set_title_text("Kairo est prêt".into());
-                w.set_lead("".into());
-                w.set_go_label(if w.get_open_after() { "Ouvrir Kairo" } else { "Fermer" }.into());
+            if args.mode == Mode::Install && args.relaunch {
+                engine::launch(target, &args.app_args);
+            }
+            if args.mode == Mode::Uninstall {
+                engine::remove_self_later(target);
+            }
+            0
+        }
+        Err(_) => 1,
+    }
+}
+
+fn offscreen() -> bool {
+    std::env::var_os("KAIRO_SETUP_SNAP").is_some() || std::env::var_os("KAIRO_SETUP_OFFSCREEN").is_some()
+}
+
+fn snapshot(ui: &SetupWindow, name: &str) {
+    let Some(dir) = std::env::var_os("KAIRO_SETUP_SNAP") else { return };
+    let Ok(buffer) = ui.window().take_snapshot() else { return };
+    let path = std::path::Path::new(&dir).join(format!("{name}.png"));
+    let _ = write_png(&path, buffer.width(), buffer.height(), buffer.as_bytes());
+}
+
+fn write_png(path: &std::path::Path, width: u32, height: u32, rgba: &[u8]) -> std::io::Result<()> {
+    use std::io::Write;
+    fn chunk(out: &mut Vec<u8>, kind: &[u8; 4], data: &[u8]) {
+        out.extend((data.len() as u32).to_be_bytes());
+        let start = out.len();
+        out.extend(kind);
+        out.extend(data);
+        let mut crc = 0xffff_ffffu32;
+        for byte in &out[start..] {
+            crc ^= u32::from(*byte);
+            for _ in 0..8 {
+                crc = if crc & 1 == 1 { 0xedb8_8320 ^ (crc >> 1) } else { crc >> 1 };
             }
         }
-        Err(e) => {
-            *ui.stage.borrow_mut() = Stage::Failed;
-            w.set_failed(true);
-            w.set_title_text("Échec".into());
-            w.set_lead(e.into());
-            w.set_go_label("Réessayer".into());
-            w.set_alt_label("Fermer".into());
+        out.extend((!crc).to_be_bytes());
+    }
+    let mut raw = Vec::with_capacity(rgba.len() + height as usize);
+    for row in rgba.chunks(width as usize * 4) {
+        raw.push(0);
+        raw.extend(row);
+    }
+    let mut encoder = flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::fast());
+    encoder.write_all(&raw)?;
+    let mut header = Vec::new();
+    header.extend(width.to_be_bytes());
+    header.extend(height.to_be_bytes());
+    header.extend([8, 6, 0, 0, 0]);
+    let mut out = b"\x89PNG\r\n\x1a\n".to_vec();
+    chunk(&mut out, b"IHDR", &header);
+    chunk(&mut out, b"IDAT", &encoder.finish()?);
+    chunk(&mut out, b"IEND", &[]);
+    std::fs::write(path, out)
+}
+
+fn fill_texts(ui: &SetupWindow, mode: Mode, target: &Target) {
+    let installed = target.installed_version();
+    let update = installed.is_some() && mode == Mode::Install;
+    ui.set_window_title(if mode == Mode::Uninstall { "Désinstaller Kairo" } else { "Installer Kairo" }.into());
+    ui.set_version_label(format!("Kairo {}", engine::VERSION).into());
+    ui.set_path(target.dir.display().to_string().into());
+    ui.set_reduced(reduced_motion());
+    match mode {
+        Mode::Install => {
+            ui.set_screen("welcome".into());
+            let (heading, detail, primary) = match &installed {
+                Some(version) => ("Mettre à jour Kairo".to_string(), format!("{} sera remplacée par la version {}, plus légère et sans WebView. Tes profils, tes builds et tes réglages restent en place.", if version.is_empty() { "La version installée".to_string() } else { format!("La version {version}") }, engine::VERSION), "Mettre à jour"),
+                None => ("Installer Kairo".to_string(), "Tes profils League of Legends, VALORANT et TFT, tes parties et tes builds, au même endroit.".to_string(), "Installer"),
+            };
+            ui.set_heading(heading.into());
+            ui.set_detail(detail.into());
+            ui.set_primary_label(primary.into());
+            ui.set_show_options(true);
+            ui.set_desktop(target.desktop_link() || installed.is_none());
+            ui.set_autostart(target.autostart());
+            ui.set_done_heading(if update { "Kairo est à jour" } else { "Kairo est installé" }.into());
+            ui.set_done_detail("Tu le retrouves dans le menu Démarrer.".into());
+            ui.set_can_open(true);
+        }
+        Mode::Uninstall => {
+            ui.set_screen("uninstall".into());
+            ui.set_heading("Désinstaller Kairo ?".into());
+            ui.set_detail("L'application et ses raccourcis seront supprimés.".into());
+            ui.set_show_purge(true);
+            ui.set_purge(false);
+            ui.set_primary_label("Désinstaller".into());
+            ui.set_show_options(false);
+            ui.set_done_heading("Kairo est désinstallé".into());
+            ui.set_done_detail(if ui.get_purge() { "Ses réglages ont été supprimés aussi." } else { "Tes réglages sont gardés si tu le réinstalles." }.into());
+            ui.set_can_open(false);
         }
     }
 }
 
-fn leave(ui: &Rc<Ui>) {
-    if ui.args.uninstall {
-        remove_self_later();
-    }
-    let _ = slint::quit_event_loop();
+fn start_work(ui: &SetupWindow, args: &Args, target: Rc<Target>, auto_close: bool) {
+    let mode = args.mode;
+    ui.set_screen("progress".into());
+    ui.set_progress(0.0);
+    ui.set_heading(if mode == Mode::Uninstall { "Désinstallation…" } else { "Installation…" }.into());
+    let choices = Choices { desktop: ui.get_desktop(), autostart: if ui.get_show_options() { Some(ui.get_autostart()) } else { None } };
+    let weak = ui.as_weak();
+    let job = (*target).clone();
+    let (relaunch, app_args, purge) = (args.relaunch, args.app_args.clone(), args.purge || ui.get_purge());
+    std::thread::spawn(move || {
+        let report = |step: &str, part: f32| {
+            let (weak, step) = (weak.clone(), step.to_string());
+            let _ = slint::invoke_from_event_loop(move || {
+                if let Some(ui) = weak.upgrade() {
+                    ui.set_progress(part);
+                    ui.set_status(status_text(&step, mode).into());
+                }
+            });
+        };
+        let result = match mode {
+            Mode::Install => engine::install(&job, &choices, &report),
+            Mode::Uninstall => engine::uninstall(&job, purge, &report),
+        };
+        let weak = weak.clone();
+        let _ = slint::invoke_from_event_loop(move || {
+            let Some(ui) = weak.upgrade() else { return };
+            match result {
+                Ok(()) => {
+                    if mode == Mode::Uninstall {
+                        ui.set_done_detail(if purge { "Ses réglages ont été supprimés aussi." } else { "Tes réglages sont gardés si tu le réinstalles." }.into());
+                    }
+                    ui.set_screen("done".into());
+                    if mode == Mode::Uninstall {
+                        engine::remove_self_later(&job);
+                    }
+                    if mode == Mode::Install && relaunch {
+                        engine::launch(&job, &app_args);
+                    }
+                    if auto_close {
+                        let weak = ui.as_weak();
+                        slint::Timer::single_shot(std::time::Duration::from_millis(900), move || {
+                            if let Some(ui) = weak.upgrade() {
+                                let _ = ui.hide();
+                            }
+                        });
+                    }
+                }
+                Err(message) => {
+                    ui.set_heading("Quelque chose a bloqué".into());
+                    ui.set_error_text(message.into());
+                    ui.set_screen("error".into());
+                }
+            }
+        });
+    });
 }
 
 fn main() {
-    let args = parse_args(env::args().skip(1));
-    if args.silent {
-        let quiet = |_: u8, _: &str| {};
-        let result = if args.uninstall { do_uninstall(args.purge, &quiet) } else { do_install(true, args.update, &quiet) };
-        if result.is_ok() {
-            if args.uninstall {
-                remove_self_later();
-            } else if args.restart {
-                launch(&args.app_args);
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    let exe_name = std::env::current_exe().ok().and_then(|path| path.file_name().map(|name| name.to_string_lossy().into_owned())).unwrap_or_default();
+    if args.first().map(String::as_str) == Some("--pack") {
+        let (Some(app), Some(out)) = (args.get(1), args.get(2)) else {
+            eprintln!("kairo-setup --pack <ethra.exe> <Kairo_x.y.z_x64-setup.exe>");
+            std::process::exit(2);
+        };
+        match engine::pack(std::path::Path::new(app), std::path::Path::new(out)) {
+            Ok(()) => std::process::exit(0),
+            Err(message) => {
+                eprintln!("{message}");
+                std::process::exit(1);
             }
         }
-        std::process::exit(if result.is_ok() { 0 } else { 1 });
     }
-    let win = SetupWindow::new().unwrap();
-    let auto = !args.uninstall && (args.passive || args.update);
-    let ui = Rc::new(Ui { win: win.clone_strong(), args, stage: RefCell::new(Stage::Ready) });
-    UI.with(|u| *u.borrow_mut() = Some(ui.clone()));
-    ui.show_ready();
-    {
-        let ui = ui.clone();
-        win.on_go(move || match *ui.stage.borrow() {
-            Stage::Done => {
-                if !ui.args.uninstall && ui.win.get_open_after() {
-                    launch(&ui.args.app_args);
-                }
-                leave(&ui);
-            }
-            Stage::Ready | Stage::Failed => {
-                let again = ui.clone();
-                slint::Timer::single_shot(Duration::ZERO, move || again.run());
-            }
-            Stage::Busy => {}
-        });
+    let parsed = parse(&args, &exe_name);
+    let target = Rc::new(Target::current());
+    if parsed.silent {
+        std::process::exit(run_headless(&parsed, &target));
     }
-    win.on_alt(|| {
-        let _ = slint::quit_event_loop();
-    });
-    win.on_close(|| {
-        let _ = slint::quit_event_loop();
-    });
-    let weak = win.as_weak();
-    win.on_minimize(move || {
-        if let Some(w) = weak.upgrade() {
-            w.window().set_minimized(true);
+    let _ = slint::BackendSelector::new()
+        .with_winit_window_attributes_hook(|attrs| {
+            use slint::winit_030::winit::platform::windows::{IconExtWindows, WindowAttributesExtWindows};
+            let icon = slint::winit_030::winit::window::Icon::from_resource(1, None).ok();
+            let attrs = attrs.with_undecorated_shadow(true).with_window_icon(icon.clone()).with_taskbar_icon(icon);
+            if offscreen() {
+                attrs.with_position(slint::winit_030::winit::dpi::PhysicalPosition::new(-10000, -10000)).with_active(false)
+            } else {
+                attrs
+            }
+        })
+        .select();
+    let ui = SetupWindow::new().expect("fenêtre");
+    fill_texts(&ui, parsed.mode, &target);
+    if parsed.mode == Mode::Install {
+        if let Err(message) = engine::own_payload() {
+            ui.set_heading("Installeur incomplet".into());
+            ui.set_error_text(message.into());
+            ui.set_screen("error".into());
+        }
+    }
+    let weak = ui.as_weak();
+    ui.on_close_window(move || {
+        if let Some(ui) = weak.upgrade() {
+            let _ = ui.hide();
         }
     });
-    let weak = win.as_weak();
-    win.on_drag(move || {
-        if let Some(w) = weak.upgrade() {
-            w.window().with_winit_window(|x: &winit::window::Window| {
-                let _ = x.drag_window();
+    let weak = ui.as_weak();
+    ui.on_minimize(move || {
+        if let Some(ui) = weak.upgrade() {
+            ui.window().with_winit_window(|window| window.set_minimized(true));
+        }
+    });
+    let weak = ui.as_weak();
+    ui.on_drag(move || {
+        if let Some(ui) = weak.upgrade() {
+            ui.window().with_winit_window(|window| {
+                let _ = window.drag_window();
             });
         }
     });
-    win.show().unwrap();
-    if auto {
-        let ui = ui.clone();
-        slint::Timer::single_shot(Duration::from_millis(200), move || ui.run());
+    let passive = parsed.passive;
+    let (weak, job, run) = (ui.as_weak(), target.clone(), parsed.clone());
+    ui.on_primary(move || {
+        if let Some(ui) = weak.upgrade() {
+            start_work(&ui, &run, job.clone(), passive);
+        }
+    });
+    let (weak, job, run) = (ui.as_weak(), target.clone(), parsed.clone());
+    ui.on_retry(move || {
+        if let Some(ui) = weak.upgrade() {
+            start_work(&ui, &run, job.clone(), passive);
+        }
+    });
+    let (weak, job) = (ui.as_weak(), target.clone());
+    ui.on_open_app(move || {
+        engine::launch(&job, &[]);
+        if let Some(ui) = weak.upgrade() {
+            let _ = ui.hide();
+        }
+    });
+    if passive && ui.get_screen() != "error" {
+        start_work(&ui, &parsed, target.clone(), true);
     }
-    slint::run_event_loop_until_quit().unwrap();
+    if std::env::var_os("KAIRO_SETUP_SNAP").is_some() {
+        let weak = ui.as_weak();
+        let mode = parsed.mode;
+        slint::Timer::single_shot(std::time::Duration::from_millis(900), move || {
+            let Some(ui) = weak.upgrade() else { return };
+            let first = ui.get_screen();
+            if first == "welcome" || first == "uninstall" {
+                snapshot(&ui, &first);
+                ui.invoke_primary();
+            }
+            let weak = ui.as_weak();
+            let timer = Rc::new(slint::Timer::default());
+            let keep = timer.clone();
+            let mut took_progress = false;
+            timer.start(slint::TimerMode::Repeated, std::time::Duration::from_millis(40), move || {
+                let Some(ui) = weak.upgrade() else { return };
+                let screen = ui.get_screen();
+                if !took_progress && screen == "progress" && ui.get_progress() > 0.3 {
+                    took_progress = true;
+                    snapshot(&ui, "progress");
+                }
+                if screen == "done" || screen == "error" {
+                    let weak = ui.as_weak();
+                    let name = if mode == Mode::Uninstall { format!("uninstall-{screen}") } else { screen.to_string() };
+                    slint::Timer::single_shot(std::time::Duration::from_millis(600), move || {
+                        if let Some(ui) = weak.upgrade() {
+                            snapshot(&ui, &name);
+                            let _ = ui.hide();
+                        }
+                    });
+                    keep.stop();
+                }
+            });
+            std::mem::forget(timer);
+        });
+    }
+    ui.run().expect("boucle");
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use flate2::write::GzEncoder;
 
     #[test]
-    fn args() {
-        let a = parse_args(["/P", "/UPDATE", "/R", "/ARGS", "x", "y"].iter().map(|s| s.to_string()));
-        assert!(a.passive && a.update && a.restart && !a.silent);
-        assert_eq!(a.app_args, vec!["x", "y"]);
-        assert!(parse_args(["--uninstall", "--purge"].iter().map(|s| s.to_string())).purge);
-    }
-
-    #[test]
-    fn extracts_payload() {
-        let dir = env::temp_dir().join(format!("kairo-setup-test-{}", std::process::id()));
-        fs::create_dir_all(&dir).unwrap();
-        let mut gz = GzEncoder::new(vec![], flate2::Compression::fast());
-        gz.write_all(b"contenu de l'exe").unwrap();
-        let data = gz.finish().unwrap();
-        extract(&data, &dir, &|_, _| {}).unwrap();
-        assert_eq!(fs::read(dir.join(EXE)).unwrap(), b"contenu de l'exe");
-        assert!(extract(b"", &dir, &|_, _| {}).is_err());
-        let _ = fs::remove_dir_all(&dir);
+    fn tauri_update_arguments_are_understood() {
+        let args: Vec<String> = ["/P", "/UPDATE", "/R", "/ARGS", "\"--background\""].iter().map(|s| s.to_string()).collect();
+        let parsed = parse(&args, "Kairo_0.4.0_x64-setup.exe");
+        assert!(parsed.mode == Mode::Install && parsed.passive && parsed.relaunch && !parsed.silent);
+        assert_eq!(parsed.app_args, vec!["--background".to_string()]);
+        let parsed = parse(&["/S".to_string()], "uninstall.exe");
+        assert!(parsed.mode == Mode::Uninstall && parsed.silent && parsed.app_args.is_empty() && !parsed.purge);
+        let parsed = parse(&["--uninstall".to_string(), "--purge".to_string()], "kairo-setup.exe");
+        assert!(parsed.mode == Mode::Uninstall && parsed.purge);
+        let parsed = parse(&["/P".to_string(), "/ARGS".to_string(), "/S".to_string()], "setup.exe");
+        assert!(!parsed.silent);
     }
 }

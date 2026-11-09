@@ -3,7 +3,7 @@ fn main() {
     let version = conf.split("version = \"").nth(1).and_then(|r| r.split('"').next()).expect("version");
     println!("cargo:rustc-env=KAIRO_VERSION={version}");
     println!("cargo:rerun-if-changed=../Cargo.toml");
-    println!("cargo:rerun-if-changed=payload/ethra.exe.gz");
+    println!("cargo:rerun-if-changed=../assets/icon.ico");
     slint_build::compile("ui/setup.slint").unwrap();
     let mut res = winresource::WindowsResource::new();
     res.set_icon("../assets/icon.ico");
