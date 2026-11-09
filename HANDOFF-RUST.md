@@ -9,7 +9,8 @@ Règles : réponses en français simple, zéro commentaire dans le code, commits
 - Toutes les pages en Slint : profils LoL, VALORANT et TFT, parties, builds et import, tier list, champions, partie en cours, overlays, réglages, choix d'avatar, sélecteur de jeu.
 - Nouveautés : stats par mode, maîtrise des champions, export CSV, top traits et unités TFT, lancement avec Windows, réduction en zone de notification, F5.
 - Logo définitif `kairo-1-instant.svg` : `native/assets/logo.svg`, PNG de 16 à 512, `icon.ico`. Il est branché sur l'exe, la fenêtre, l'en-tête, la zone de notification et l'installeur natif. Les raccourcis pointent vers l'icône de l'exe.
-- Installeur natif de base dans `native/setup` (Rust + Slint, sans WebView) : `/S`, `/P /UPDATE /R`, `--uninstall`, `--purge`.
+- Installeur refait le 9 novembre sur le modèle d'Ethone et d'Argus (`native/setup`) : accueil ou mise à jour, progression, terminé, erreur avec Réessayer, désinstallation avec option « supprimer aussi mes réglages », raccourci bureau, lancement avec Windows, `/S`, `/P /UPDATE /R /ARGS`, `--uninstall`, `--purge`. Il remplace Kairo Tauri sur place (même dossier, même `ethra.exe`) et retire l'ancien Ethra. L'app passe en 0.4.0 pour que la mise à jour Tauri 0.3.4 la propose. `release.ps1` construit puis emballe avec `kairo-setup --pack`.
+- Overlays en jeu refaits le 9 novembre : un seul panneau fin et translucide à droite (180 px), sections séparées par un filet, morts en portraits, écarts de lane sur une ligne, alertes et compétence en petites pastilles. Stats perso et valeur d'équipe désactivées par défaut.
 
 ## Vérifié
 
@@ -25,7 +26,8 @@ Règles : réponses en français simple, zéro commentaire dans le code, commits
 
 ## Pas vérifié
 
-- Installeur : compilé, jamais lancé. Ne pas le lancer depuis Claude, il irait dans le conteneur MSIX. Le tester seulement en dossier de test.
+- Installeur : essayé seulement en dossier de test (`KAIRO_SETUP_TEST=<dossier>`, plus `KAIRO_SETUP_SNAP` ou `KAIRO_SETUP_OFFSCREEN`) sur une fausse installation Tauri 0.3.4 et Ethra : passage au natif, mise à jour passive, silencieuse, désinstallation avec et sans réglages. Jamais lancé pour de vrai. Dernier : `native\release\Kairo_0.4.0_x64-setup.exe`, 16,8 Mo, SHA-256 `3C2C7B60722A117851CB1D37CFFF48E36BB32A0CEEF91A7EF24C7617014BE223`.
+- Nouveaux overlays : vus sur captures hors écran avec une fausse partie, pas par-dessus le vrai jeu.
 - Zone de notification, boutons de fenêtre, redimensionnement, vraie souris, clavier (Tab, Ctrl K, Alt flèches), boutons latéraux.
 - Transparence réelle de l'overlay par-dessus le jeu, et en vraie partie.
 - Liste des parties avec le vrai client depuis le correctif, maîtrise des champions (forme de la réponse supposée), VALORANT réel.
@@ -35,8 +37,8 @@ Règles : réponses en français simple, zéro commentaire dans le code, commits
 
 ## Reste à faire
 
-1. Installeur custom de zéro demandé par Rub19 : partir de `native/setup` et prendre comme modèle `desktop/native` sur la branche `claude/ethone-rust-natif-dba200` du dépôt dashboard. Il doit avoir accueil ou mise à jour, progression, terminé, erreur avec Réessayer, désinstallation, options de raccourci et de lancement avec Windows, modes `/S` et `/P /UPDATE /R`, migration depuis `%LOCALAPPDATA%\Kairo` et `dev.ethone.ethra`. Ajouter l'option de lancement avec Windows (absente pour l'instant). Tester uniquement en dossier de test. Puis retirer l'ancien `setup/` Tauri.
-2. Adapter `scripts/release.mjs` ou le remplacer par `native/release.ps1` avec signature minisign. Ne rien publier.
+1. Essais de Rub19 : lancer `native\release\Kairo_0.4.0_x64-setup.exe` sur sa vraie installation, puis une partie avec les overlays. Après son OK seulement : retirer l'ancien `setup/` Tauri.
+2. Ajouter la signature minisign à `native/release.ps1` et écrire `latest.json`. Ne rien publier.
 3. Passer tout le contenu de `docs/RUST_PARITY.md` en revue et cocher les cases : aucune n'est cochée. La note d'état en tête du fichier est périmée, la plupart des bugs listés sont corrigés.
 4. Refaire les essais avec le vrai client, mesurer Tauri, envoyer à la session principale la liste des essais de Rub19 avec le chemin de l'installeur.
 5. Finitions : pastille de groupe VALORANT en accent au lieu de sa couleur, motion à relire.
