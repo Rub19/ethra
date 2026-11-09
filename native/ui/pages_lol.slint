@@ -1898,93 +1898,123 @@ export component LiveView inherits Rectangle {
     }
 }
 
-export component OvRowView {
+global Ov {
+    out property <color> glass: #070a11c4;
+    out property <color> edge: #ffffff14;
+    out property <color> hair: #ffffff0f;
+    out property <color> label: #9aa3b5;
+    out property <color> faint: #6b7385;
+    out property <color> up: #3ddc97;
+    out property <color> down: #ff6b7d;
+}
+
+export component OvRowView inherits Rectangle {
     in property <string> icon;
     in property <string> label;
     in property <string> value;
     in property <int> tone;
     in property <float> bar: -1;
+    min-height: root.bar >= 0 ? 21px : 18px;
     VerticalLayout {
+        spacing: 2px;
         HorizontalLayout {
-            min-height: 24px;
-            spacing: 8px;
-            if root.icon != "": VerticalLayout {
-                alignment: center;
-                Pic {
-                    url: root.icon;
-                    width: 18px;
-                    height: 18px;
-                    fit: ImageFit.contain;
-                }
+            height: 17px;
+            spacing: 6px;
+            if root.icon != "": Pic {
+                url: root.icon;
+                width: 16px;
+                height: 16px;
+                y: 1px;
+                radius: 4px;
+                fit: ImageFit.contain;
             }
             Text {
                 text: root.label;
-                font-size: 13px;
-                color: #aab4c6;
+                font-size: 12px;
+                color: Ov.label;
                 vertical-alignment: center;
                 overflow: elide;
                 horizontal-stretch: 1;
             }
-            if root.tone == 3: VerticalLayout {
-                alignment: center;
-                horizontal-stretch: 0;
-                Rectangle {
-                    background: Theme.accent;
-                    border-radius: 5px;
-                    min-width: uv.preferred-width + 12px;
-                    height: 18px;
-                    uv := Text {
-                        text: root.value;
-                        font-size: 11px;
-                        font-weight: 700;
-                        color: Theme.bg;
-                    }
-                }
-            }
-            if root.tone != 3: Text {
+            Text {
                 text: root.value;
-                font-size: 13px;
+                font-size: 12px;
                 font-weight: 700;
                 horizontal-stretch: 0;
-                color: root.tone == 1 ? #3ddc97 : root.tone == 2 ? #ff6b7d : Theme.text;
+                color: root.tone == 3 ? Theme.accent : root.tone == 1 ? Ov.up : root.tone == 2 ? Ov.down : Theme.text;
                 vertical-alignment: center;
             }
         }
         if root.bar >= 0: Rectangle {
-            height: 3px;
-            border-radius: 2px;
-            background: #ffffff14;
+            height: 2px;
+            border-radius: 1px;
+            background: #ffffff12;
             Rectangle {
                 x: 0px;
                 width: parent.width * clamp(root.bar, 0, 1);
-                border-radius: 2px;
-                background: Theme.accent;
+                border-radius: 1px;
+                background: Theme.accent.with-alpha(0.85);
+                animate width { duration: 400ms; easing: ease-out; }
             }
         }
     }
 }
 
-export component OvWidgetView inherits Rectangle {
+component OvSection inherits Rectangle {
     in property <OvWidget> w;
-    Rectangle {
-        background: #090d15db;
-        border-width: 1px;
-        border-color: #ffffff17;
-        border-radius: 12px;
-        VerticalLayout {
-            padding-top: 9px;
-            padding-bottom: 10px;
-            padding-left: 12px;
-            padding-right: 12px;
-            Text {
-                text: root.w.title;
-                font-size: 10px;
-                font-weight: 700;
-                letter-spacing: 0.9px;
-                color: Theme.accent;
-                height: 18px;
-                overflow: elide;
+    VerticalLayout {
+        spacing: 4px;
+        Text {
+            text: root.w.title;
+            font-size: 9.5px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: Ov.faint;
+            overflow: elide;
+        }
+        if root.w.kind == "deaths": HorizontalLayout {
+            spacing: 6px;
+            alignment: start;
+            for r in root.w.rows: VerticalLayout {
+                spacing: 2px;
+                width: 26px;
+                Pic {
+                    url: r.icon;
+                    width: 26px;
+                    height: 26px;
+                    radius: 6px;
+                    dim: 0.55;
+                }
+                Text {
+                    text: r.value;
+                    font-size: 10.5px;
+                    font-weight: 700;
+                    color: Theme.text;
+                    horizontal-alignment: center;
+                }
             }
+        }
+        if root.w.kind == "trio": HorizontalLayout {
+            spacing: 4px;
+            for r in root.w.rows: VerticalLayout {
+                horizontal-stretch: 1;
+                Text {
+                    text: r.value;
+                    font-size: 13px;
+                    font-weight: 700;
+                    color: r.tone == 1 ? Ov.up : r.tone == 2 ? Ov.down : Theme.text;
+                    overflow: elide;
+                }
+                Text {
+                    text: r.label;
+                    font-size: 10px;
+                    color: Ov.faint;
+                    overflow: elide;
+                }
+            }
+        }
+        if root.w.kind != "deaths" && root.w.kind != "trio": VerticalLayout {
+            spacing: 2px;
             for r in root.w.rows: OvRowView {
                 icon: r.icon;
                 label: r.label;
@@ -1996,40 +2026,68 @@ export component OvWidgetView inherits Rectangle {
     }
 }
 
+export component OvPanel inherits Rectangle {
+    in property <[OvWidget]> widgets;
+    background: Ov.glass;
+    border-width: 1px;
+    border-color: Ov.edge;
+    border-radius: 10px;
+    VerticalLayout {
+        padding: 9px;
+        padding-top: 8px;
+        spacing: 7px;
+        for w[i] in root.widgets: VerticalLayout {
+            spacing: 7px;
+            if i > 0: Rectangle {
+                height: 1px;
+                background: Ov.hair;
+            }
+            OvSection { w: w; }
+        }
+    }
+}
+
+export component OvWidgetView inherits Rectangle {
+    in property <OvWidget> w;
+    OvPanel {
+        widgets: [root.w];
+    }
+}
+
 export component OvAlertView inherits Rectangle {
     in property <OvAlert> a;
-    min-width: 250px;
-    height: 58px;
+    height: 32px;
+    min-width: lay.preferred-width;
     Rectangle {
-        background: #090d15e6;
+        background: Ov.glass;
         border-width: 1px;
-        border-color: #e8b53e8c;
-        border-radius: 14px;
-        HorizontalLayout {
-            padding-left: 14px;
-            padding-right: 14px;
-            spacing: 12px;
-            VerticalLayout {
-                alignment: center;
-                Pic {
-                    url: root.a.icon;
-                    width: 30px;
-                    height: 30px;
-                    fit: ImageFit.contain;
-                }
+        border-color: Theme.accent.with-alpha(0.45);
+        border-radius: 16px;
+        lay := HorizontalLayout {
+            padding-left: 7px;
+            padding-right: 13px;
+            spacing: 7px;
+            alignment: center;
+            Pic {
+                url: root.a.icon;
+                width: 20px;
+                height: 20px;
+                y: (parent.height - 20px) / 2;
+                fit: ImageFit.contain;
             }
-            VerticalLayout {
-                alignment: center;
-                T { text: root.a.name; font-weight: 700; font-size: 15px; }
-                Text { text: "apparaît bientôt"; font-size: 12px; color: #aab4c6; }
+            Text {
+                text: root.a.name + " dans";
+                font-size: 12.5px;
+                font-weight: 600;
+                color: Theme.text;
+                vertical-alignment: center;
             }
             Text {
                 text: root.a.secs;
-                font-size: 24px;
+                font-size: 13.5px;
                 font-weight: 700;
                 color: Theme.accent;
                 vertical-alignment: center;
-                horizontal-stretch: 0;
             }
         }
     }
@@ -2039,49 +2097,44 @@ export component OvSkillView inherits Rectangle {
     in property <string> key-name;
     in property <string> icon;
     in property <string> level;
-    min-width: 170px;
-    height: 60px;
+    height: 32px;
+    min-width: lay.preferred-width;
     Rectangle {
-        background: #090d15e6;
+        background: Ov.glass;
         border-width: 1px;
-        border-color: #e8b53e8c;
-        border-radius: 14px;
-        HorizontalLayout {
-            padding-left: 8px;
-            padding-right: 16px;
-            spacing: 12px;
-            VerticalLayout {
-                alignment: center;
+        border-color: Ov.edge;
+        border-radius: 16px;
+        lay := HorizontalLayout {
+            padding-left: 5px;
+            padding-right: 13px;
+            spacing: 8px;
+            alignment: center;
+            Rectangle {
+                width: 22px;
+                height: 22px;
+                y: (parent.height - 22px) / 2;
+                Pic {
+                    url: root.icon;
+                    radius: 11px;
+                }
                 Rectangle {
-                    width: 44px;
-                    height: 44px;
-                    Rectangle {
-                        border-radius: 10px;
-                        border-width: 2px;
-                        border-color: Theme.accent;
-                        clip: true;
-                        Pic { url: root.icon; }
-                    }
-                    Rectangle {
-                        x: 28px;
-                        y: 28px;
-                        width: 22px;
-                        height: 22px;
-                        border-radius: 6px;
-                        background: Theme.accent;
-                        Text {
-                            text: root.key-name;
-                            font-size: 13px;
-                            font-weight: 700;
-                            color: Theme.bg;
-                        }
-                    }
+                    border-radius: 11px;
+                    border-width: 1.5px;
+                    border-color: Theme.accent;
                 }
             }
-            VerticalLayout {
-                alignment: center;
-                Text { text: root.level; font-size: 11px; color: #aab4c6; }
-                T { text: "Monte " + root.key-name; font-size: 17px; font-weight: 700; }
+            Text {
+                text: "Monte " + root.key-name;
+                font-size: 12.5px;
+                font-weight: 700;
+                color: Theme.text;
+                vertical-alignment: center;
+            }
+            Text {
+                text: root.level;
+                font-size: 11px;
+                color: Ov.faint;
+                vertical-alignment: center;
             }
         }
     }
@@ -2108,9 +2161,9 @@ component OvCardView inherits Rectangle {
                     alignment: center;
                     VerticalLayout {
                         alignment: center;
-                        if root.c.kind == 0: OvWidgetView { w: root.c.widget; width: 210px; }
+                        if root.c.kind == 0: OvWidgetView { w: root.c.widget; width: 196px; }
                         if root.c.kind == 1: OvAlertView { a: root.c.alert; }
-                        if root.c.kind == 2: OvSkillView { key-name: "Q"; icon: root.c.skill-icon; level: "NIVEAU 4"; }
+                        if root.c.kind == 2: OvSkillView { key-name: "Q"; icon: root.c.skill-icon; level: "niveau 4"; }
                     }
                 }
             }

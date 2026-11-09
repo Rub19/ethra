@@ -186,23 +186,23 @@ pub fn render_overlays(a: &mut App) {
     let ch = |id: &str| format!("https://ddragon.leagueoflegends.com/cdn/15.1.1/img/champion/{id}.png");
     let it = |id: i64| format!("https://ddragon.leagueoflegends.com/cdn/15.1.1/img/item/{id}.png");
     let mut c = card("ovTimers", "Timers d'objectifs", "Dragon, Nashor et réapparition des inhibiteurs, calculés depuis les événements de la partie.", s.ov_timers, 0);
-    c.widget = widget("Objectifs", vec![ov_row(icon_baron(), "Nashor", "0:48", 0, 0.85), ov_row(icon_dragon(), "Dragon", "UP", 3, -1.0), ov_row(icon_inhib(), "Inhib mid rouge", "3:12", 0, 0.35)]);
-    let mut al = card("ovAlerts", "Alertes d'objectifs", "Bandeau en haut de l'écran 30 secondes avant l'apparition d'un objectif.", s.ov_alerts, 1);
+    c.widget = widget("timers", "Objectifs", vec![ov_row(icon_baron(), "Nashor", "0:48", 0, 0.85), ov_row(icon_dragon(), "Dragon", "UP", 3, -1.0), ov_row(icon_inhib(), "Inhib mid rouge", "3:12", 0, 0.35)]);
+    let mut al = card("ovAlerts", "Alertes d'objectifs", "Petite pastille en haut de l'écran 30 secondes avant l'apparition d'un objectif.", s.ov_alerts, 1);
     al.alert = OvAlert { icon: ss(icon_dragon()), name: ss("Dragon"), secs: ss("30s") };
     let mut sk = card("ovSkill", "Ordre des compétences", "Indique la compétence à monter à chaque niveau, selon le build méta OP.GG.", s.ov_skill, 2);
     sk.skill_icon = ss("https://cdn.communitydragon.org/latest/champion/Ahri/ability-icon/q");
     let mut be = card("ovBench", "Benchmark de lane", "Ton écart de CS, de valeur d'objets et de niveau avec ton adversaire direct.", s.ov_bench, 0);
-    be.widget = widget("vs Yasuo", vec![ov_row("", "CS", "+12", 1, -1.0), ov_row("", "Objets", "-0.4k", 2, -1.0), ov_row("", "Niveau", "+1", 1, -1.0)]);
+    be.widget = widget("trio", "vs Yasuo", vec![ov_row("", "CS", "+12", 1, -1.0), ov_row("", "Objets", "-0.4k", 2, -1.0), ov_row("", "Niveau", "+1", 1, -1.0)]);
     let mut de = card("ovDeaths", "Ennemis morts", "Les adversaires morts et leur temps de réapparition, pour savoir quand forcer un objectif.", s.ov_deaths, 0);
-    de.widget = widget("Ennemis morts", vec![ov_row(ch("Yasuo"), "Yasuo", "24s", 1, -1.0), ov_row(ch("Thresh"), "Thresh", "11s", 1, -1.0)]);
+    de.widget = widget("deaths", "Ennemis morts", vec![ov_row(ch("Yasuo"), "Yasuo", "24s", 1, -1.0), ov_row(ch("Thresh"), "Thresh", "11s", 1, -1.0)]);
     let mut ni = card("ovItem", "Prochain objet", "Le prochain objet de ton build méta et l'or qu'il te manque pour l'acheter.", s.ov_item, 0);
-    ni.widget = widget("Prochain objet", vec![ov_row(it(3089), "Coiffe de Rabadon", "-620", 0, 0.82)]);
+    ni.widget = widget("item", "Prochain objet", vec![ov_row(it(3089), "Coiffe de Rabadon", "-620", 0, 0.82)]);
     let mut go = card("ovGold", "Valeur des objets", "Différence de valeur totale des objets entre ton équipe et l'équipe adverse.", s.ov_gold, 0);
-    go.widget = widget("Valeur des objets", vec![ov_row("", "Équipes", "+3.8k", 1, -1.0)]);
+    go.widget = widget("rows", "Valeur des objets", vec![ov_row("", "Écart d'équipe", "+3.8k", 1, -1.0)]);
     let mut ju = card("ovJungle", "Jungle path", "Ton full clear étape par étape pendant les premières minutes quand tu joues jungle, avec le crabe à 3:30. Le départ se règle sur la page du champion.", s.ov_jungle, 0);
-    ju.widget = widget("Jungle path, fin côté top", vec![ov_row("", "1. Buff rouge", "", 0, -1.0), ov_row("", "2. Krugs", "", 0, -1.0), ov_row("", "3. Raptors", "", 0, -1.0), ov_row("", "C. Crabe", "1:12", 0, -1.0)]);
+    ju.widget = widget("jungle", "Jungle, fin côté top", vec![ov_row("", "1. Buff rouge", "", 0, -1.0), ov_row("", "2. Krugs", "", 0, -1.0), ov_row("", "3. Raptors", "", 0, -1.0), ov_row("", "C. Crabe", "1:12", 0, -1.0)]);
     let mut st = card("ovStats", "Tes stats", "KDA, CS par minute et or disponible, toujours visibles.", s.ov_stats, 0);
-    st.widget = widget("Toi", vec![ov_row("", "KDA", "4 / 1 / 6", 0, -1.0), ov_row("", "CS/min", "7.8", 0, -1.0), ov_row("", "Or", "1 240", 0, -1.0)]);
+    st.widget = widget("trio", "Toi", vec![ov_row("", "KDA", "4 / 1 / 6", 0, -1.0), ov_row("", "CS/min", "7.8", 0, -1.0), ov_row("", "Or", "1 240", 0, -1.0)]);
     a.data().set_overlays(OverlaysData { enabled: s.ov_enabled, cards: ms(vec![c, al, sk, be, de, ni, go, ju, st]) });
 }
 

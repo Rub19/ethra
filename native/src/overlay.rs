@@ -68,8 +68,8 @@ pub fn row(icon: impl AsRef<str>, label: impl AsRef<str>, value: impl AsRef<str>
     OvRow { icon: ss(icon), label: ss(label), value: ss(value), tone, bar }
 }
 
-pub fn widget(title: impl AsRef<str>, rows: Vec<OvRow>) -> OvWidget {
-    OvWidget { title: ss(title), rows: ms(rows) }
+pub fn widget(kind: &str, title: impl AsRef<str>, rows: Vec<OvRow>) -> OvWidget {
+    OvWidget { kind: ss(kind), title: ss(title), rows: ms(rows) }
 }
 
 fn tone(x: f64) -> i32 {
@@ -168,7 +168,7 @@ pub fn build_frame(g: &Value, d: Option<&DD>, skills: Option<&Skills>) -> Option
     let next_key = if spent < level && next_slot > 0 { KEYS.get(next_slot as usize - 1).copied() } else { None };
     let champ = d.map(|d| champ_id(d, &champ_name)).unwrap_or(0);
     let skill = match (cfg.ov_skill, next_key, d) {
-        (true, Some(k), Some(d)) => Some((k.to_string(), d.champs.get(&champ).map(|c| img_ability(&c.id, k)).unwrap_or_default(), format!("NIVEAU {level}"))),
+        (true, Some(k), Some(d)) => Some((k.to_string(), d.champs.get(&champ).map(|c| img_ability(&c.id, k)).unwrap_or_default(), format!("niveau {level}"))),
         _ => None,
     };
     let mut w = vec![];
@@ -187,11 +187,12 @@ pub fn build_frame(g: &Value, d: Option<&DD>, skills: Option<&Skills>) -> Option
                 }
             })
             .collect();
-        w.push(widget(format!("Jungle path, fin côté {}", r.side), rows));
+        w.push(widget("jungle", format!("Jungle, fin côté {}", r.side), rows));
     }
     let all: Vec<&(String, f64)> = timers.iter().chain(inhibs.iter()).collect();
     if cfg.ov_timers && !all.is_empty() {
         w.push(widget(
+            "timers",
             "Objectifs",
             all.iter()
                 .map(|x| {
@@ -206,6 +207,7 @@ pub fn build_frame(g: &Value, d: Option<&DD>, skills: Option<&Skills>) -> Option
     }
     if let (true, Some(d), false) = (cfg.ov_deaths, d, dead.is_empty()) {
         w.push(widget(
+            "deaths",
             "Ennemis morts",
             dead.iter()
                 .map(|p| {
@@ -219,20 +221,20 @@ pub fn build_frame(g: &Value, d: Option<&DD>, skills: Option<&Skills>) -> Option
     if let (true, Some(d), Some(id)) = (cfg.ov_item, d, next_item) {
         let name = d.items.get(&id).map(|x| x.name.clone()).unwrap_or_default();
         let ok = gold >= next_price;
-        w.push(widget("Prochain objet", vec![row(img_item(d, id), name, if ok { "Achetable".to_string() } else { format!("-{}", fr(next_price - gold)) }, if ok { 3 } else { 0 }, if next_price > 0 && !ok { gold as f32 / next_price as f32 } else { -1.0 })]));
+        w.push(widget("item", "Prochain objet", vec![row(img_item(d, id), name, if ok { "Achetable".to_string() } else { format!("-{}", fr(next_price - gold)) }, if ok { 3 } else { 0 }, if next_price > 0 && !ok { gold as f32 / next_price as f32 } else { -1.0 })]));
     }
     if let (true, Some(o)) = (cfg.ov_bench, opp) {
         let cs = s["creepScore"].as_f64().unwrap_or(0.0) - o["scores"]["creepScore"].as_f64().unwrap_or(0.0);
         let item_diff = worth(me) - worth(o);
         let lvl = me["level"].as_f64().unwrap_or(0.0) - o["level"].as_f64().unwrap_or(0.0);
-        w.push(widget(format!("vs {}", o["championName"].as_str().unwrap_or_default()), vec![row("", "CS", sign(cs), tone(cs), -1.0), row("", "Objets", format!("{}k", sign((item_diff / 100.0).round() / 10.0)), tone(item_diff), -1.0), row("", "Niveau", sign(lvl), tone(lvl), -1.0)]));
+        w.push(widget("trio", format!("vs {}", o["championName"].as_str().unwrap_or_default()), vec![row("", "CS", sign(cs), tone(cs), -1.0), row("", "Objets", format!("{}k", sign((item_diff / 100.0).round() / 10.0)), tone(item_diff), -1.0), row("", "Niveau", sign(lvl), tone(lvl), -1.0)]));
     }
     if cfg.ov_gold && d.is_some() {
-        w.push(widget("Valeur des objets", vec![row("", "Équipes", format!("{}{:.1}k", if diff >= 0.0 { "+" } else { "" }, diff / 1000.0), tone(diff), -1.0)]));
+        w.push(widget("rows", "Valeur des objets", vec![row("", "Écart d'équipe", format!("{}{:.1}k", if diff >= 0.0 { "+" } else { "" }, diff / 1000.0), tone(diff), -1.0)]));
     }
     if cfg.ov_stats {
         let i = |k: &str| s[k].as_i64().unwrap_or(0);
-        w.push(widget("Toi", vec![row("", "KDA", format!("{} / {} / {}", i("kills"), i("deaths"), i("assists")), 0, -1.0), row("", "CS/min", format!("{:.1}", s["creepScore"].as_f64().unwrap_or(0.0) / (t / 60.0).max(1.0)), 0, -1.0), row("", "Or", fr(gold), 0, -1.0)]));
+        w.push(widget("trio", "Toi", vec![row("", "KDA", format!("{} / {} / {}", i("kills"), i("deaths"), i("assists")), 0, -1.0), row("", "CS/min", format!("{:.1}", s["creepScore"].as_f64().unwrap_or(0.0) / (t / 60.0).max(1.0)), 0, -1.0), row("", "Or", fr(gold), 0, -1.0)]));
     }
     Some(Frame { widgets: w, alerts, skill })
 }
@@ -253,6 +255,7 @@ fn ensure_window() {
             win.window().with_winit_window(|w: &winit::window::Window| {
                 if crate::offscreen() {
                     w.set_outer_position(winit::dpi::PhysicalPosition::new(-20000, -20000));
+                    let _ = w.request_inner_size(winit::dpi::PhysicalSize::new(1600, 900));
                 } else if let Some(m) = w.primary_monitor() {
                     w.set_outer_position(m.position());
                     let _ = w.request_inner_size(m.size());

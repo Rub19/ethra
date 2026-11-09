@@ -56,7 +56,7 @@ export struct PlayerCard { art: string, tags: [string], rank: string, rank-color
 export struct DmgBar { label: string, ad: float, ap: float, ad-text: string, ap-text: string, show: bool }
 export struct LiveData { waiting: bool, title: string, show-build: bool, build-hint: bool, dmg1: DmgBar, dmg2: DmgBar, team1: [PlayerCard], team2: [PlayerCard] }
 export struct OvRow { icon: string, label: string, value: string, tone: int, bar: float }
-export struct OvWidget { title: string, rows: [OvRow] }
+export struct OvWidget { kind: string, title: string, rows: [OvRow] }
 export struct OvAlert { icon: string, name: string, secs: string }
 export struct OvCard { key: string, title: string, desc: string, on: bool, kind: int, widget: OvWidget, alert: OvAlert, skill-icon: string }
 export struct OverlaysData { enabled: bool, cards: [OvCard] }

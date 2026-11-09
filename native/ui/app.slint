@@ -1,7 +1,7 @@
 ﻿import { ScrollView } from "std-widgets.slint";
 import { Theme, Motion, Act, Api, Chevron, Press, Pic, T, Small, Num, Primary, Ghost, Seg, Card, Reveal, Page, Notice, PageHead, Opt } from "theme.slint";
 import { Data, SearchOpt, ShareData, OvWidget, OvAlert, GameCard } from "data.slint";
-import { ProfilePage, MatchPageView, TierListView, ChampionsView, BuildsView, LiveView, OverlaysView, ShareCard, OvWidgetView, OvAlertView, OvSkillView } from "pages_lol.slint";
+import { ProfilePage, MatchPageView, TierListView, ChampionsView, BuildsView, LiveView, OverlaysView, ShareCard, OvWidgetView, OvAlertView, OvSkillView, OvPanel } from "pages_lol.slint";
 import { VProfileView, VMatchView, VLiveView, VAgentsView } from "pages_valo.slint";
 import { SettingsView, TftDecksView, TftProfileView } from "pages_misc.slint";
 
@@ -1122,33 +1122,39 @@ export component OverlayWindow inherits Window {
     in property <string> skill-level;
     in property <bool> visible-all;
     if root.visible-all: VerticalLayout {
-        x: (root.width - 260px) / 2;
-        y: root.height * 0.09;
-        width: 260px;
-        spacing: 8px;
+        x: (root.width - self.width) / 2;
+        y: root.height * 0.075;
+        width: 240px;
+        spacing: 6px;
         alignment: start;
-        for a in root.alerts: Reveal {
-            height: 58px;
-            OvAlertView { a: a; }
+        for a[i] in root.alerts: Reveal {
+            index: i;
+            height: 32px;
+            HorizontalLayout {
+                alignment: center;
+                OvAlertView { a: a; }
+            }
         }
     }
     if root.visible-all && root.skill-show: Reveal {
-        x: (root.width - 180px) / 2;
-        y: root.height * 0.78 - 60px;
-        width: 180px;
-        height: 60px;
-        OvSkillView {
-            key-name: root.skill-key;
-            icon: root.skill-icon;
-            level: root.skill-level;
+        x: (root.width - 240px) / 2;
+        y: root.height * 0.8 - 40px;
+        width: 240px;
+        height: 32px;
+        HorizontalLayout {
+            alignment: center;
+            OvSkillView {
+                key-name: root.skill-key;
+                icon: root.skill-icon;
+                level: root.skill-level;
+            }
         }
     }
-    if root.visible-all: VerticalLayout {
-        x: root.width - 224px;
-        y: root.height * 0.34;
-        width: 210px;
-        spacing: 8px;
-        alignment: start;
-        for w in root.widgets: OvWidgetView { w: w; }
+    if root.visible-all && root.widgets.length > 0: Reveal {
+        x: root.width - 180px - 12px;
+        y: root.height * 0.3;
+        width: 180px;
+        height: panel.preferred-height;
+        panel := OvPanel { widgets: root.widgets; }
     }
 }
