@@ -26,7 +26,7 @@ Règles : réponses en français simple, zéro commentaire dans le code, commits
 
 ## Pas vérifié
 
-- Installeur : essayé seulement en dossier de test (`KAIRO_SETUP_TEST=<dossier>`, plus `KAIRO_SETUP_SNAP` ou `KAIRO_SETUP_OFFSCREEN`) sur une fausse installation Tauri 0.3.4 et Ethra : passage au natif, mise à jour passive, silencieuse, désinstallation avec et sans réglages. Jamais lancé pour de vrai. Dernier : `native\release\Kairo_0.4.0_x64-setup.exe`, 16,8 Mo, SHA-256 `3C2C7B60722A117851CB1D37CFFF48E36BB32A0CEEF91A7EF24C7617014BE223`.
+- Installeur : essayé seulement en dossier de test (`KAIRO_SETUP_TEST=<dossier>`, plus `KAIRO_SETUP_SNAP` ou `KAIRO_SETUP_OFFSCREEN`) sur une fausse installation Tauri 0.3.4 et Ethra : passage au natif, mise à jour passive, silencieuse, désinstallation avec et sans réglages. Jamais lancé pour de vrai. Dernier : `native\release\Kairo_0.4.0_x64-setup.exe`, 16,8 Mo, SHA-256 `34C25305BC327892CC786B787ADB3A2EB8BEC83F945A0CB81B31504636F99565` (recompilé le 9 novembre avec la carte de partage et les pastilles de groupe, non signé).
 - Nouveaux overlays : vus sur captures hors écran avec une fausse partie, pas par-dessus le vrai jeu.
 - Zone de notification, boutons de fenêtre, redimensionnement, vraie souris, clavier (Tab, Ctrl K, Alt flèches), boutons latéraux.
 - Transparence réelle de l'overlay par-dessus le jeu, et en vraie partie.
@@ -39,9 +39,9 @@ Règles : réponses en français simple, zéro commentaire dans le code, commits
 
 1. Essais de Rub19 : lancer `native\release\Kairo_0.4.0_x64-setup.exe` sur sa vraie installation, puis une partie avec les overlays. Après son OK seulement : retirer l'ancien `setup/` Tauri.
 2. Fait : `native/release.ps1 -Notes "…"` signe l'installeur avec `~/.tauri/kairo-updater.key` (ou `KAIRO_SIGN_KEY`) par le `tauri signer` du dépôt principal, puis écrit `release/latest.json` vers la release GitHub `v<version>`, comme `scripts/release.mjs`. Essayé avec une clé jetable, jamais avec la vraie clé. Sans clé, l'installeur est produit non signé. Publier reste la décision de Rub19.
-3. Fait le 9 novembre : `docs/RUST_PARITY.md` revu ligne par ligne contre le code, 43 lignes vues marcher, 31 portées (dont 5 jamais essayées en vrai), aucune manquante. Reste à recapturer la carte de partage et les onglets CS, Or, XP (une partie de LoL était en cours, rien n'a été lancé).
+3. Fait le 9 novembre : `docs/RUST_PARITY.md` revu ligne par ligne contre le code, 43 lignes vues marcher, 31 portées (dont 5 jamais essayées en vrai), aucune manquante. Recapturé après la partie : onglets CS, Or, XP bons ; bouton « Copier l'image » de la carte de partage corrigé (il était à gauche par-dessus les runes).
 4. Refaire les essais avec le vrai client, mesurer Tauri, envoyer à la session principale la liste des essais de Rub19 avec le chemin de l'installeur.
-5. Finitions : pastilles de groupe dans l'en-tête des équipes VALORANT passées à la couleur du groupe (comme les lignes et comme Tauri), compilé et testé mais pas encore capturé ; motion à relire.
+5. Finitions : pastilles de groupe dans l'en-tête des équipes VALORANT passées à la couleur du groupe (comme les lignes et comme Tauri), vu sur capture avec le jeu d'essai (« Duo » en jaune) ; motion à relire.
 
 ## Pièges
 

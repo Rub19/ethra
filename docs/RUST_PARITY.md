@@ -10,7 +10,8 @@ Revue faite ligne par ligne contre le code (`native/src`, `native/ui`) : chaque 
 Bugs du 8 novembre :
 - `Pic` à 32 px et bouton de fenêtre coupé : corrigés (« composants à la bonne taille, en-tête qui tient »).
 - Liste des parties LoL vide : corrigée, vue avec le jeu d'essai ; pas encore revue avec le vrai client.
-- Carte de partage et onglets CS, Or, XP : pas recapturés depuis, à revoir.
+- Onglets CS, Or, XP : bons, recapturés le 9 novembre.
+- Carte de partage : pleine largeur, mais le bouton « Copier l'image » était parti à gauche par-dessus les runes ; corrigé le 9 novembre et recapturé. La copie elle-même n'a pas été refaite.
 
 ## src-tauri/src/main.rs
 
@@ -95,7 +96,7 @@ Bugs du 8 novembre :
 
 - [v] `laneOpponent`, `score`, `grade`
 - [v] en-tête, notes, résumé, courbe CS / or / XP au survol, objectifs, tableau des scores
-- [x] carte de partage et copie de l'image (porté, pas essayé en vrai)
+- [v] carte de partage ; [x] copie de l'image (portée, pas refaite depuis le mode test)
 
 ## src/Builds.tsx, src/Jungle.tsx
 
