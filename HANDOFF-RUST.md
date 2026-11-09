@@ -80,3 +80,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File release.ps1
 ```
 
 Les images de `snap.ps1` vont dans `%TEMP%\kairo_snap`. Le jeu d'essai s'active avec `KAIRO_FAKE=<fichier>`, le faux live avec `KAIRO_FAKE_LIVE=<fichier>`. L'installeur sort dans `native/release/Kairo_0.3.4_x64-setup.exe`.
+
+## Parcours de bout en bout (événements Slint)
+
+`powershell -File native/e2e/run.ps1` compile avec la fonction `e2e` (absente des builds installés) et rejoue `native/e2e/kairo.txt` hors écran : clics par libellé accessible ou texte affiché, frappe touche par touche, raccourcis, vérifications, capture à chaque échec. Journal et captures dans `%TEMP%`. 49 étapes : profil LoL, filtres, page de partie et onglets CS/Or/XP, Tier list, Overlays, Réglages, Alt+←/→, Ctrl+1/2, profil et match VALORANT. Jeu d'essai, lecture seule, refuse de tourner pendant une partie. Bug trouvé et corrigé : après un clic sur un onglet de l'en-tête, plus aucun raccourci ne marchait (focus perdu).
+Limite : un élément coupé par le clip d'un parent compte encore comme visible.

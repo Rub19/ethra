@@ -13,6 +13,7 @@ tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "sync"
 reqwest = { version = "0.12", features = ["json"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+i-slint-backend-testing = { version = "=1.18.1", optional = true }
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "ico", "gif"] }
 arboard = { version = "3", default-features = false, features = ["image-data"] }
 rusty-leveldb = "4"
@@ -23,6 +24,9 @@ tray-icon = "0.21"
 winreg = "0.55"
 windows-sys = { version = "0.59", features = ["Win32_UI_WindowsAndMessaging", "Win32_Foundation", "Win32_System_Diagnostics_ToolHelp"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+
+[features]
+e2e = ["dep:i-slint-backend-testing"]
 
 [build-dependencies]
 slint-build = "=1.18.1"

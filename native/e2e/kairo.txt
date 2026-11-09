@@ -1,0 +1,54 @@
+# Parcours de Kairo par événements Slint, jeu d'essai, lecture seule, sans client ni partie réelle
+wait 3000
+key Ctrl+1
+waitfor Testeur|20000
+expect Classé Solo/Duo
+expect Gold II 40 LP
+snap 01-profil-lol
+
+click Victoires
+expect 13V - 0D
+click Défaites
+click Toutes
+click Tous les modes
+key Escape
+
+click 30:00, à l'instant
+waitfor Courbe de la partie|20000
+expect Ton point fort
+expect Copier l'image
+click Or
+click XP
+click CS
+snap 02-partie
+key Alt+Left
+waitfor Session du jour|10000
+
+click Tier list
+wait 3000
+snap 03-tierlist
+click Overlays
+wait 1500
+snap 04-overlays
+click Réglages
+wait 1500
+snap 05-reglages
+key Alt+Left
+key Alt+Right
+
+key Ctrl+2
+waitfor TesteurV|20000
+expect Platine 1
+click Agents
+wait 1000
+snap 06-valo-agents
+click Cartes
+click Armes
+click Parties
+click Compétition
+click Toutes
+click Ascent
+waitfor Manches|20000
+snap 07-valo-match
+key Alt+Left
+waitfor Session du jour|10000

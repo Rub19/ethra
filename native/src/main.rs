@@ -1,5 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+#[cfg(feature = "e2e")]
+mod e2e;
 mod build_data;
 mod history;
 mod images;
@@ -145,6 +147,7 @@ impl App {
         self.ui.set_account(false);
         images::trim_if_needed();
         self.refresh_view();
+        self.ui.invoke_restore_focus();
     }
 
     pub fn switch_game(&mut self, g: &str) {
@@ -614,6 +617,12 @@ fn main() {
         ui.window().set_position(slint::PhysicalPosition::new(-20000, -20000));
     }
     ui.show().unwrap();
+    #[cfg(feature = "e2e")]
+    e2e::start(&ui, "KAIRO", std::rc::Rc::new(|ui: &AppWindow, name: &str| {
+        if let (Ok(dir), Ok(shot)) = (std::env::var("KAIRO_E2E_SNAP"), ui.window().take_snapshot()) {
+            let _ = image::save_buffer(format!("{dir}/{name}.png"), shot.as_bytes(), shot.width(), shot.height(), image::ColorType::Rgba8);
+        }
+    }));
     let _tray = if offscreen() { None } else { tray::start() };
     slint::run_event_loop_until_quit().unwrap();
 }

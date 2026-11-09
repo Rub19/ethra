@@ -1,4 +1,4 @@
-﻿import { ScrollView } from "std-widgets.slint";
+import { ScrollView } from "std-widgets.slint";
 import { Theme, Motion, Act, Api, Chevron, Press, Pic, T, Small, Num, Primary, Ghost, Seg, Card, Reveal, Page, Notice, PageHead, Opt } from "theme.slint";
 import { Data, SearchOpt, ShareData, OvWidget, OvAlert, GameCard } from "data.slint";
 import { ProfilePage, MatchPageView, TierListView, ChampionsView, BuildsView, LiveView, OverlaysView, ShareCard, OvWidgetView, OvAlertView, OvSkillView, OvPanel } from "pages_lol.slint";
@@ -867,6 +867,9 @@ export component AppWindow inherits Window {
     property <bool> over-menu: gm.visible && gmt.has-hover;
     public function focus-search() {
         head.focus-search();
+    }
+    public function restore-focus() {
+        root-scope.focus();
     }
     init => { Theme.win-w = root.width; }
     changed width => { Theme.win-w = root.width; }

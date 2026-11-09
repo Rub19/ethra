@@ -51,6 +51,8 @@ def vmatch(i):
 hist = [{"MatchID": f"m{i}"} for i in range(20)]
 for pu in ["vme"] + [f"v{k}" for k in range(1, 10)]:
     d[f"valo:pd:/match-history/v1/history/{pu}?startIndex=0&endIndex=20"] = {"History": hist}
+    for queue in ("competitive", "unrated", "swiftplay", "deathmatch", "premier"):
+        d[f"valo:pd:/match-history/v1/history/{pu}?startIndex=0&endIndex=20&queue={queue}"] = {"History": hist if queue == "competitive" else []}
     d[f"valo:pd:/mmr/v1/players/{pu}"] = {"QueueSkills": {"competitive": {"SeasonalInfoBySeasonID": {"act": {"CompetitiveTier": 15, "RankedRating": 44, "NumberOfWinsWithPlacements": 12, "NumberOfGames": 20, "WinsByTier": {"15": 3, "18": 1}}}}}}
     d[f"valo:pd:/mmr/v1/players/{pu}/competitiveupdates?startIndex=0&endIndex=20&queue=competitive"] = {"Matches": [{"MatchID": f"m{i}", "RankedRatingEarned": 18 if i % 2 else -9, "TierBeforeUpdate": 15, "TierAfterUpdate": 15, "IsPlacementMatch": False} for i in range(20)]}
 for i in range(20):
