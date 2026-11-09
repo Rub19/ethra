@@ -38,7 +38,7 @@ Règles : réponses en français simple, zéro commentaire dans le code, commits
 ## Reste à faire
 
 1. Essais de Rub19 : lancer `native\release\Kairo_0.4.0_x64-setup.exe` sur sa vraie installation, puis une partie avec les overlays. Après son OK seulement : retirer l'ancien `setup/` Tauri.
-2. Ajouter la signature minisign à `native/release.ps1` et écrire `latest.json`. Ne rien publier.
+2. Fait : `native/release.ps1 -Notes "…"` signe l'installeur avec `~/.tauri/kairo-updater.key` (ou `KAIRO_SIGN_KEY`) par le `tauri signer` du dépôt principal, puis écrit `release/latest.json` vers la release GitHub `v<version>`, comme `scripts/release.mjs`. Essayé avec une clé jetable, jamais avec la vraie clé. Sans clé, l'installeur est produit non signé. Publier reste la décision de Rub19.
 3. Passer tout le contenu de `docs/RUST_PARITY.md` en revue et cocher les cases : aucune n'est cochée. La note d'état en tête du fichier est périmée, la plupart des bugs listés sont corrigés.
 4. Refaire les essais avec le vrai client, mesurer Tauri, envoyer à la session principale la liste des essais de Rub19 avec le chemin de l'installeur.
 5. Finitions : pastille de groupe VALORANT en accent au lieu de sa couleur, motion à relire.
