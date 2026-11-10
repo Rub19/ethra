@@ -12,7 +12,7 @@ export struct LpData { total: string, tone: int, span: string, path: string, poi
 export struct ProfileData {
     loading: bool, error: string, splash: string, avatar: string, level: string, name: string, tag: string, quick: [Stat],
     sub: string, tabs: [Opt], show-filters: bool, queue-label: string, queue-opts: [Opt], champ-label: string, champ-opts: [Opt], results: [Opt],
-    show-session: bool, session-empty: bool, session: [Stat], session-strip: [bool], session-note: string,
+    show-session: bool, session-empty: bool, session: [Stat], session-strip: [bool], session-note: string, insights: [string],
     ranks: [RankRow], has-lp: bool, lp: LpData,
     recent-title: string, wr: float, wr-text: string, form-line: string, form-tone: int, form-strip: [bool], kda-line: string, perfs: [Perf],
     games-loading: bool, empty-title: string, empty-filtered: bool, more: bool, pool-cols: [Col], pool-rows: [TRow], queues: [Perf], mastery: [Perf],

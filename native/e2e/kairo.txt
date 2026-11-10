@@ -4,9 +4,11 @@ key Ctrl+1
 waitfor Testeur|20000
 expect Classé Solo/Duo
 expect Gold II 40 LP
+expect Tendances
 snap 01-profil-lol
 
 click Victoires
+scrollto 13V - 0D|300,700
 expect 13V - 0D
 click Défaites
 click Toutes

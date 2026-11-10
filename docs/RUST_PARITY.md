@@ -173,15 +173,15 @@ Toutes les clés `rw-*` : `rw-settings`, `rw-recent`, `rw-game`, `rw-route-*`, `
 
 `[ ]` à faire, `[x]` fait et vérifié (tests ou parcours e2e), avec la preuve dans « Fait ensuite » ou ici.
 
-- [ ] 1. Champions à éviter : pires taux de victoire récents (au moins 3 parties). La série en cours existait déjà (« 2 victoires de suite » dans la carte des dernières parties)
+- [~] 1. Champions à éviter : pires taux de victoire récents (au moins 3 parties, moins de 45 %). La série en cours existait déjà ; ligne de la carte « Tendances », testée mais absente du jeu d'essai (aucun champion sous 45 %)
 - [~] 2. Conseil de pause après 3 défaites d'affilée, sous la session du jour (fonction `streak`, test `streak_counts_the_latest_run`). Pas encore réglable ni désactivable, pas vu à l'écran : le jeu d'essai finit sur des victoires
 - [ ] 3. Objectif de session : nombre de victoires ou LP visés, avec suivi
-- [ ] 4. Taux de victoire par heure de la journée
-- [ ] 5. Taux de victoire par jour de la semaine
-- [ ] 6. Temps de jeu du jour et de la semaine
-- [ ] 7. Meilleurs coéquipiers : joueurs avec qui tu gagnes le plus
-- [ ] 8. Adversaires fréquents
-- [ ] 9. Courbe du KDA sur les dernières parties
+- [x] 4. Taux de victoire par moment de la journée (nuit, matin, après-midi, soir, 3 parties au moins) : carte « Tendances » du profil (test insights_come_from_kept_games), vue dans le parcours e2e à 56 étapes
+- [x] 5. Taux de victoire par jour de la semaine : carte « Tendances » du profil (test insights_come_from_kept_games), vue dans le parcours e2e à 56 étapes
+- [x] 6. Temps de jeu du jour et des 7 derniers jours : carte « Tendances » du profil (test insights_come_from_kept_games), vue dans le parcours e2e à 56 étapes
+- [x] 7. Plus longues séries de victoires et de défaites (les coéquipiers ne sont pas dans l'historique du client, seulement dans le détail de chaque partie) : carte « Tendances » du profil (test insights_come_from_kept_games), vue dans le parcours e2e à 56 étapes
+- [x] 8. Durée moyenne des victoires et des défaites (même raison que 7) : carte « Tendances » du profil (test insights_come_from_kept_games), vue dans le parcours e2e à 56 étapes
+- [x] 9. KDA des dernières parties : existait déjà (« KDA sur les 5 dernières, sur les 5 d'avant » dans la carte des dernières parties)
 - [ ] 10. Recherche dans l'historique par champion ou par joueur
 - [ ] 11. Note personnelle sur une partie, gardée sur le PC
 - [ ] 12. Joueurs suivis : liste épinglée avec leur rang

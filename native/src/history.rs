@@ -305,6 +305,84 @@ pub fn tft_queue(id: i64) -> &'static str {
     }
 }
 
+pub struct Slot {
+    pub hour: u32,
+    pub weekday: u32,
+}
+
+pub fn minutes_text(seconds: i64) -> String {
+    let minutes = (seconds.max(0) + 30) / 60;
+    if minutes >= 60 { format!("{} h {:02}", minutes / 60, minutes % 60) } else { format!("{minutes} min") }
+}
+
+pub fn insights(games: &[&Game], now: i64, day_start: i64, slot: &dyn Fn(i64) -> Slot, champ: &dyn Fn(i64) -> String) -> Vec<String> {
+    let mut lines = Vec::new();
+    let rate = |list: &[&&Game]| list.iter().filter(|g| win(g.me())).count() as f64 / list.len().max(1) as f64;
+    const PARTS: [(&str, u32, u32); 4] = [("la nuit", 0, 6), ("le matin", 6, 12), ("l'après-midi", 12, 18), ("le soir", 18, 24)];
+    let best_part = PARTS
+        .iter()
+        .filter_map(|(label, from, to)| {
+            let list: Vec<&&Game> = games.iter().filter(|g| (*from..*to).contains(&slot(g.game_creation).hour)).collect();
+            (list.len() >= 3).then(|| (label, rate(&list), list.len()))
+        })
+        .max_by(|a, b| a.1.total_cmp(&b.1));
+    if let Some((label, wr, n)) = best_part {
+        lines.push(format!("Tu gagnes le plus {label} : {} % sur {n} parties.", (wr * 100.0).round()));
+    }
+    const DAYS: [&str; 7] = ["le lundi", "le mardi", "le mercredi", "le jeudi", "le vendredi", "le samedi", "le dimanche"];
+    let best_day = (0..7u32)
+        .filter_map(|d| {
+            let list: Vec<&&Game> = games.iter().filter(|g| slot(g.game_creation).weekday == d).collect();
+            (list.len() >= 3).then(|| (d, rate(&list), list.len()))
+        })
+        .max_by(|a, b| a.1.total_cmp(&b.1));
+    if let Some((d, wr, n)) = best_day {
+        lines.push(format!("Meilleur jour : {} ({} % sur {n} parties).", DAYS[d as usize], (wr * 100.0).round()));
+    }
+    let today: i64 = games.iter().filter(|g| g.game_creation >= day_start).map(|g| g.game_duration).sum();
+    let week: i64 = games.iter().filter(|g| g.game_creation >= now - 7 * 86_400_000).map(|g| g.game_duration).sum();
+    if week > 0 {
+        lines.push(format!("Temps de jeu : {} aujourd'hui, {} sur 7 jours.", minutes_text(today), minutes_text(week)));
+    }
+    let mut champs: Vec<(i64, usize, usize)> = Vec::new();
+    for g in games {
+        let id = g.me().champion_id;
+        match champs.iter_mut().find(|c| c.0 == id) {
+            Some(c) => {
+                c.1 += 1;
+                c.2 += usize::from(win(g.me()));
+            }
+            None => champs.push((id, 1, usize::from(win(g.me())))),
+        }
+    }
+    let mut weak: Vec<&(i64, usize, usize)> = champs.iter().filter(|c| c.1 >= 3 && (c.2 as f64) < c.1 as f64 * 0.45).collect();
+    weak.sort_by(|a, b| (a.2 as f64 / a.1 as f64).total_cmp(&(b.2 as f64 / b.1 as f64)));
+    if !weak.is_empty() {
+        let names: Vec<String> = weak.iter().take(3).map(|c| format!("{} {}V {}D", champ(c.0), c.2, c.1 - c.2)).collect();
+        lines.push(format!("À éviter en ce moment : {}.", names.join(", ")));
+    }
+    let mut ordered: Vec<&&Game> = games.iter().collect();
+    ordered.sort_by_key(|g| g.game_creation);
+    let (mut best_win, mut best_loss, mut run, mut last) = (0usize, 0usize, 0usize, None);
+    for g in &ordered {
+        let w = win(g.me());
+        run = if last == Some(w) { run + 1 } else { 1 };
+        last = Some(w);
+        if w { best_win = best_win.max(run) } else { best_loss = best_loss.max(run) }
+    }
+    if best_win >= 2 || best_loss >= 2 {
+        lines.push(format!("Plus longues séries : {best_win} victoire{}, {best_loss} défaite{}.", if best_win > 1 { "s" } else { "" }, if best_loss > 1 { "s" } else { "" }));
+    }
+    let average = |w: bool| {
+        let list: Vec<i64> = games.iter().filter(|g| win(g.me()) == w).map(|g| g.game_duration).collect();
+        (!list.is_empty()).then(|| list.iter().sum::<i64>() / list.len() as i64)
+    };
+    if let (Some(w), Some(l)) = (average(true), average(false)) {
+        lines.push(format!("Durée moyenne : {} pour les victoires, {} pour les défaites.", minutes_text(w), minutes_text(l)));
+    }
+    lines
+}
+
 pub fn streak<I: IntoIterator<Item = bool>>(results: I) -> Option<(bool, usize)> {
     let mut list = results.into_iter();
     let first = list.next()?;
@@ -314,6 +392,31 @@ pub fn streak<I: IntoIterator<Item = bool>>(results: I) -> Option<(bool, usize)>
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn insights_come_from_kept_games() {
+        let game = |at: i64, won: bool, champ: i64, minutes: i64| {
+            let mut stats = Map::new();
+            stats.insert("win".into(), Value::Bool(won));
+            Game { game_creation: at, game_duration: minutes * 60, participants: vec![Participant { champion_id: champ, stats, ..Default::default() }], ..Default::default() }
+        };
+        let hour = 3_600_000;
+        let list = vec![
+            game(20 * hour, true, 1, 30), game(21 * hour, true, 1, 28), game(22 * hour, true, 2, 26),
+            game(8 * hour, false, 3, 31), game(9 * hour, false, 3, 33), game(10 * hour, false, 3, 35), game(11 * hour, true, 1, 30),
+        ];
+        let refs: Vec<&Game> = list.iter().collect();
+        let slot = |t: i64| Slot { hour: ((t / hour) % 24) as u32, weekday: if t < 15 * hour { 5 } else { 1 } };
+        let lines = insights(&refs, 23 * hour, 0, &slot, &|c| format!("C{c}"));
+        assert!(lines.iter().any(|l| l == "Tu gagnes le plus le soir : 100 % sur 3 parties."), "{lines:?}");
+        assert!(lines.iter().any(|l| l.starts_with("Meilleur jour : le mardi")), "{lines:?}");
+        assert!(lines.iter().any(|l| l == "Temps de jeu : 3 h 33 aujourd'hui, 3 h 33 sur 7 jours."), "{lines:?}");
+        assert!(lines.iter().any(|l| l == "À éviter en ce moment : C3 0V 3D."), "{lines:?}");
+        assert!(lines.iter().any(|l| l == "Plus longues séries : 4 victoires, 3 défaites."), "{lines:?}");
+        assert!(lines.iter().any(|l| l.starts_with("Durée moyenne : 29 min pour les victoires")), "{lines:?}");
+        assert_eq!(minutes_text(3_600), "1 h 00");
+        assert!(insights(&[], 0, 0, &slot, &|_| String::new()).is_empty());
+    }
 
     #[test]
     fn streak_counts_the_latest_run() {

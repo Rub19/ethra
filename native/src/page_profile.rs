@@ -1,4 +1,4 @@
-use crate::history::{streak, by_queue, champs_in, counted, cs, filter_games, form_of, is_remake, kda, merge_games, n, queues_in, win, Game, HistoryFilter, Participant};
+use crate::history::{insights, Slot, streak, by_queue, champs_in, counted, cs, filter_games, form_of, is_remake, kda, merge_games, n, queues_in, win, Game, HistoryFilter, Participant};
 use crate::lol::*;
 use crate::text::*;
 use crate::{good, ms, on_ui, opt, spawn, ss, stat, store, with_app, App};
@@ -398,6 +398,16 @@ pub fn render(a: &mut App, rebuild_rows: bool) {
         session: ms(session),
         session_strip: ms(today.iter().take(12).rev().map(|g| win(g.me())).collect()),
         session_note: ss(session_note),
+        insights: ms(insights(
+            &recent,
+            chrono::Utc::now().timestamp_millis(),
+            midnight,
+            &|t| {
+                use chrono::{Datelike, TimeZone, Timelike};
+                chrono::Local.timestamp_millis_opt(t).single().map_or(Slot { hour: 0, weekday: 0 }, |d| Slot { hour: d.hour(), weekday: d.weekday().num_days_from_monday() })
+            },
+            &|id| cname(id),
+        ).into_iter().map(ss).collect()),
         ranks: ms(ranks),
         has_lp: st.lp.len() > 1,
         lp: lp_data(&st.lp),

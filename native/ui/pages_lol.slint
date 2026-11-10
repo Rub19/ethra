@@ -455,6 +455,17 @@ export component ProfilePage inherits Rectangle {
                             for r in Data.profile.ranks: RankView { r: r; }
                         }
                     }
+                    if Data.profile.insights.length > 0: Card {
+                        VerticalLayout {
+                            padding: 16px;
+                            spacing: 6px;
+                            CardTitle { text: "Tendances"; }
+                            for line in Data.profile.insights: Small {
+                                text: line;
+                                wrap: word-wrap;
+                            }
+                        }
+                    }
                     if Data.profile.has-lp: Card {
                         VerticalLayout {
                             padding: 16px;
