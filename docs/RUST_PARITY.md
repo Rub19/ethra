@@ -164,3 +164,28 @@ Toutes les clés `rw-*` : `rw-settings`, `rw-recent`, `rw-game`, `rw-route-*`, `
 - [x] lancement avec Windows, réduction en zone de notification, F5
 - [v] overlays en jeu refaits : un panneau fin à droite, pastilles d'alerte et de compétence
 - [x] installeur natif (`native/setup`) : passage depuis Tauri et Ethra, mise à jour, désinstallation, essayé seulement en dossier de test
+
+## 20 fonctionnalités en plus (demandées le 10 novembre 2026)
+
+`[ ]` à faire, `[x]` fait et vérifié (tests ou parcours e2e), avec la preuve dans « Fait ensuite » ou ici.
+
+- [ ] 1. Série en cours (victoires ou défaites d'affilée) dans la session du jour
+- [ ] 2. Conseil de pause après 3 défaites d'affilée (réglable, désactivable)
+- [ ] 3. Objectif de session : nombre de victoires ou LP visés, avec suivi
+- [ ] 4. Taux de victoire par heure de la journée
+- [ ] 5. Taux de victoire par jour de la semaine
+- [ ] 6. Temps de jeu du jour et de la semaine
+- [ ] 7. Meilleurs coéquipiers : joueurs avec qui tu gagnes le plus
+- [ ] 8. Adversaires fréquents
+- [ ] 9. Courbe du KDA sur les dernières parties
+- [ ] 10. Recherche dans l'historique par champion ou par joueur
+- [ ] 11. Note personnelle sur une partie, gardée sur le PC
+- [ ] 12. Joueurs suivis : liste épinglée avec leur rang
+- [ ] 13. Comparer deux profils côte à côte
+- [ ] 14. VALORANT : taux de victoire par carte
+- [ ] 15. VALORANT : précision tête, corps, jambes par arme
+- [ ] 16. VALORANT : stats par rôle d'agent
+- [ ] 17. VALORANT : export CSV des parties
+- [ ] 18. TFT : placement moyen par trait principal
+- [ ] 19. Raccourci global pour montrer ou cacher l'overlay
+- [ ] 20. Mini fenêtre de session toujours devant
