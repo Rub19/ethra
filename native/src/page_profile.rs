@@ -1,8 +1,8 @@
-use crate::history::{toggle_pin, goal_text, next_goal, insights, Slot, streak, by_queue, champs_in, counted, cs, filter_games, form_of, is_remake, kda, merge_games, n, queues_in, win, Game, HistoryFilter, Participant};
+use crate::history::{versus, toggle_pin, goal_text, next_goal, insights, Slot, streak, by_queue, champs_in, counted, cs, filter_games, form_of, is_remake, kda, merge_games, n, queues_in, win, Game, HistoryFilter, Participant};
 use crate::lol::*;
 use crate::text::*;
 use crate::{good, ms, on_ui, opt, spawn, ss, stat, store, with_app, App};
-use crate::{Badge, Cell, ChartData, ChartSeries, AxisLabel, Col, LpData, LpPoint, MatchPage, MatchRow, ObjTeam, Perf, PlayerChip, ProfileData, RankRow, Score, ShareData, TRow};
+use crate::{Versus, Badge, Cell, ChartData, ChartSeries, AxisLabel, Col, LpData, LpPoint, MatchPage, MatchRow, ObjTeam, Perf, PlayerChip, ProfileData, RankRow, Score, ShareData, TRow};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use slint::{Color, Model, ModelRc, VecModel};
@@ -404,6 +404,20 @@ pub fn render(a: &mut App, rebuild_rows: bool) {
         session_strip: ms(today.iter().take(12).rev().map(|g| win(g.me())).collect()),
         session_note: ss(session_note),
         goal_text: ss(goal_text(settings.session_goal, tw)),
+        versus_title: ss(if own { String::new() } else { format!("Toi face à {}", st.sum.game_name) }),
+        versus: ms(if own {
+            Vec::new()
+        } else {
+            let mut own_games: Vec<Game> = crate::store::keys_with("rw-games-")
+                .iter()
+                .filter_map(|k| crate::store::load::<Vec<Game>>(k))
+                .max_by_key(|l| l.iter().map(|g| g.game_creation).max().unwrap_or(0))
+                .unwrap_or_default();
+            own_games.retain(|g| !is_remake(g));
+            let mine: Vec<&Game> = own_games.iter().collect();
+            let theirs: Vec<&Game> = games.iter().filter(|g| !is_remake(g)).collect();
+            versus(&mine, &theirs, &|id| cname(id)).into_iter().map(|(label, me, them)| Versus { label: ss(label), mine: ss(me), theirs: ss(them) }).collect()
+        }),
         pin_label: ss(match st.puuid.as_deref() {
             Some(puuid) => {
                 let pinned: Vec<Value> = crate::store::load("rw-pinned").unwrap_or_default();

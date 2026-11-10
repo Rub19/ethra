@@ -474,6 +474,23 @@ export component ProfilePage inherits Rectangle {
                             for r in Data.profile.ranks: RankView { r: r; }
                         }
                     }
+                    if Data.profile.versus.length > 0: Card {
+                        VerticalLayout {
+                            padding: 16px;
+                            spacing: 6px;
+                            CardTitle { text: Data.profile.versus-title; }
+                            HorizontalLayout {
+                                Small { text: ""; horizontal-stretch: 1; }
+                                Small { text: "Toi"; width: 90px; horizontal-alignment: right; }
+                                Small { text: "Lui"; width: 90px; horizontal-alignment: right; }
+                            }
+                            for v in Data.profile.versus: HorizontalLayout {
+                                Small { text: v.label; horizontal-stretch: 1; }
+                                T { text: v.mine; width: 90px; horizontal-alignment: right; font-size: 14px; }
+                                T { text: v.theirs; width: 90px; horizontal-alignment: right; font-size: 14px; }
+                            }
+                        }
+                    }
                     if Data.profile.insights.length > 0: Card {
                         VerticalLayout {
                             padding: 16px;

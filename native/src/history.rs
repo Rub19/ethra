@@ -314,6 +314,32 @@ pub struct Slot {
     pub weekday: u32,
 }
 
+pub fn versus(mine: &[&Game], theirs: &[&Game], champ: &dyn Fn(i64) -> String) -> Vec<(String, String, String)> {
+    if mine.is_empty() || theirs.is_empty() {
+        return Vec::new();
+    }
+    let rate = |l: &[&Game]| format!("{} %", (l.iter().filter(|g| win(g.me())).count() as f64 / l.len() as f64 * 100.0).round());
+    let kda_of = |l: &[&Game]| format!("{:.2}", l.iter().map(|g| kda(&g.me().stats)).sum::<f64>() / l.len() as f64);
+    let cs_of = |l: &[&Game]| format!("{:.1}", l.iter().map(|g| cs(&g.me().stats) / (g.game_duration as f64 / 60.0).max(1.0)).sum::<f64>() / l.len() as f64);
+    let fav = |l: &[&Game]| {
+        let mut counts: Vec<(i64, usize)> = Vec::new();
+        for g in l {
+            match counts.iter_mut().find(|c| c.0 == g.me().champion_id) {
+                Some(c) => c.1 += 1,
+                None => counts.push((g.me().champion_id, 1)),
+            }
+        }
+        counts.into_iter().max_by_key(|c| c.1).map(|c| champ(c.0)).unwrap_or_default()
+    };
+    vec![
+        ("Parties".to_string(), mine.len().to_string(), theirs.len().to_string()),
+        ("Taux de victoire".to_string(), rate(mine), rate(theirs)),
+        ("KDA moyen".to_string(), kda_of(mine), kda_of(theirs)),
+        ("CS par minute".to_string(), cs_of(mine), cs_of(theirs)),
+        ("Champion favori".to_string(), fav(mine), fav(theirs)),
+    ]
+}
+
 pub const PINS: usize = 10;
 
 pub fn toggle_pin(list: &mut Vec<Value>, puuid: &str, name: &str) -> bool {
@@ -422,6 +448,27 @@ pub fn streak<I: IntoIterator<Item = bool>>(results: I) -> Option<(bool, usize)>
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn two_profiles_compare_line_by_line() {
+        let game = |won: bool, champ: i64, kills: f64| {
+            let mut stats = Map::new();
+            stats.insert("win".into(), Value::Bool(won));
+            stats.insert("kills".into(), kills.into());
+            stats.insert("deaths".into(), 1.0.into());
+            Game { game_duration: 1800, participants: vec![Participant { champion_id: champ, stats, ..Default::default() }], ..Default::default() }
+        };
+        let a = [game(true, 1, 4.0), game(false, 1, 2.0)];
+        let b = [game(true, 2, 6.0)];
+        let mine: Vec<&Game> = a.iter().collect();
+        let theirs: Vec<&Game> = b.iter().collect();
+        let lines = versus(&mine, &theirs, &|c| format!("C{c}"));
+        assert_eq!(lines[0], ("Parties".into(), "2".into(), "1".into()));
+        assert_eq!(lines[1], ("Taux de victoire".into(), "50 %".into(), "100 %".into()));
+        assert_eq!(lines[2], ("KDA moyen".into(), "3.00".into(), "6.00".into()));
+        assert_eq!(lines[4], ("Champion favori".into(), "C1".into(), "C2".into()));
+        assert!(versus(&[], &theirs, &|_| String::new()).is_empty());
+    }
 
     #[test]
     fn pins_toggle_and_stay_short() {

@@ -185,7 +185,7 @@ Toutes les clés `rw-*` : `rw-settings`, `rw-recent`, `rw-game`, `rw-route-*`, `
 - [x] 10. Filtre de période sur l'historique (toute période, aujourd'hui, 7 jours, 30 jours ; test the_period_filter_keeps_recent_games), vu dans le parcours e2e à 75 étapes. Le filtre par champion existait déjà ; par joueur, impossible : l'historique du client ne contient que ton joueur
 - [x] 11. Note personnelle sur une partie, champ sous le résumé de la partie, gardée sur ce PC (rw-note-<partie>), saisie dans le parcours e2e et relue dans store.json
 - [x] 12. Joueurs épinglés : « Épingler ce joueur » sur le profil d'un autre joueur, en tête de la recherche (10 au plus, test pins_toggle_and_stay_short), vu dans le parcours e2e à 89 étapes ; sans leur rang (il faudrait interroger chaque profil à l'ouverture de la recherche)
-- [ ] 13. Comparer deux profils côte à côte
+- [x] 13. Comparer deux profils : carte « Toi face à … » sur le profil d'un autre joueur (parties, taux de victoire, KDA, CS par minute, champion favori ; tes parties gardées sur ce PC ; test two_profiles_compare_line_by_line), vue dans le parcours e2e à 90 étapes
 - [x] 14. VALORANT : RR gagnés ou perdus par carte, colonne « RR » de l'onglet Cartes (le taux de victoire par carte existait déjà) ; même code que l'onglet Rôles vu dans le parcours e2e à 60 étapes
 - [x] 15. VALORANT : RR par agent, colonne « RR » de l'onglet Agents (la précision par arme n'est pas dans les données de Riot, seulement la précision globale, déjà affichée)
 - [x] 16. VALORANT : onglet « Rôles » du profil (parties, taux de victoire, K/D, ACS, ADR, HS, manches, RR par rôle), vu dans le parcours e2e à 60 étapes

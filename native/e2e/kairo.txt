@@ -49,6 +49,7 @@ waitfor Épingler ce joueur|20000
 click Épingler ce joueur
 expect épinglé
 expect Retirer des épinglés
+expect Toi face à Joueur3
 snap 02b-epingle
 key Alt+Left
 wait 800
