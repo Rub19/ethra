@@ -439,6 +439,11 @@ export component ProfilePage inherits Rectangle {
                                 item-width: 14px;
                                 align: LayoutAlignment.center;
                             }
+                            if Data.profile.session-note != "": Small {
+                                text: Data.profile.session-note;
+                                color: Theme.loss;
+                                wrap: word-wrap;
+                            }
                         }
                     }
                     Card {

@@ -1,4 +1,4 @@
-use crate::history::{by_queue, champs_in, counted, cs, filter_games, form_of, is_remake, kda, merge_games, n, queues_in, win, Game, HistoryFilter, Participant};
+use crate::history::{streak, by_queue, champs_in, counted, cs, filter_games, form_of, is_remake, kda, merge_games, n, queues_in, win, Game, HistoryFilter, Participant};
 use crate::lol::*;
 use crate::text::*;
 use crate::{good, ms, on_ui, opt, spawn, ss, stat, store, with_app, App};
@@ -324,6 +324,13 @@ pub fn render(a: &mut App, rebuild_rows: bool) {
     if let Some(dl) = delta {
         session.push(stat(format!("{} LP", signed(dl)), "Solo/Duo", good(dl >= 0)));
     }
+    let mut recent: Vec<&Game> = games.iter().filter(|g| !is_remake(g)).collect();
+    recent.sort_by_key(|g| std::cmp::Reverse(g.game_creation));
+    let run = streak(recent.iter().map(|g| win(g.me())));
+    let session_note = match run {
+        Some((false, count)) if count >= 3 => format!("{count} défaites d'affilée : une pause de 10 minutes aide souvent à repartir."),
+        _ => String::new(),
+    };
     let session_copy = format!("Session du jour : {tw}V {}D ({} %), KDA {tkda:.2}{}", today.len() - tw, (twr * 100.0).round(), delta.map(|x| format!(", {} LP", signed(x))).unwrap_or_default());
     let queue_label = |k: i64| st.queues.get(&k).cloned().unwrap_or_else(|| format!("File {k}"));
     let mut queue_opts = vec![opt("q:0", "Tous les modes", st.filter.queue == 0)];
@@ -390,6 +397,7 @@ pub fn render(a: &mut App, rebuild_rows: bool) {
         session_empty: today.is_empty(),
         session: ms(session),
         session_strip: ms(today.iter().take(12).rev().map(|g| win(g.me())).collect()),
+        session_note: ss(session_note),
         ranks: ms(ranks),
         has_lp: st.lp.len() > 1,
         lp: lp_data(&st.lp),

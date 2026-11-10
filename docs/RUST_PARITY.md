@@ -47,7 +47,8 @@ Bugs du 8 novembre :
 ## src/buildData.ts
 
 - [x] `riotBuild`, `myBuild`, `bestBuild`, `pageName`
-- [x] `applyBuild` : page de runes, sorts, item set (porté, pas essayé en vrai)
+- [x] `applyBuild` : page de runes, sorts, item set
+ (porté, pas essayé en vrai)
 
 ## src/valoApi.ts
 
@@ -103,7 +104,8 @@ Bugs du 8 novembre :
 - [v] sources OP.GG, tes parties, reco Riot avec repli
 - [v] Faille et ARAM, rôles, filtre de rang, mode compact
 - [v] runes, sorts, options d'objets, ordre des compétences avec variantes, matchups
-- [x] interrupteurs d'import auto, bouton « Importer dans le client » (porté, pas essayé en vrai)
+- [x] interrupteurs d'import auto, bouton « Importer dans le client »
+ (porté, pas essayé en vrai)
 - [x] `route`, carte et étapes de la jungle, équipe et départ
 
 ## src/Champions.tsx, src/TierList.tsx
@@ -135,8 +137,10 @@ Bugs du 8 novembre :
 
 ## src/Updater.tsx
 
-- [x] vérification toutes les 30 min, repli sur GitHub, téléchargement avec progression, signature minisign, installation (porté, pas essayé en vrai)
-- [x] « Plus tard », erreur et page de téléchargement (porté, pas essayé en vrai)
+- [x] vérification toutes les 30 min, repli sur GitHub, téléchargement avec progression, signature minisign, installation
+ (porté, pas essayé en vrai)
+- [x] « Plus tard », erreur et page de téléchargement
+ (porté, pas essayé en vrai)
 
 ## src/Valo.tsx
 
@@ -169,8 +173,8 @@ Toutes les clés `rw-*` : `rw-settings`, `rw-recent`, `rw-game`, `rw-route-*`, `
 
 `[ ]` à faire, `[x]` fait et vérifié (tests ou parcours e2e), avec la preuve dans « Fait ensuite » ou ici.
 
-- [ ] 1. Série en cours (victoires ou défaites d'affilée) dans la session du jour
-- [ ] 2. Conseil de pause après 3 défaites d'affilée (réglable, désactivable)
+- [ ] 1. Champions à éviter : pires taux de victoire récents (au moins 3 parties). La série en cours existait déjà (« 2 victoires de suite » dans la carte des dernières parties)
+- [~] 2. Conseil de pause après 3 défaites d'affilée, sous la session du jour (fonction `streak`, test `streak_counts_the_latest_run`). Pas encore réglable ni désactivable, pas vu à l'écran : le jeu d'essai finit sur des victoires
 - [ ] 3. Objectif de session : nombre de victoires ou LP visés, avec suivi
 - [ ] 4. Taux de victoire par heure de la journée
 - [ ] 5. Taux de victoire par jour de la semaine

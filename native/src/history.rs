@@ -305,9 +305,23 @@ pub fn tft_queue(id: i64) -> &'static str {
     }
 }
 
+pub fn streak<I: IntoIterator<Item = bool>>(results: I) -> Option<(bool, usize)> {
+    let mut list = results.into_iter();
+    let first = list.next()?;
+    Some((first, 1 + list.take_while(|result| *result == first).count()))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn streak_counts_the_latest_run() {
+        assert_eq!(streak([true, true, false, true]), Some((true, 2)));
+        assert_eq!(streak([false, false, false]), Some((false, 3)));
+        assert_eq!(streak([false, true]), Some((false, 1)));
+        assert_eq!(streak(std::iter::empty()), None);
+    }
     use serde_json::json;
 
     fn game(id: i64, queue: i64, champ: i64, won: bool, duration: i64) -> Game {
