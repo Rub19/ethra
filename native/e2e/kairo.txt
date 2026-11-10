@@ -19,6 +19,13 @@ scrollto 13V - 0D|300,700
 expect 13V - 0D
 click Défaites
 click Toutes
+click Toute période
+click Aujourd'hui
+wait 600
+absent il y a 1 j
+snap 01c-aujourdhui
+click Aujourd'hui
+click Toute période
 click Tous les modes
 click Draft
 absent Tous les modes

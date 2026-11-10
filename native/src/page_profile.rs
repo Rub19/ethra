@@ -17,6 +17,7 @@ const SMITE: i64 = 11;
 #[derive(Default)]
 pub struct ProfileState {
     pub puuid: Option<String>,
+    pub period: i64,
     pub sum: Summoner,
     pub ranks: HashMap<String, Queue>,
     pub games: Option<Vec<Game>>,
@@ -343,6 +344,7 @@ pub fn render(a: &mut App, rebuild_rows: bool) {
         let name = cname(c);
         opt(format!("c:{c}"), if name.is_empty() { c.to_string() } else { name }, st.filter.champ == c)
     }));
+    let periods = [(0i64, "Toute période"), (1, "Aujourd'hui"), (7, "7 jours"), (30, "30 jours")].iter().map(|(k, l)| opt(format!("p:{k}"), l, st.period == *k)).collect();
     let results = [("", "Toutes"), ("win", "Victoires"), ("loss", "Défaites")].iter().map(|(k, l)| opt(format!("r:{k}"), l, st.filter.result == *k)).collect();
     let ranks = [("RANKED_SOLO_5x5", "Classé Solo/Duo"), ("RANKED_FLEX_SR", "Classé Flex"), ("CHERRY", "Arena")]
         .iter()
@@ -394,6 +396,8 @@ pub fn render(a: &mut App, rebuild_rows: bool) {
         champ_label: ss(if st.filter.champ == 0 { "Tous les champions".to_string() } else { cname(st.filter.champ) }),
         champ_opts: ms(champ_opts),
         results: ms(results),
+        periods: ms(periods),
+        period_label: ss(match st.period { 1 => "Aujourd'hui", 7 => "7 jours", 30 => "30 jours", _ => "Toute période" }),
         show_session: own,
         session_empty: today.is_empty(),
         session: ms(session),
@@ -862,6 +866,16 @@ pub fn action(a: &mut App, key: &str) -> bool {
         render(a, true);
     } else if let Some(k) = key.strip_prefix("c:") {
         a.profile.filter.champ = k.parse().unwrap_or(0);
+        a.profile.visible = PAGE;
+        render(a, true);
+    } else if let Some(k) = key.strip_prefix("p:") {
+        let days: i64 = k.parse().unwrap_or(0);
+        a.profile.period = days;
+        a.profile.filter.since = match days {
+            0 => 0,
+            1 => midnight_ms(),
+            n => chrono::Utc::now().timestamp_millis() - n * 86_400_000,
+        };
         a.profile.visible = PAGE;
         render(a, true);
     } else if let Some(k) = key.strip_prefix("r:") {

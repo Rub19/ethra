@@ -11,7 +11,7 @@ export struct LpPoint { x: float, y: float, tip: string }
 export struct LpData { total: string, tone: int, span: string, path: string, points: [LpPoint] }
 export struct ProfileData {
     loading: bool, error: string, splash: string, avatar: string, level: string, name: string, tag: string, quick: [Stat],
-    sub: string, tabs: [Opt], show-filters: bool, queue-label: string, queue-opts: [Opt], champ-label: string, champ-opts: [Opt], results: [Opt],
+    sub: string, tabs: [Opt], show-filters: bool, queue-label: string, queue-opts: [Opt], champ-label: string, champ-opts: [Opt], results: [Opt], periods: [Opt], period-label: string,
     show-session: bool, session-empty: bool, session: [Stat], session-strip: [bool], session-note: string, insights: [string], goal-text: string,
     ranks: [RankRow], has-lp: bool, lp: LpData,
     recent-title: string, wr: float, wr-text: string, form-line: string, form-tone: int, form-strip: [bool], kda-line: string, perfs: [Perf],

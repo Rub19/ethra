@@ -4,6 +4,7 @@
 mod e2e;
 mod build_data;
 mod history;
+mod hotkey;
 mod images;
 mod jungle;
 mod lol;
@@ -568,6 +569,9 @@ fn main() {
     poll_lcu();
     page_valo::poll();
     overlay::start();
+    if !offscreen() {
+        hotkey::start();
+    }
     update::start();
     let rev = slint::Timer::default();
     rev.start(slint::TimerMode::Repeated, Duration::from_millis(80), || {

@@ -94,6 +94,7 @@ pub struct HistoryFilter {
     pub result: String,
     pub queue: i64,
     pub champ: i64,
+    pub since: i64,
 }
 
 pub fn filter_games(games: &[Game], f: &HistoryFilter) -> Vec<Game> {
@@ -105,6 +106,9 @@ pub fn filter_games(games: &[Game], f: &HistoryFilter) -> Vec<Game> {
                 return false;
             }
             if f.champ != 0 && p.champion_id != f.champ {
+                return false;
+            }
+            if f.since != 0 && g.game_creation < f.since {
                 return false;
             }
             if !f.result.is_empty() && (is_remake(g) || (f.result == "win") != win(p)) {
@@ -408,6 +412,14 @@ mod tests {
     use super::*;
 
     #[test]
+    fn the_period_filter_keeps_recent_games() {
+        let list = vec![Game { game_creation: 100, game_duration: 1800, ..Default::default() }, Game { game_creation: 900, game_duration: 1800, ..Default::default() }];
+        let kept = filter_games(&list, &HistoryFilter { since: 500, ..Default::default() });
+        assert_eq!(kept.iter().map(|g| g.game_creation).collect::<Vec<_>>(), vec![900]);
+        assert_eq!(filter_games(&list, &HistoryFilter::default()).len(), 2);
+    }
+
+    #[test]
     fn session_goals_cycle_and_report() {
         assert_eq!(next_goal(0), 2);
         assert_eq!(next_goal(5), 0);
@@ -482,7 +494,7 @@ mod tests {
     fn filters() {
         let g = games();
         assert_eq!(counted(&g).iter().map(|x| x.game_id).collect::<Vec<_>>(), vec![1, 2, 3]);
-        let f = |result: &str, queue, champ| ids(&filter_games(&g, &HistoryFilter { result: result.into(), queue, champ }));
+        let f = |result: &str, queue, champ| ids(&filter_games(&g, &HistoryFilter { result: result.into(), queue, champ, since: 0 }));
         assert_eq!(f("", 0, 0), vec![1, 2, 3, 4]);
         assert_eq!(f("win", 0, 0), vec![1]);
         assert_eq!(f("loss", 0, 0), vec![2, 3]);

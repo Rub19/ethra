@@ -182,7 +182,7 @@ Toutes les clés `rw-*` : `rw-settings`, `rw-recent`, `rw-game`, `rw-route-*`, `
 - [x] 7. Plus longues séries de victoires et de défaites (les coéquipiers ne sont pas dans l'historique du client, seulement dans le détail de chaque partie) : carte « Tendances » du profil (test insights_come_from_kept_games), vue dans le parcours e2e à 56 étapes
 - [x] 8. Durée moyenne des victoires et des défaites (même raison que 7) : carte « Tendances » du profil (test insights_come_from_kept_games), vue dans le parcours e2e à 56 étapes
 - [x] 9. KDA des dernières parties : existait déjà (« KDA sur les 5 dernières, sur les 5 d'avant » dans la carte des dernières parties)
-- [ ] 10. Recherche dans l'historique par champion ou par joueur
+- [x] 10. Filtre de période sur l'historique (toute période, aujourd'hui, 7 jours, 30 jours ; test the_period_filter_keeps_recent_games), vu dans le parcours e2e à 75 étapes. Le filtre par champion existait déjà ; par joueur, impossible : l'historique du client ne contient que ton joueur
 - [x] 11. Note personnelle sur une partie, champ sous le résumé de la partie, gardée sur ce PC (rw-note-<partie>), saisie dans le parcours e2e et relue dans store.json
 - [ ] 12. Joueurs suivis : liste épinglée avec leur rang
 - [ ] 13. Comparer deux profils côte à côte
@@ -191,5 +191,5 @@ Toutes les clés `rw-*` : `rw-settings`, `rw-recent`, `rw-game`, `rw-route-*`, `
 - [x] 16. VALORANT : onglet « Rôles » du profil (parties, taux de victoire, K/D, ACS, ADR, HS, manches, RR par rôle), vu dans le parcours e2e à 60 étapes
 - [~] 17. VALORANT : « Exporter mes parties VALORANT » dans Réglages, CSV des parties chargées (test valorant_csv_escapes_and_has_a_header) ; pas cliqué dans le parcours (fenêtre d'enregistrement de Windows)
 - [x] 18. TFT : place moyenne par trait et par unité, existait déjà (« Tes traits les plus joués », « place moy. »)
-- [ ] 19. Raccourci global pour montrer ou cacher l'overlay
+- [~] 19. Raccourci global Ctrl+Maj+O pour montrer ou cacher les overlays (RegisterHotKey, message rappelant le raccourci, rappel sur la page Overlays) ; pas essayé : il faudrait appuyer sur les touches du PC
 - [ ] 20. Mini fenêtre de session toujours devant

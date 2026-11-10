@@ -400,6 +400,11 @@ export component ProfilePage inherits Rectangle {
                         label: Data.profile.champ-label;
                         options: Data.profile.champ-opts;
                     }
+                    Select {
+                        width: 150px;
+                        label: Data.profile.period-label;
+                        options: Data.profile.periods;
+                    }
                     Seg {
                         options: Data.profile.results;
                         fsize: 13.5px;
@@ -2263,7 +2268,7 @@ export component OverlaysView inherits Rectangle {
                         clicked => { Act.act("ov:ovEnabled"); }
                     }
                     at := Text {
-                        text: Data.overlays.enabled ? "Overlays activés" : "Overlays désactivés";
+                        text: (Data.overlays.enabled ? "Overlays activés" : "Overlays désactivés") + "  ·  Ctrl+Maj+O";
                         font-weight: 700;
                         color: Data.overlays.enabled ? Theme.teal : Theme.muted;
                     }
