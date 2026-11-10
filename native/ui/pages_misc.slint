@@ -381,7 +381,7 @@ export component TftDecksView inherits Rectangle {
             sub: Data.tft-decks.sub;
             text: Data.tft-decks.text;
         }
-        if Data.tft-decks.error != "": Empty { title: "Données TFT indisponibles"; text: Data.tft-decks.error; }
+        if Data.tft-decks.error != "": Empty { title: "Données TFT indisponibles"; text: Data.tft-decks.error; button: "Réessayer"; key: "retry"; }
         if Data.tft-decks.loading && Data.tft-decks.error == "": Skeleton { rows: 4; row-height: 200px; }
         if !Data.tft-decks.loading && Data.tft-decks.error == "": grid := Rectangle {
             property <int> cols: max(1, floor((self.width + 16px) / 636px));

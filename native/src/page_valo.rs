@@ -430,7 +430,7 @@ fn tier_rank(d: &VD, tier: i64, rr: Option<i64>, label: &str, sub: String) -> Ra
 
 pub fn render_profile(a: &mut App, rows_too: bool) {
     if !a.valo.err.is_empty() {
-        a.data().set_vprofile(VProfileData { error: ss(&a.valo.err), ..Default::default() });
+        a.data().set_vprofile(VProfileData { error: ss(crate::text::friendly_error(&a.valo.err)), ..Default::default() });
         return;
     }
     let Some(d) = a.valo.d.clone() else { return };
@@ -600,7 +600,7 @@ pub fn open_match(a: &mut App, id: String, puuid: String) {
                     ask_names(a, names);
                     render_match(a);
                 }
-                (Err(e), _) | (_, Err(e)) => a.data().set_vmatch(VMatchData { error: ss(e), ..Default::default() }),
+                (Err(e), _) | (_, Err(e)) => a.data().set_vmatch(VMatchData { error: ss(crate::text::friendly_error(&e)), ..Default::default() }),
             }
         });
     });
@@ -800,7 +800,7 @@ pub fn open_agents(a: &mut App) {
                     a.valo.patch = r["meta"]["gameVersion"].as_str().map(String::from).or(r["meta"]["gameVersion"].as_f64().map(|x| x.to_string())).unwrap_or_default();
                     render_agents(a);
                 }
-                (Err(e), _) | (_, Err(e)) => a.data().set_vagents(VAgentsData { error: ss(e), ..Default::default() }),
+                (Err(e), _) | (_, Err(e)) => a.data().set_vagents(VAgentsData { error: ss(crate::text::friendly_error(&e)), ..Default::default() }),
             }
         });
     });

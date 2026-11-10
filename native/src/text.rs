@@ -1,5 +1,31 @@
 use chrono::{Datelike, Local, TimeZone, Timelike};
 
+pub fn friendly_error(raw: &str) -> String {
+    let raw = raw.trim();
+    let lower = raw.to_lowercase();
+    let code = raw.split_whitespace().next().and_then(|word| word.parse::<u16>().ok());
+    let message = if raw.starts_with("VALO_CLOSED") {
+        "VALORANT n'est pas lancé : ouvre le jeu puis réessaie."
+    } else if raw == "LECTURE_SEULE" {
+        "Mode lecture seule : cette action est désactivée."
+    } else if raw.starts_with("OPGG") {
+        "OP.GG ne répond pas pour l'instant."
+    } else {
+        match code {
+            Some(401 | 403) => "Session Riot expirée : relance le client ou le jeu.",
+            Some(404) => "Riot n'a pas ces données pour ce compte ou cette file.",
+            Some(429) => "Riot limite les requêtes : attends quelques secondes.",
+            Some(500..=599) => "Les serveurs Riot ont un souci, réessaie plus tard.",
+            _ if ["error sending request", "connect", "timed out", "dns", "connexion"].iter().any(|word| lower.contains(word)) => "Pas de réseau ou serveur injoignable.",
+            _ => return raw.to_string(),
+        }
+    };
+    match code {
+        Some(code) => format!("{message} (erreur {code})"),
+        None => message.to_string(),
+    }
+}
+
 pub fn fr(v: i64) -> String {
     let s = v.abs().to_string();
     let mut out = String::new();
@@ -109,5 +135,20 @@ mod tests {
         assert_eq!(mmss(125.9), "2:05");
         assert_eq!(signed(3), "+3");
         assert_eq!(fold("Élise Çà"), "elise ca");
+    }
+}
+
+#[cfg(test)]
+mod friendly_error_tests {
+    use super::friendly_error;
+
+    #[test]
+    fn riot_errors_become_sentences() {
+        assert_eq!(friendly_error("404 valo:pd:/match-history/v1/history/vme"), "Riot n'a pas ces données pour ce compte ou cette file. (erreur 404)");
+        assert_eq!(friendly_error("401 {\"error\":\"expired\"}"), "Session Riot expirée : relance le client ou le jeu. (erreur 401)");
+        assert_eq!(friendly_error("VALO_CLOSED lockfile"), "VALORANT n'est pas lancé : ouvre le jeu puis réessaie.");
+        assert_eq!(friendly_error("error sending request for url (https://pd.eu.a.pvp.net)"), "Pas de réseau ou serveur injoignable.");
+        assert_eq!(friendly_error("OPGG {}"), "OP.GG ne répond pas pour l'instant.");
+        assert_eq!(friendly_error("Joueur absent de cette partie."), "Joueur absent de cette partie.");
     }
 }

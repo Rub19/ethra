@@ -391,7 +391,7 @@ pub fn open_tft_decks(a: &mut App) {
                     a.tft.decks = Some(r);
                     render_decks(a);
                 }
-                (Err(e), _) | (_, Err(e)) => a.data().set_tft_decks(TftDecksData { error: ss(e), ..Default::default() }),
+                (Err(e), _) | (_, Err(e)) => a.data().set_tft_decks(TftDecksData { error: ss(crate::text::friendly_error(&e)), ..Default::default() }),
             }
         });
     });
@@ -506,7 +506,7 @@ pub fn open_tft_profile(a: &mut App) {
                     a.d = Some(dd);
                     render_tft_profile(a);
                 }
-                Err(e) => a.data().set_tft_profile(TftProfileData { error: ss(e), ..Default::default() }),
+                Err(e) => a.data().set_tft_profile(TftProfileData { error: ss(crate::text::friendly_error(&e)), ..Default::default() }),
             }
         });
     });

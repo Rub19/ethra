@@ -217,7 +217,7 @@ pub fn open_profile(a: &mut App, puuid: Option<String>) {
                 }
                 Err(e) => {
                     a.profile.err = e.clone();
-                    a.data().set_profile(ProfileData { error: ss(e), ..Default::default() });
+                    a.data().set_profile(ProfileData { error: ss(crate::text::friendly_error(&e)), ..Default::default() });
                 }
             }
         });
@@ -506,7 +506,7 @@ pub fn open_match(a: &mut App, game_id: i64, puuid: String) {
                     a.match_.queues = q;
                     render_match(a);
                 }
-                Err(e) => a.data().set_match(MatchPage { error: ss(e), ..Default::default() }),
+                Err(e) => a.data().set_match(MatchPage { error: ss(crate::text::friendly_error(&e)), ..Default::default() }),
             }
         });
     });

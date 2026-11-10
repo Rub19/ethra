@@ -1,4 +1,4 @@
-param([string]$Script = "kairo.txt", [string]$Phase = "None", [string]$ValoPhase = "MENUS")
+param([string]$Script = "kairo.txt", [string]$Phase = "None", [string]$ValoPhase = "MENUS", [string]$Remove = "")
 $ErrorActionPreference = "Stop"
 Set-Location (Split-Path $PSScriptRoot)
 if (Get-Process "League of Legends","VALORANT-Win64" -ErrorAction SilentlyContinue) { "Un jeu est ouvert : rien n'est lancé."; exit 2 }
@@ -10,6 +10,7 @@ $out = Join-Path $env:TEMP "kairo-e2e"
 Remove-Item -Recurse -Force $out -ErrorAction SilentlyContinue
 New-Item -ItemType Directory "$out\donnees", "$out\captures" | Out-Null
 python -I tools\fixture.py "$out\jeu-essai.json" $Phase $ValoPhase
+if ($Remove) { python -I -c "import json,re,sys; p=sys.argv[1]; d=json.load(open(p,encoding='utf8')); json.dump({k:v for k,v in d.items() if not re.search(sys.argv[2],k)},open(p,'w',encoding='utf8'))" "$out\jeu-essai.json" $Remove }
 $env:KAIRO_FAKE = "$out\jeu-essai.json"
 $env:KAIRO_DATA_DIR = "$out\donnees"
 $env:KAIRO_READONLY = "1"

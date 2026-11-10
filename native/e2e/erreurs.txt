@@ -1,0 +1,11 @@
+# À lancer avec -Remove "match-history/v1/history/vme" : historique VALORANT absent du jeu d'essai
+wait 3000
+key Ctrl+2
+waitfor Profil VALORANT indisponible|20000
+expect Riot n'a pas ces données pour ce compte ou cette file. (erreur 404)
+absent valo:pd:
+snap erreur-valo
+click Réessayer
+waitfor Profil VALORANT indisponible|20000
+key Ctrl+1
+waitfor Testeur|20000

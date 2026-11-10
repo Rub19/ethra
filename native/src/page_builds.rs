@@ -59,7 +59,7 @@ pub fn open_tier(a: &mut App) {
                     a.tier.rows = Some(rows);
                     render_tier(a);
                 }
-                Err(e) => a.data().set_tier(TierData { error: ss(e), ..Default::default() }),
+                Err(e) => a.data().set_tier(TierData { error: ss(crate::text::friendly_error(&e)), ..Default::default() }),
             }
         });
     });

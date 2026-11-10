@@ -239,6 +239,7 @@ impl App {
     pub fn reload(&mut self) {
         self.key.clear();
         self.refresh_view();
+        self.ui.invoke_restore_focus();
     }
 
     pub fn render_tabs(&self) {

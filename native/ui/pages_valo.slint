@@ -209,7 +209,7 @@ export component VProfileView inherits Rectangle {
             padding-bottom: 22px;
             Notice { title: Data.notice-title; text: Data.notice-text; }
         }
-        if Data.vprofile.error != "": Empty { text: Data.vprofile.error; }
+        if Data.vprofile.error != "": Empty { title: "Profil VALORANT indisponible"; text: Data.vprofile.error; button: "Réessayer"; key: "retry"; }
         if Data.vprofile.loading && Data.vprofile.error == "": Skeleton { rows: 7; }
         if !Data.vprofile.loading && Data.vprofile.error == "": VerticalLayout {
             spacing: 6px;
@@ -448,7 +448,7 @@ export component VMatchView inherits Rectangle {
     Page {
         width: 100%;
         height: 100%;
-        if Data.vmatch.error != "": Empty { text: Data.vmatch.error; }
+        if Data.vmatch.error != "": Empty { title: "Partie indisponible"; text: Data.vmatch.error; button: "Réessayer"; key: "retry"; }
         if Data.vmatch.loading && Data.vmatch.error == "": Skeleton { rows: 10; }
         if !Data.vmatch.loading && Data.vmatch.error == "": VerticalLayout {
             spacing: 16px;
@@ -839,7 +839,7 @@ export component VAgentsView inherits Rectangle {
             sub: Data.vagents.sub;
             text: "Statistiques mondiales fournies par OP.GG. Le tier est calculé sur le winrate : les 15 % meilleurs agents sont en S. La part des choix indique la proportion de joueurs qui prennent l'agent.";
         }
-        if Data.vagents.error != "": Empty { title: "OP.GG ne répond pas"; text: Data.vagents.error; }
+        if Data.vagents.error != "": Empty { title: "OP.GG ne répond pas"; text: Data.vagents.error; button: "Réessayer"; key: "retry"; }
         if Data.vagents.loading && Data.vagents.error == "": Skeleton { rows: 10; row-height: 56px; }
         if !Data.vagents.loading && Data.vagents.error == "": VerticalLayout {
             spacing: 16px;
