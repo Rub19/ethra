@@ -837,6 +837,32 @@ component UpdateCorner inherits Rectangle {
     }
 }
 
+export component MiniWindow inherits Window {
+    in property <string> record;
+    in property <string> rate;
+    in property <string> kda;
+    in property <string> lp;
+    in property <string> goal;
+    title: "Kairo · session";
+    always-on-top: true;
+    width: 280px;
+    height: 132px;
+    background: Theme.bg;
+    VerticalLayout {
+        padding: 14px;
+        spacing: 6px;
+        Small { text: "Session du jour"; }
+        HorizontalLayout {
+            spacing: 14px;
+            T { text: root.record; font-size: 22px; font-weight: 700; }
+            T { text: root.kda + " KDA"; font-size: 16px; vertical-alignment: center; }
+            if root.lp != "": T { text: root.lp; font-size: 16px; color: Theme.teal; vertical-alignment: center; }
+        }
+        Small { text: root.rate; }
+        if root.goal != "": Small { text: root.goal; }
+    }
+}
+
 export component ShareWindow inherits Window {
     no-frame: true;
     background: #0e1220;

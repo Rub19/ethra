@@ -41,6 +41,41 @@ pub struct LpPt {
     pub v: i64,
 }
 
+thread_local! {
+    static MINI: std::cell::RefCell<Option<crate::MiniWindow>> = const { std::cell::RefCell::new(None) };
+}
+
+fn fill_mini(record: &str, rate: &str, kda: &str, lp: &str, goal: &str) {
+    MINI.with(|m| {
+        if let Some(w) = m.borrow().as_ref() {
+            w.set_record(ss(record));
+            w.set_rate(ss(rate));
+            w.set_kda(ss(kda));
+            w.set_lp(ss(lp));
+            w.set_goal(ss(goal));
+        }
+    });
+}
+
+fn toggle_mini() -> bool {
+    use slint::ComponentHandle;
+    MINI.with(|m| {
+        let mut slot = m.borrow_mut();
+        if let Some(w) = slot.take() {
+            let _ = w.hide();
+            return false;
+        }
+        match crate::MiniWindow::new() {
+            Ok(w) => {
+                let _ = w.show();
+                *slot = Some(w);
+                true
+            }
+            Err(_) => false,
+        }
+    })
+}
+
 fn keep_games(puuid: &str, fresh: Vec<Game>) -> Vec<Game> {
     let key = format!("rw-games-{puuid}");
     let kept: Vec<Game> = store::load(&key).unwrap_or_default();
@@ -333,6 +368,15 @@ pub fn render(a: &mut App, rebuild_rows: bool) {
         Some((false, count)) if count >= 3 && settings.tilt_advice => format!("{count} défaites d'affilée : une pause de 10 minutes aide souvent à repartir."),
         _ => String::new(),
     };
+    if own {
+        fill_mini(
+            &format!("{tw}V {}D", today.len() - tw),
+            &format!("{} % de victoires aujourd'hui", (twr * 100.0).round()),
+            &format!("{tkda:.2}"),
+            &delta.map(|x| format!("{} LP", signed(x))).unwrap_or_default(),
+            &if crate::store::settings().session_goal > 0 { goal_text(crate::store::settings().session_goal, tw) } else { String::new() },
+        );
+    }
     let session_copy = format!("Session du jour : {tw}V {}D ({} %), KDA {tkda:.2}{}", today.len() - tw, (twr * 100.0).round(), delta.map(|x| format!(", {} LP", signed(x))).unwrap_or_default());
     let queue_label = |k: i64| st.queues.get(&k).cloned().unwrap_or_else(|| format!("File {k}"));
     let mut queue_opts = vec![opt("q:0", "Tous les modes", st.filter.queue == 0)];
@@ -932,6 +976,11 @@ pub fn action(a: &mut App, key: &str) -> bool {
                     a.toast(if on { format!("{name} épinglé : il apparaît en tête de la recherche") } else { format!("{name} retiré des épinglés") });
                     render(a, false);
                 }
+            }
+            "mini-toggle" => {
+                let on = toggle_mini();
+                a.toast(if on { "Mini fenêtre ouverte, toujours devant les autres" } else { "Mini fenêtre fermée" });
+                render(a, false);
             }
             "goal-next" => {
                 let mut s = crate::store::settings();

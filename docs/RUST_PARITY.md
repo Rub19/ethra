@@ -192,4 +192,4 @@ Toutes les clés `rw-*` : `rw-settings`, `rw-recent`, `rw-game`, `rw-route-*`, `
 - [~] 17. VALORANT : « Exporter mes parties VALORANT » dans Réglages, CSV des parties chargées (test valorant_csv_escapes_and_has_a_header) ; pas cliqué dans le parcours (fenêtre d'enregistrement de Windows)
 - [x] 18. TFT : place moyenne par trait et par unité, existait déjà (« Tes traits les plus joués », « place moy. »)
 - [~] 19. Raccourci global Ctrl+Maj+O pour montrer ou cacher les overlays (RegisterHotKey, message rappelant le raccourci, rappel sur la page Overlays) ; pas essayé : il faudrait appuyer sur les touches du PC
-- [ ] 20. Mini fenêtre de session toujours devant
+- [~] 20. Mini fenêtre de session toujours devant : lien « Mini fenêtre » de la session du jour, fenêtre Slint always-on-top (victoires et défaites, KDA, LP, objectif) mise à jour à chaque rendu du profil ; ouverte et fermée dans le parcours e2e à 95 étapes (hors écran), pas vue sur un vrai écran

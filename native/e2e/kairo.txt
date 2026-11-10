@@ -5,6 +5,11 @@ waitfor Testeur|20000
 expect Classé Solo/Duo
 expect Gold II 40 LP
 expect Tendances
+click Mini fenêtre
+expect Mini fenêtre ouverte
+wait 1500
+click Mini fenêtre
+expect Mini fenêtre fermée
 click Fixer un objectif
 expect Objectif atteint : 4/2 victoires
 click Objectif atteint

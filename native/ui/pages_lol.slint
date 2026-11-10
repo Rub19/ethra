@@ -432,6 +432,10 @@ export component ProfilePage inherits Rectangle {
                             spacing: 8px;
                             HorizontalLayout {
                                 CardTitle { text: "Session du jour"; }
+                                LinkBtn {
+                                    label: "Mini fenêtre";
+                                    clicked => { Act.act("mini-toggle"); }
+                                }
                                 if !Data.profile.session-empty: LinkBtn {
                                     label: "Copier";
                                     clicked => { Act.act("copy-session"); }
