@@ -1,4 +1,4 @@
-use crate::history::{insights, Slot, streak, by_queue, champs_in, counted, cs, filter_games, form_of, is_remake, kda, merge_games, n, queues_in, win, Game, HistoryFilter, Participant};
+use crate::history::{goal_text, next_goal, insights, Slot, streak, by_queue, champs_in, counted, cs, filter_games, form_of, is_remake, kda, merge_games, n, queues_in, win, Game, HistoryFilter, Participant};
 use crate::lol::*;
 use crate::text::*;
 use crate::{good, ms, on_ui, opt, spawn, ss, stat, store, with_app, App};
@@ -327,8 +327,9 @@ pub fn render(a: &mut App, rebuild_rows: bool) {
     let mut recent: Vec<&Game> = games.iter().filter(|g| !is_remake(g)).collect();
     recent.sort_by_key(|g| std::cmp::Reverse(g.game_creation));
     let run = streak(recent.iter().map(|g| win(g.me())));
+    let settings = crate::store::settings();
     let session_note = match run {
-        Some((false, count)) if count >= 3 => format!("{count} défaites d'affilée : une pause de 10 minutes aide souvent à repartir."),
+        Some((false, count)) if count >= 3 && settings.tilt_advice => format!("{count} défaites d'affilée : une pause de 10 minutes aide souvent à repartir."),
         _ => String::new(),
     };
     let session_copy = format!("Session du jour : {tw}V {}D ({} %), KDA {tkda:.2}{}", today.len() - tw, (twr * 100.0).round(), delta.map(|x| format!(", {} LP", signed(x))).unwrap_or_default());
@@ -398,6 +399,7 @@ pub fn render(a: &mut App, rebuild_rows: bool) {
         session: ms(session),
         session_strip: ms(today.iter().take(12).rev().map(|g| win(g.me())).collect()),
         session_note: ss(session_note),
+        goal_text: ss(goal_text(settings.session_goal, tw)),
         insights: ms(insights(
             &recent,
             chrono::Utc::now().timestamp_millis(),
@@ -716,6 +718,7 @@ fn render_match(a: &mut App) {
         badges: badge_list(&bd, 8),
         build_label: ss(format!("Build {}", d.champs.get(&p.champion_id).map(|c| c.name.clone()).unwrap_or_default())),
         build_route: ss(format!("champion/{}", p.champion_id)),
+        note: ss(crate::store::get(&format!("rw-note-{}", g.game_id)).unwrap_or_default()),
         share,
         share_msg: msg,
         scores: ms(scores
@@ -877,6 +880,19 @@ pub fn action(a: &mut App, key: &str) -> bool {
             "more" => {
                 a.profile.visible += PAGE;
                 render(a, true);
+            }
+            other if other.starts_with("match-note:") => {
+                if let Some(id) = a.match_.game.as_ref().map(|g| g.game_id) {
+                    let text = other["match-note:".len()..].trim().chars().take(300).collect::<String>();
+                    let key = format!("rw-note-{id}");
+                    if text.is_empty() { crate::store::remove(&[key]) } else { crate::store::set(&key, text) }
+                }
+            }
+            "goal-next" => {
+                let mut s = crate::store::settings();
+                s.session_goal = next_goal(s.session_goal);
+                crate::store::save_settings(&s);
+                render(a, false);
             }
             "copy-session" => {
                 let t = a.profile.session_copy.clone();

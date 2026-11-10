@@ -143,6 +143,8 @@ pub struct Settings {
     pub jungle_route: String,
     pub auto_open_live: bool,
     pub close_to_tray: bool,
+    pub tilt_advice: bool,
+    pub session_goal: i64,
 }
 
 impl Default for Settings {
@@ -167,6 +169,8 @@ impl Default for Settings {
             jungle_route: "red".into(),
             auto_open_live: true,
             close_to_tray: false,
+            tilt_advice: true,
+            session_goal: 0,
         }
     }
 }

@@ -1086,6 +1086,7 @@ export component SearchBox {
             selection-background-color: Theme.accent.transparentize(0.65);
             text <=> root.value;
             single-line: true;
+            accessible-label: root.placeholder;
             edited => { Act.act(root.key + self.text); }
         }
         if ti.text == "": Text {

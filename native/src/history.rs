@@ -310,6 +310,20 @@ pub struct Slot {
     pub weekday: u32,
 }
 
+pub const GOALS: [i64; 4] = [0, 2, 3, 5];
+
+pub fn next_goal(goal: i64) -> i64 {
+    GOALS[(GOALS.iter().position(|g| *g == goal).unwrap_or(0) + 1) % GOALS.len()]
+}
+
+pub fn goal_text(goal: i64, wins: usize) -> String {
+    match goal {
+        0 => "Fixer un objectif".to_string(),
+        g if wins as i64 >= g => format!("Objectif atteint : {wins}/{g} victoires"),
+        g => format!("Objectif : {wins}/{g} victoires"),
+    }
+}
+
 pub fn minutes_text(seconds: i64) -> String {
     let minutes = (seconds.max(0) + 30) / 60;
     if minutes >= 60 { format!("{} h {:02}", minutes / 60, minutes % 60) } else { format!("{minutes} min") }
@@ -392,6 +406,16 @@ pub fn streak<I: IntoIterator<Item = bool>>(results: I) -> Option<(bool, usize)>
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn session_goals_cycle_and_report() {
+        assert_eq!(next_goal(0), 2);
+        assert_eq!(next_goal(5), 0);
+        assert_eq!(next_goal(7), 2);
+        assert_eq!(goal_text(0, 4), "Fixer un objectif");
+        assert_eq!(goal_text(3, 1), "Objectif : 1/3 victoires");
+        assert_eq!(goal_text(3, 3), "Objectif atteint : 3/3 victoires");
+    }
 
     #[test]
     fn insights_come_from_kept_games() {

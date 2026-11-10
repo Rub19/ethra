@@ -5,6 +5,13 @@ waitfor Testeur|20000
 expect Classé Solo/Duo
 expect Gold II 40 LP
 expect Tendances
+click Fixer un objectif
+expect Objectif atteint : 4/2 victoires
+click Objectif atteint
+click Objectif atteint
+expect Objectif : 4/5 victoires
+click Objectif : 4/5 victoires
+expect Fixer un objectif
 snap 01-profil-lol
 
 click Victoires
@@ -24,6 +31,7 @@ click 30:00, à l'instant
 waitfor Courbe de la partie|20000
 expect Ton point fort
 expect Copier l'image
+type Ma note sur cette partie, gardée sur ce PC…|Bon early
 click Or
 click XP
 click CS

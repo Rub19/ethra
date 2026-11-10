@@ -174,8 +174,8 @@ Toutes les clés `rw-*` : `rw-settings`, `rw-recent`, `rw-game`, `rw-route-*`, `
 `[ ]` à faire, `[x]` fait et vérifié (tests ou parcours e2e), avec la preuve dans « Fait ensuite » ou ici.
 
 - [~] 1. Champions à éviter : pires taux de victoire récents (au moins 3 parties, moins de 45 %). La série en cours existait déjà ; ligne de la carte « Tendances », testée mais absente du jeu d'essai (aucun champion sous 45 %)
-- [~] 2. Conseil de pause après 3 défaites d'affilée, sous la session du jour (fonction `streak`, test `streak_counts_the_latest_run`). Pas encore réglable ni désactivable, pas vu à l'écran : le jeu d'essai finit sur des victoires
-- [ ] 3. Objectif de session : nombre de victoires ou LP visés, avec suivi
+- [~] 2. Conseil de pause après 3 défaites d'affilée, sous la session du jour (test streak_counts_the_latest_run), réglable dans Réglages (« Conseil de pause ») ; pas vu à l'écran : le jeu d'essai finit sur des victoires
+- [x] 3. Objectif de session : lien sous la session du jour qui passe de 2 à 3 puis 5 victoires, « Objectif : 1/3 victoires », « Objectif atteint » (test session_goals_cycle_and_report), joué dans le parcours e2e à 68 étapes ; objectif en LP non fait
 - [x] 4. Taux de victoire par moment de la journée (nuit, matin, après-midi, soir, 3 parties au moins) : carte « Tendances » du profil (test insights_come_from_kept_games), vue dans le parcours e2e à 56 étapes
 - [x] 5. Taux de victoire par jour de la semaine : carte « Tendances » du profil (test insights_come_from_kept_games), vue dans le parcours e2e à 56 étapes
 - [x] 6. Temps de jeu du jour et des 7 derniers jours : carte « Tendances » du profil (test insights_come_from_kept_games), vue dans le parcours e2e à 56 étapes
@@ -183,7 +183,7 @@ Toutes les clés `rw-*` : `rw-settings`, `rw-recent`, `rw-game`, `rw-route-*`, `
 - [x] 8. Durée moyenne des victoires et des défaites (même raison que 7) : carte « Tendances » du profil (test insights_come_from_kept_games), vue dans le parcours e2e à 56 étapes
 - [x] 9. KDA des dernières parties : existait déjà (« KDA sur les 5 dernières, sur les 5 d'avant » dans la carte des dernières parties)
 - [ ] 10. Recherche dans l'historique par champion ou par joueur
-- [ ] 11. Note personnelle sur une partie, gardée sur le PC
+- [x] 11. Note personnelle sur une partie, champ sous le résumé de la partie, gardée sur ce PC (rw-note-<partie>), saisie dans le parcours e2e et relue dans store.json
 - [ ] 12. Joueurs suivis : liste épinglée avec leur rang
 - [ ] 13. Comparer deux profils côte à côte
 - [x] 14. VALORANT : RR gagnés ou perdus par carte, colonne « RR » de l'onglet Cartes (le taux de victoire par carte existait déjà) ; même code que l'onglet Rôles vu dans le parcours e2e à 60 étapes

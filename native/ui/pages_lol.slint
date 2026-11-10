@@ -439,6 +439,13 @@ export component ProfilePage inherits Rectangle {
                                 item-width: 14px;
                                 align: LayoutAlignment.center;
                             }
+                            HorizontalLayout {
+                                alignment: center;
+                                LinkBtn {
+                                    label: Data.profile.goal-text;
+                                    clicked => { Act.act("goal-next"); }
+                                }
+                            }
                             if Data.profile.session-note != "": Small {
                                 text: Data.profile.session-note;
                                 color: Theme.loss;
@@ -941,6 +948,11 @@ export component MatchPageView inherits Rectangle {
                                 font-size: 18px;
                                 color: Theme.text;
                                 wrap: word-wrap;
+                            }
+                            SearchBox {
+                                placeholder: "Ma note sur cette partie, gardée sur ce PC…";
+                                key: "match-note:";
+                                value: Data.match.note;
                             }
                         }
                     }

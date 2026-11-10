@@ -224,6 +224,7 @@ fn toggle_setting(s: &mut Settings, key: &str) {
         "autoSpells" => &mut s.auto_spells,
         "autoItems" => &mut s.auto_items,
         "closeToTray" => &mut s.close_to_tray,
+        "tiltAdvice" => &mut s.tilt_advice,
         _ => return,
     };
     *f = !*f;
@@ -298,6 +299,7 @@ pub fn render_settings(a: &mut App) {
             gopt("closeToTray", "Réduire dans la zone de notification", "Fermer la fenêtre garde Kairo actif près de l'horloge, pour les overlays et l'import auto.", s.close_to_tray),
         ]),
         lol: ms(vec![
+            gopt("tiltAdvice", "Conseil de pause", "Après 3 défaites d'affilée, la session du jour propose une pause.", s.tilt_advice),
             gopt("autoRunes", "Importer les runes", "Crée une page « Kairo : Champion Rôle » dès que tu verrouilles ton champion.", s.auto_runes),
             gopt("autoSpells", "Importer les sorts d'invocateur", "Applique les sorts les plus joués avec ce champion.", s.auto_spells),
             gopt("autoItems", "Créer l'item set", "Ajoute ton build dans la boutique en jeu.", s.auto_items),
