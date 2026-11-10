@@ -834,6 +834,24 @@ pub fn on_phase(a: &mut App, p: Option<String>) {
     if p.as_deref() == Some("ChampSelect") && old.as_deref() != Some("ChampSelect") && cfg.auto_open_live && a.game == "lol" {
         a.go("partie");
     }
+    if p.as_deref() == Some("EndOfGame") && old.as_deref() != Some("EndOfGame") && cfg.auto_open_recap {
+        {
+            spawn(async move {
+                let Ok(puuid) = crate::lol::me().await.map(|s| s.puuid) else { return };
+                let Some(id) = net::get("/lol-end-of-game/v1/eog-stats-block").await.ok().filter(|v| v["gameMode"].as_str() != Some("TFT")).and_then(|v| v["gameId"].as_i64()).filter(|id| *id > 0) else { return };
+                for _ in 0..6 {
+                    if net::get(&format!("/lol-match-history/v1/games/{id}")).await.is_ok() {
+                        on_ui(move |a| {
+                            a.switch_game("lol");
+                            a.go(&format!("match/{id}/{puuid}"));
+                        });
+                        return;
+                    }
+                    tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+                }
+            });
+        }
+    }
     if p.as_deref() == Some("ReadyCheck") && cfg.auto_accept {
         spawn(async {
             let _ = net::lcu("POST", "/lol-matchmaking/v1/ready-check/accept", None).await;

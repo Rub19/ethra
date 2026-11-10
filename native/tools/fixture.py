@@ -15,14 +15,18 @@ def full(gid, n):
         idents.append({"participantId": i + 1, "player": {"puuid": pu, "gameName": "Testeur" if i == 0 else f"Joueur{i}", "tagLine": "EUW", "summonerName": ""}})
     teams = [{"teamId": t, "towerKills": 6, "dragonKills": 2, "baronKills": 1, "riftHeraldKills": 1, "hordeKills": 3} for t in (100, 200)]
     return {"gameId": gid, "gameCreation": now - n * 3600_000 * 5, "gameDuration": 1800 if n != 7 else 200, "queueId": 420 if n % 2 else 400, "mapId": 11, "participants": parts, "participantIdentities": idents, "teams": teams}
-d = {"lcu:/lol-gameflow/v1/gameflow-phase": phase, "lcu:/lol-summoner/v1/current-summoner": {"puuid": "me", "gameName": "Testeur", "tagLine": "EUW", "summonerLevel": 120, "profileIconId": 29, "summonerId": 1}}
+d = {"lcu:/lol-end-of-game/v1/eog-stats-block": {"gameId": 2000, "gameMode": "ARAM"}, "lcu:/lol-gameflow/v1/gameflow-phase": phase, "lcu:/lol-summoner/v1/current-summoner": {"puuid": "me", "gameName": "Testeur", "tagLine": "EUW", "summonerLevel": 120, "profileIconId": 29, "summonerId": 1}}
 d["lcu:/lol-ranked/v1/ranked-stats/me"] = {"queueMap": {"RANKED_SOLO_5x5": {"tier": "GOLD", "division": "II", "leaguePoints": 40, "wins": 50, "losses": 45}, "RANKED_TFT": {"tier": "SILVER", "division": "I", "leaguePoints": 12, "wins": 5, "losses": 30}}}
-d["lcu:/lol-game-queues/v1/queues"] = [{"id": 420, "description": "Classé Solo/Duo", "name": ""}, {"id": 400, "description": "Draft", "name": ""}]
+d["lcu:/lol-game-queues/v1/queues"] = [{"id": 420, "description": "Classé Solo/Duo", "name": ""}, {"id": 400, "description": "Draft", "name": ""}, {"id": 450, "description": "ARAM", "name": ""}]
 games = []
 for n in range(20):
     f = full(1000 + n, n); d[f"lcu:/lol-match-history/v1/games/{1000 + n}"] = f
     f2 = dict(f); f2["participants"] = [f["participants"][0]]; f2["participantIdentities"] = [f["participantIdentities"][0]]; games.append(f2)
     d[f"lcu:/lol-match-history/v1/game-timelines/{1000 + n}"] = {"frames": [{"participantFrames": {str(i + 1): {"minionsKilled": m * (6 + i % 3), "jungleMinionsKilled": 0, "totalGold": 500 + m * 380 + i * 8, "xp": m * 420} for i in range(10)}} for m in range(24)]}
+aram = full(2000, 0)
+aram.update({"queueId": 450, "mapId": 12, "gameDuration": 596})
+aram["participants"][0]["stats"].update({"totalHeal": 1932, "timeCCingOthers": 36, "totalDamageTaken": 21000})
+d["lcu:/lol-match-history/v1/games/2000"] = aram
 for count in (19, 99):
     d[f"lcu:/lol-match-history/v1/products/lol/me/matches?begIndex=0&endIndex={count}"] = {"games": {"games": games}}
 tft = [{"metadata": {"match_id": f"T{i}"}, "json": {"game_datetime": now - i * 7200_000, "game_length": 1800.5, "queue_id": 1100, "participants": [{"puuid": "me", "placement": 1 + i % 8, "level": 8, "units": [{"characterId": "TFT15_Ahri", "tier": 2, "rarity": 2}], "traits": [{"name": "TFT15_Mage", "num_units": 3, "style": 2}]}]}} for i in range(20)]

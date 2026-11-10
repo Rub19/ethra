@@ -1,0 +1,11 @@
+# Lancer avec -Script recap.txt -Phase EndOfGame : le récap ARAM s'ouvre seul à la fin de la partie
+waitfor Copier l'image|20000
+expect Ton point fort
+expect soins
+expect 1 932
+expect Contrôle des foules
+expect Dégâts subis
+absent Plus gros critique
+expect Résistance
+absent Farming
+snap 01-recap-aram

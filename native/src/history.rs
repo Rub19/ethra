@@ -340,6 +340,34 @@ pub fn versus(mine: &[&Game], theirs: &[&Game], champ: &dyn Fn(i64) -> String) -
     ]
 }
 
+pub const HIGHLIGHTS: [(&str, &str); 8] = [
+    ("totalDamageDealtToChampions", "dégâts aux champions"),
+    ("totalHeal", "soins"),
+    ("timeCCingOthers", "secondes de contrôle"),
+    ("damageSelfMitigated", "dégâts réduits"),
+    ("totalDamageTaken", "dégâts subis"),
+    ("kills", "éliminations"),
+    ("goldEarned", "or gagné"),
+    ("visionScore", "score de vision"),
+];
+
+pub fn highlight(g: &Game, p: &Participant) -> (&'static str, &'static str, f64) {
+    let mut best = (HIGHLIGHTS[0].0, HIGHLIGHTS[0].1, n(&p.stats, HIGHLIGHTS[0].0));
+    let mut best_rank = 0;
+    for (key, label) in HIGHLIGHTS {
+        let value = n(&p.stats, key);
+        if value <= 0.0 || (key == "visionScore" && g.map_id != 11) {
+            continue;
+        }
+        let rank = g.participants.iter().filter(|x| n(&x.stats, key) < value).count();
+        if rank > best_rank {
+            best = (key, label, value);
+            best_rank = rank;
+        }
+    }
+    best
+}
+
 pub const PINS: usize = 10;
 
 pub fn toggle_pin(list: &mut Vec<Value>, puuid: &str, name: &str) -> bool {
@@ -448,6 +476,21 @@ pub fn streak<I: IntoIterator<Item = bool>>(results: I) -> Option<(bool, usize)>
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn highlight_picks_the_stat_where_i_rank_best() {
+        let player = |id: i64, dmg: f64, heal: f64| {
+            let mut stats = Map::new();
+            stats.insert("totalDamageDealtToChampions".into(), dmg.into());
+            stats.insert("totalHeal".into(), heal.into());
+            Participant { participant_id: id, stats, ..Default::default() }
+        };
+        let g = Game { map_id: 12, participants: vec![player(1, 10000.0, 5000.0), player(2, 20000.0, 100.0), player(3, 30000.0, 200.0)], ..Default::default() };
+        assert_eq!(highlight(&g, &g.participants[0]), ("totalHeal", "soins", 5000.0));
+        assert_eq!(highlight(&g, &g.participants[2]).0, "totalDamageDealtToChampions");
+        let quiet = Game { participants: vec![player(1, 0.0, 0.0)], ..Default::default() };
+        assert_eq!(highlight(&quiet, &quiet.participants[0]).1, "dégâts aux champions");
+    }
 
     #[test]
     fn two_profiles_compare_line_by_line() {

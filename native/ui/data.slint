@@ -24,7 +24,7 @@ export struct ChartSeries { name: string, color: color, path: string, end-y: flo
 export struct AxisLabel { pos: float, text: string }
 export struct ChartData { series: [ChartSeries], yticks: [AxisLabel], xticks: [AxisLabel], len: int, mark14: float, tabs: [Opt], unit: string }
 export struct ObjTeam { title: string, mine: bool, stats: [Stat] }
-export struct ShareData { label: string, result: string, tone: int, mvp: bool, duration: string, damage: string, stats: [Stat], runes: [string], items: [string], splash: string }
+export struct ShareData { label: string, result: string, tone: int, mvp: bool, duration: string, damage: string, hero: string, stats: [Stat], runes: [string], items: [string], splash: string }
 export struct MatchPage {
     loading: bool, error: string, result: int, title: string, sub: string, champ: string, badges: [Badge], build-label: string, build-route: string,
     share: ShareData, share-msg: string, scores: [Score], best: string, summary: string,

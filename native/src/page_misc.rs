@@ -225,6 +225,7 @@ fn toggle_setting(s: &mut Settings, key: &str) {
         "ovStats" => &mut s.ov_stats,
         "ovEnabled" => &mut s.ov_enabled,
         "autoOpenLive" => &mut s.auto_open_live,
+        "autoOpenRecap" => &mut s.auto_open_recap,
         "autoAccept" => &mut s.auto_accept,
         "autoRunes" => &mut s.auto_runes,
         "autoSpells" => &mut s.auto_spells,
@@ -300,6 +301,7 @@ pub fn render_settings(a: &mut App) {
     let d = SettingsData {
         general: ms(vec![
             gopt("autoOpenLive", "Ouvrir la partie en cours automatiquement", "Kairo passe sur la page de la partie dès la sélection des champions ou des agents.", s.auto_open_live),
+            gopt("autoOpenRecap", "Ouvrir le récap à la fin de la partie", "Dès la fin d'une partie League (ARAM compris), Kairo affiche ton récap : stat phare, KDA, objets et tableau des scores.", s.auto_open_recap),
             gopt("autoAccept", "Accepter la partie automatiquement", "Clique sur « Accepter » à ta place quand une partie League est trouvée.", s.auto_accept),
             gopt("startup", "Lancer Kairo avec Windows", "Kairo démarre à l'ouverture de ta session.", startup_enabled()),
             gopt("closeToTray", "Réduire dans la zone de notification", "Fermer la fenêtre garde Kairo actif près de l'horloge, pour les overlays et l'import auto.", s.close_to_tray),

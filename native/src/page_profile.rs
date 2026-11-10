@@ -723,7 +723,8 @@ fn render_match(a: &mut App) {
     };
     let team_kills: f64 = g.participants.iter().filter(|x| x.team_id == p.team_id).map(|x| n(&x.stats, "kills")).sum();
     let kp = |x: &Participant| (n(&x.stats, "kills") + n(&x.stats, "assists")) / g.participants.iter().filter(|y| y.team_id == x.team_id).map(|y| n(&y.stats, "kills")).sum::<f64>().max(1.0);
-    let mut scores: Vec<(&str, i64)> = vec![("Farming", score(&g, p, &|x| cs(&x.stats))), ("Combat", score(&g, p, &|x| kda(&x.stats) + kp(x) * 3.0 + n(&x.stats, "totalDamageDealtToChampions") / 10000.0))];
+    let first = if g.map_id == 12 { ("Résistance", score(&g, p, &|x| n(&x.stats, "totalDamageTaken") + n(&x.stats, "damageSelfMitigated"))) } else { ("Farming", score(&g, p, &|x| cs(&x.stats))) };
+    let mut scores: Vec<(&str, i64)> = vec![first, ("Combat", score(&g, p, &|x| kda(&x.stats) + kp(x) * 3.0 + n(&x.stats, "totalDamageDealtToChampions") / 10000.0))];
     if g.map_id == 11 {
         scores.push(("Vision", score(&g, p, &|x| n(&x.stats, "visionScore"))));
     }
@@ -732,26 +733,43 @@ fn render_match(a: &mut App) {
     let (cs_d, gold_d) = (diff("cs"), diff("gold"));
     let summary = match opp {
         Some(o) if at >= 10 => format!("À {at} min, tu avais {} CS et {} or {} sur {} ({}).", cs_d.abs(), fr(gold_d.abs()), if gold_d >= 0 { "d'avance" } else { "de retard" }, opp_name.clone().unwrap_or_else(|| "ton adversaire".into()), d.champs.get(&o.champion_id).map(|c| c.name.clone()).unwrap_or_default()),
+        _ if g.map_id == 12 => format!("{}% de participation aux kills, {} dégâts subis et {} s de contrôle sur les adversaires.", ((n(s, "kills") + n(s, "assists")) / team_kills.max(1.0) * 100.0).round(), fr(n(s, "totalDamageTaken") as i64), n(s, "timeCCingOthers")),
         _ => format!("{:.1} CS/min, {}% de participation aux kills.", cs(s) / min.max(0.01), ((n(s, "kills") + n(s, "assists")) / team_kills.max(1.0) * 100.0).round()),
     };
     let remake = g.game_duration < 300;
     let qlabel = a.match_.queues.get(&g.queue_id).cloned().unwrap_or_else(|| format!("File {}", g.queue_id));
     let bd = badges(&g, &puuid);
     let splash = d.champs.get(&p.champion_id).map(|c| img_splash(&c.id)).unwrap_or_default();
+    let hero = crate::history::highlight(&g, p);
+    let kda_text = format!("{} / {} / {}", n(s, "kills"), n(s, "deaths"), n(s, "assists"));
+    let side: Vec<(&str, String, &str)> = if g.map_id == 12 {
+        vec![
+            ("", kda_text, "KDA"),
+            ("totalDamageDealtToChampions", fr(n(s, "totalDamageDealtToChampions") as i64), "Dégâts aux champions"),
+            ("totalDamageTaken", fr(n(s, "totalDamageTaken") as i64), "Dégâts subis"),
+            ("timeCCingOthers", format!("{} s", n(s, "timeCCingOthers")), "Contrôle des foules"),
+            ("totalHeal", fr(n(s, "totalHeal") as i64), "Soins"),
+            ("goldEarned", fr(n(s, "goldEarned") as i64), "Or gagné"),
+        ]
+    } else {
+        vec![
+            ("", kda_text, "KDA"),
+            ("totalDamageDealtToChampions", fr(n(s, "totalDamageDealtToChampions") as i64), "Dégâts aux champions"),
+            ("largestCriticalStrike", fr(n(s, "largestCriticalStrike") as i64), "Plus gros critique"),
+            ("goldEarned", fr(n(s, "goldEarned") as i64), "Or gagné"),
+            ("", fr(cs(s) as i64), "CS"),
+            ("totalHeal", fr(n(s, "totalHeal") as i64), "Soins"),
+        ]
+    };
     let share = ShareData {
         label: ss(&qlabel),
         result: ss(if remake { "REMAKE" } else if win(p) { "VICTOIRE" } else { "DÉFAITE" }),
         tone: if remake { 0 } else { good(win(p)) },
         mvp: bd.contains(&"MVP"),
         duration: ss(mmss(g.game_duration as f64)),
-        damage: ss(fr(n(s, "totalDamageDealtToChampions") as i64)),
-        stats: ms(vec![
-            stat(format!("{} / {} / {}", n(s, "kills"), n(s, "deaths"), n(s, "assists")), "KDA", 0),
-            stat(fr(n(s, "largestCriticalStrike") as i64), "Plus gros critique", 0),
-            stat(fr(n(s, "goldEarned") as i64), "Or gagné", 0),
-            stat(fr(cs(s) as i64), "CS", 0),
-            stat(fr(n(s, "totalHeal") as i64), "Soins", 0),
-        ]),
+        damage: ss(fr(hero.2 as i64)),
+        hero: ss(hero.1),
+        stats: ms(side.into_iter().filter(|(key, _, _)| *key != hero.0).take(5).map(|(_, value, label)| stat(value, label, 0)).collect()),
         runes: ms([n(s, "perk0") as i64, n(s, "perkSubStyle") as i64].iter().filter(|id| d.runes.contains_key(id)).map(|id| ss(img_rune(&d, *id))).collect()),
         items: ms((0..7).map(|k| n(s, &format!("item{k}")) as i64).filter(|x| *x != 0).map(|id| ss(img_item(&d, id))).collect()),
         splash: ss(splash),
