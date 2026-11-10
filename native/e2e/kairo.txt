@@ -43,8 +43,22 @@ click Or
 click XP
 click CS
 snap 02-partie
+scrollto Joueur3|900,700
+click Joueur3
+waitfor Épingler ce joueur|20000
+click Épingler ce joueur
+expect épinglé
+expect Retirer des épinglés
+snap 02b-epingle
+key Alt+Left
+wait 800
 key Alt+Left
 waitfor Session du jour|10000
+click Joueur#TAG ou champion
+wait 600
+expect Joueur épinglé
+snap 02c-recherche-epingle
+key Escape
 
 click Tier list
 wait 3000

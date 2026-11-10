@@ -390,6 +390,13 @@ export component ProfilePage inherits Rectangle {
                     spacing: 8px;
                     padding-top: 8px;
                     padding-bottom: 8px;
+                    if Data.profile.pin-label != "": VerticalLayout {
+                        alignment: center;
+                        LinkBtn {
+                            label: Data.profile.pin-label;
+                            clicked => { Act.act("pin-toggle"); }
+                        }
+                    }
                     Select {
                         width: 180px;
                         label: Data.profile.queue-label;

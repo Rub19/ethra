@@ -1,4 +1,4 @@
-use crate::history::{goal_text, next_goal, insights, Slot, streak, by_queue, champs_in, counted, cs, filter_games, form_of, is_remake, kda, merge_games, n, queues_in, win, Game, HistoryFilter, Participant};
+use crate::history::{toggle_pin, goal_text, next_goal, insights, Slot, streak, by_queue, champs_in, counted, cs, filter_games, form_of, is_remake, kda, merge_games, n, queues_in, win, Game, HistoryFilter, Participant};
 use crate::lol::*;
 use crate::text::*;
 use crate::{good, ms, on_ui, opt, spawn, ss, stat, store, with_app, App};
@@ -404,6 +404,13 @@ pub fn render(a: &mut App, rebuild_rows: bool) {
         session_strip: ms(today.iter().take(12).rev().map(|g| win(g.me())).collect()),
         session_note: ss(session_note),
         goal_text: ss(goal_text(settings.session_goal, tw)),
+        pin_label: ss(match st.puuid.as_deref() {
+            Some(puuid) => {
+                let pinned: Vec<Value> = crate::store::load("rw-pinned").unwrap_or_default();
+                if pinned.iter().any(|p| p["puuid"] == puuid) { "Retirer des épinglés" } else { "Épingler ce joueur" }
+            }
+            None => "",
+        }),
         insights: ms(insights(
             &recent,
             chrono::Utc::now().timestamp_millis(),
@@ -900,6 +907,16 @@ pub fn action(a: &mut App, key: &str) -> bool {
                     let text = other["match-note:".len()..].trim().chars().take(300).collect::<String>();
                     let key = format!("rw-note-{id}");
                     if text.is_empty() { crate::store::remove(&[key]) } else { crate::store::set(&key, text) }
+                }
+            }
+            "pin-toggle" => {
+                if let Some(puuid) = a.profile.puuid.clone() {
+                    let name = format!("{}#{}", a.profile.sum.game_name, a.profile.sum.tag_line);
+                    let mut list: Vec<Value> = crate::store::load("rw-pinned").unwrap_or_default();
+                    let on = toggle_pin(&mut list, &puuid, &name);
+                    crate::store::save("rw-pinned", &list);
+                    a.toast(if on { format!("{name} épinglé : il apparaît en tête de la recherche") } else { format!("{name} retiré des épinglés") });
+                    render(a, false);
                 }
             }
             "goal-next" => {

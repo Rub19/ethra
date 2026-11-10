@@ -128,8 +128,14 @@ fn run_search(a: &mut App) {
                 }
             }
         }
+        let pinned: Vec<Value> = store::load("rw-pinned").unwrap_or_default();
+        for p in pinned.iter().filter(|p| t.is_empty() || fold(p["name"].as_str().unwrap_or_default()).contains(&t)).take(6) {
+            let name = p["name"].as_str().unwrap_or_default();
+            keys.push(format!("go:profil/{}", p["puuid"].as_str().unwrap_or_default()));
+            opts.push(SearchOpt { label: ss(name), sub: ss("Joueur épinglé"), letter: ss(name.chars().next().map(String::from).unwrap_or_default()), ..Default::default() });
+        }
         let recent: Vec<Value> = store::load("rw-recent").unwrap_or_default();
-        for p in recent.iter().filter(|p| t.is_empty() || fold(p["name"].as_str().unwrap_or_default()).contains(&t)).take(4) {
+        for p in recent.iter().filter(|p| pinned.iter().all(|x| x["puuid"] != p["puuid"])).filter(|p| t.is_empty() || fold(p["name"].as_str().unwrap_or_default()).contains(&t)).take(4) {
             let name = p["name"].as_str().unwrap_or_default();
             keys.push(format!("go:profil/{}", p["puuid"].as_str().unwrap_or_default()));
             opts.push(SearchOpt { label: ss(name), sub: ss("Joueur récent"), letter: ss(name.chars().next().map(String::from).unwrap_or_default()), ..Default::default() });

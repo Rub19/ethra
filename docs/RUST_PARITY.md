@@ -184,7 +184,7 @@ Toutes les clés `rw-*` : `rw-settings`, `rw-recent`, `rw-game`, `rw-route-*`, `
 - [x] 9. KDA des dernières parties : existait déjà (« KDA sur les 5 dernières, sur les 5 d'avant » dans la carte des dernières parties)
 - [x] 10. Filtre de période sur l'historique (toute période, aujourd'hui, 7 jours, 30 jours ; test the_period_filter_keeps_recent_games), vu dans le parcours e2e à 75 étapes. Le filtre par champion existait déjà ; par joueur, impossible : l'historique du client ne contient que ton joueur
 - [x] 11. Note personnelle sur une partie, champ sous le résumé de la partie, gardée sur ce PC (rw-note-<partie>), saisie dans le parcours e2e et relue dans store.json
-- [ ] 12. Joueurs suivis : liste épinglée avec leur rang
+- [x] 12. Joueurs épinglés : « Épingler ce joueur » sur le profil d'un autre joueur, en tête de la recherche (10 au plus, test pins_toggle_and_stay_short), vu dans le parcours e2e à 89 étapes ; sans leur rang (il faudrait interroger chaque profil à l'ouverture de la recherche)
 - [ ] 13. Comparer deux profils côte à côte
 - [x] 14. VALORANT : RR gagnés ou perdus par carte, colonne « RR » de l'onglet Cartes (le taux de victoire par carte existait déjà) ; même code que l'onglet Rôles vu dans le parcours e2e à 60 étapes
 - [x] 15. VALORANT : RR par agent, colonne « RR » de l'onglet Agents (la précision par arme n'est pas dans les données de Riot, seulement la précision globale, déjà affichée)

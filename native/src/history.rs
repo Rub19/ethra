@@ -314,6 +314,18 @@ pub struct Slot {
     pub weekday: u32,
 }
 
+pub const PINS: usize = 10;
+
+pub fn toggle_pin(list: &mut Vec<Value>, puuid: &str, name: &str) -> bool {
+    if let Some(i) = list.iter().position(|p| p["puuid"] == puuid) {
+        list.remove(i);
+        return false;
+    }
+    list.insert(0, serde_json::json!({"puuid": puuid, "name": name}));
+    list.truncate(PINS);
+    true
+}
+
 pub const GOALS: [i64; 4] = [0, 2, 3, 5];
 
 pub fn next_goal(goal: i64) -> i64 {
@@ -410,6 +422,19 @@ pub fn streak<I: IntoIterator<Item = bool>>(results: I) -> Option<(bool, usize)>
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn pins_toggle_and_stay_short() {
+        let mut list = Vec::new();
+        assert!(toggle_pin(&mut list, "a", "A#1"));
+        assert!(!toggle_pin(&mut list, "a", "A#1"));
+        assert!(list.is_empty());
+        for i in 0..12 {
+            toggle_pin(&mut list, &i.to_string(), "x");
+        }
+        assert_eq!(list.len(), PINS);
+        assert_eq!(list[0]["puuid"], "11");
+    }
 
     #[test]
     fn the_period_filter_keeps_recent_games() {
