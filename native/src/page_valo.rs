@@ -428,6 +428,54 @@ fn tier_rank(d: &VD, tier: i64, rr: Option<i64>, label: &str, sub: String) -> Ra
     }
 }
 
+pub fn matches_csv(lines: &[Vec<String>]) -> String {
+    let esc = |s: &str| format!("\"{}\"", s.replace('"', "\"\""));
+    let head = ["date", "carte", "agent", "mode", "résultat", "score", "éliminations", "morts", "assistances", "ACS", "HS"];
+    let mut out = vec![head.iter().map(|h| esc(h)).collect::<Vec<_>>().join(";")];
+    out.extend(lines.iter().map(|l| l.iter().map(|c| esc(c)).collect::<Vec<_>>().join(";")));
+    format!("\u{feff}{}", out.join("\n"))
+}
+
+pub fn export_csv(a: &mut App) {
+    let (Some(d), Some(me)) = (a.valo.d.clone(), a.vself.clone()) else {
+        a.toast("Ouvre d'abord ton profil VALORANT");
+        return;
+    };
+    let mut list: Vec<Arc<VMatch>> = a.valo.by_id.values().cloned().collect();
+    list.sort_by_key(|m| std::cmp::Reverse(m.match_info.game_start_millis));
+    let lines: Vec<Vec<String>> = list
+        .iter()
+        .filter_map(|m| {
+            let p = m.players.iter().find(|x| x.subject == me)?;
+            let ps = p.stats.as_ref()?;
+            let stats = v_stats(m);
+            let s = stats.get(&me)?;
+            Some(vec![
+                crate::text::date_long_time(m.match_info.game_start_millis),
+                d.maps.get(&m.match_info.map_id).map(|y| y.0.clone()).unwrap_or_else(|| m.match_info.map_id.clone()),
+                d.agents.get(&p.character_id.to_lowercase()).map(|y| y.name.clone()).unwrap_or_default(),
+                queue_label(&m.match_info.queue_id),
+                if v_team_won(m, &p.team_id) { "Victoire".into() } else { "Défaite".into() },
+                v_score(m, &p.team_id),
+                ps.kills.to_string(),
+                ps.deaths.to_string(),
+                ps.assists.to_string(),
+                format!("{}", s.acs.round()),
+                pct(s.hs),
+            ])
+        })
+        .collect();
+    if lines.is_empty() {
+        a.toast("Aucune partie VALORANT chargée pour l'instant");
+        return;
+    }
+    let Some(path) = rfd::FileDialog::new().set_file_name("kairo-valorant.csv").add_filter("CSV", &["csv"]).save_file() else { return };
+    match std::fs::write(&path, matches_csv(&lines)) {
+        Ok(()) => a.toast(format!("{} parties VALORANT exportées", lines.len())),
+        Err(e) => a.toast(format!("Export impossible : {e}")),
+    }
+}
+
 pub fn render_profile(a: &mut App, rows_too: bool) {
     if !a.valo.err.is_empty() {
         a.data().set_vprofile(VProfileData { error: ss(crate::text::friendly_error(&a.valo.err)), ..Default::default() });
@@ -446,6 +494,8 @@ pub fn render_profile(a: &mut App, rows_too: bool) {
     let n = agg.g.max(1.0);
     let agents = group(&mine, &who, |_, p| p.character_id.to_lowercase());
     let maps = group(&mine, &who, |m, _| m.match_info.map_id.clone());
+    let role_of = |p: &VPlayer| d.agents.get(&p.character_id.to_lowercase()).map(|y| y.role.clone()).filter(|r| !r.is_empty()).unwrap_or_else(|| "?".into());
+    let roles = group(&mine, &who, |_, p| role_of(p));
     let fav = agents.first().and_then(|x| d.agents.get(&x.0));
     let kd = |x: &Sum| format!("{:.2}", x.k / x.d.max(1.0));
     let mut quick = vec![];
@@ -491,16 +541,33 @@ pub fn render_profile(a: &mut App, rows_too: bool) {
         })
         .collect();
     let tab = st.tab.clone();
-    let source = if tab == "agents" { &agents } else { &maps };
+    let source = match tab.as_str() {
+        "agents" => &agents,
+        "roles" => &roles,
+        _ => &maps,
+    };
+    let mut rr: HashMap<String, i64> = HashMap::new();
+    for (m, p) in &mine {
+        if let Some(r) = st.rr.get(&m.match_info.match_id) {
+            let key = match tab.as_str() {
+                "agents" => p.character_id.to_lowercase(),
+                "roles" => role_of(p),
+                _ => m.match_info.map_id.clone(),
+            };
+            *rr.entry(key).or_default() += r.earned;
+        }
+    }
     let table = source
         .iter()
         .map(|(k, x)| {
-            let c0 = if tab == "agents" {
+            let c0 = if tab == "roles" {
+                iconed(k.clone(), d.agents.values().find(|y| y.role == *k).map(|y| y.role_icon.clone()).unwrap_or_default())
+            } else if tab == "agents" {
                 iconed(d.agents.get(k).map(|y| y.name.clone()).unwrap_or_else(|| "?".into()), d.agents.get(k).map(|y| y.icon.clone()).unwrap_or_default())
             } else {
                 iconed(d.maps.get(k).map(|y| y.0.clone()).unwrap_or_else(|| "?".into()), d.maps.get(k).map(|y| y.1.clone()).unwrap_or_default())
             };
-            row(vec![c0, txt(x.g.to_string()), toned(pct(x.w / x.g), good(x.w / x.g >= 0.5)), txt(kd(x)), txt(((x.acs / x.g).round() as i64).to_string()), txt(((x.adr / x.g).round() as i64).to_string()), txt(pct(x.hs / x.g)), txt(if x.r > 0.0 { pct(x.rw / x.r) } else { "–".to_string() })], "")
+            row(vec![c0, txt(x.g.to_string()), toned(pct(x.w / x.g), good(x.w / x.g >= 0.5)), txt(kd(x)), txt(((x.acs / x.g).round() as i64).to_string()), txt(((x.adr / x.g).round() as i64).to_string()), txt(pct(x.hs / x.g)), txt(if x.r > 0.0 { pct(x.rw / x.r) } else { "–".to_string() }), rr.get(k).map_or_else(|| txt("–".to_string()), |v| toned(signed(*v), good(*v >= 0)))], "")
         })
         .collect();
     let mut kills: HashMap<String, i64> = HashMap::new();
@@ -535,7 +602,7 @@ pub fn render_profile(a: &mut App, rows_too: bool) {
             }
         })
         .collect::<Vec<_>>();
-    let tabs: Vec<Opt> = [("parties", "Parties"), ("agents", "Agents"), ("cartes", "Cartes"), ("armes", "Armes")].iter().map(|(k, l)| opt(format!("vtab:{k}"), l, tab == *k)).collect();
+    let tabs: Vec<Opt> = [("parties", "Parties"), ("agents", "Agents"), ("roles", "Rôles"), ("cartes", "Cartes"), ("armes", "Armes")].iter().map(|(k, l)| opt(format!("vtab:{k}"), l, tab == *k)).collect();
     let more = st.more.as_str();
     let name = st.name.clone();
     let data = VProfileData {
@@ -573,7 +640,7 @@ pub fn render_profile(a: &mut App, rows_too: bool) {
         more_enabled: more == "idle",
         weapons_empty: weapons.is_empty(),
         weapons: ms(weapons),
-        cols: ms(vec![col(if tab == "agents" { "Agent" } else { "Carte" }, 0.0), col("Parties", 80.0), col("Winrate", 80.0), col("K/D", 70.0), col("ACS", 70.0), col("ADR", 70.0), col("HS", 70.0), col("Manches", 90.0)]),
+        cols: ms(vec![col(match tab.as_str() { "agents" => "Agent", "roles" => "Rôle", _ => "Carte" }, 0.0), col("Parties", 80.0), col("Winrate", 80.0), col("K/D", 70.0), col("ACS", 70.0), col("ADR", 70.0), col("HS", 70.0), col("Manches", 90.0), col("RR", 70.0)]),
         table: ms(table),
     };
     a.data().set_vprofile(data);
@@ -1180,6 +1247,14 @@ pub fn action(a: &mut App, key: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn valorant_csv_escapes_and_has_a_header() {
+        let csv = matches_csv(&[vec!["1 nov".into(), "Ascent".into(), "Jett".into(), "Compétition".into(), "Victoire".into(), "13-7".into(), "20".into(), "10".into(), "5".into(), "250".into(), "25%".into()]]);
+        assert!(csv.starts_with("\u{feff}\"date\";\"carte\""));
+        assert!(csv.contains("\"Ascent\";\"Jett\""));
+        assert_eq!(csv.lines().count(), 2);
+    }
     use serde_json::json;
 
     #[test]

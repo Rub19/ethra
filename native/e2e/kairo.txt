@@ -49,6 +49,10 @@ expect Platine 1
 click Agents
 wait 1000
 snap 06-valo-agents
+click Rôles
+wait 800
+expect Rôle
+snap 06b-valo-roles
 click Cartes
 click Armes
 click Parties

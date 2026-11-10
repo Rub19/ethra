@@ -186,10 +186,10 @@ Toutes les clés `rw-*` : `rw-settings`, `rw-recent`, `rw-game`, `rw-route-*`, `
 - [ ] 11. Note personnelle sur une partie, gardée sur le PC
 - [ ] 12. Joueurs suivis : liste épinglée avec leur rang
 - [ ] 13. Comparer deux profils côte à côte
-- [ ] 14. VALORANT : taux de victoire par carte
-- [ ] 15. VALORANT : précision tête, corps, jambes par arme
-- [ ] 16. VALORANT : stats par rôle d'agent
-- [ ] 17. VALORANT : export CSV des parties
-- [ ] 18. TFT : placement moyen par trait principal
+- [x] 14. VALORANT : RR gagnés ou perdus par carte, colonne « RR » de l'onglet Cartes (le taux de victoire par carte existait déjà) ; même code que l'onglet Rôles vu dans le parcours e2e à 60 étapes
+- [x] 15. VALORANT : RR par agent, colonne « RR » de l'onglet Agents (la précision par arme n'est pas dans les données de Riot, seulement la précision globale, déjà affichée)
+- [x] 16. VALORANT : onglet « Rôles » du profil (parties, taux de victoire, K/D, ACS, ADR, HS, manches, RR par rôle), vu dans le parcours e2e à 60 étapes
+- [~] 17. VALORANT : « Exporter mes parties VALORANT » dans Réglages, CSV des parties chargées (test valorant_csv_escapes_and_has_a_header) ; pas cliqué dans le parcours (fenêtre d'enregistrement de Windows)
+- [x] 18. TFT : place moyenne par trait et par unité, existait déjà (« Tes traits les plus joués », « place moy. »)
 - [ ] 19. Raccourci global pour montrer ou cacher l'overlay
 - [ ] 20. Mini fenêtre de session toujours devant

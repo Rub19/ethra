@@ -313,6 +313,7 @@ pub fn render_settings(a: &mut App) {
             setrow("Images".into(), format!("{} d'images gardées sur ce PC pour aller plus vite.", human(crate::images::disk_cache_size())), "Vider", "clear:images", true),
             setrow("Parties conservées".into(), format!("{games} parties League gardées sur ce PC, au-delà des 20 du client."), "Effacer", "clear:games", games > 0),
             setrow("Exporter mes parties".into(), "Enregistre tes parties conservées dans un fichier CSV pour Excel.".into(), "Exporter", "export-csv", games > 0),
+            setrow("Exporter mes parties VALORANT".into(), format!("{} chargées dans Kairo, dans un fichier CSV pour Excel.", a.valo.by_id.len()), "Exporter", "export-vcsv", !a.valo.by_id.is_empty()),
             setrow("Historique LP".into(), if lp > 0 { "La courbe de LP de tes comptes repart de zéro si tu l'effaces.".into() } else { "Aucune courbe enregistrée.".to_string() }, "Effacer", "clear:lp", lp > 0),
             setrow("Recherches récentes".into(), format!("{recent} joueur{} proposé{} dans la recherche.", if recent > 1 { "s" } else { "" }, if recent > 1 { "s" } else { "" }), "Oublier", "clear:recent", recent > 0),
         ]),
@@ -737,6 +738,8 @@ pub fn action(a: &mut App, key: &str) -> bool {
         render_settings(a);
     } else if key == "export-csv" {
         export_csv(a);
+    } else if key == "export-vcsv" {
+        crate::page_valo::export_csv(a);
     } else if let Some(k) = key.strip_prefix("set:") {
         let mut s = settings();
         toggle_setting(&mut s, k);

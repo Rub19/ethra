@@ -433,7 +433,7 @@ export component VProfileView inherits Rectangle {
                             }
                         }
                     }
-                    if !Data.vprofile.ids-loading && Data.vprofile.empty == "" && (Data.vprofile.tab == "agents" || Data.vprofile.tab == "cartes"): Table {
+                    if !Data.vprofile.ids-loading && Data.vprofile.empty == "" && (Data.vprofile.tab == "agents" || Data.vprofile.tab == "roles" || Data.vprofile.tab == "cartes"): Table {
                         cols: Data.vprofile.cols;
                         rows: Data.vprofile.table;
                         row-height: 48px;
