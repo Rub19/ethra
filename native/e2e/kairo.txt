@@ -11,7 +11,12 @@ expect 13V - 0D
 click Défaites
 click Toutes
 click Tous les modes
-key Escape
+click Draft
+absent Tous les modes
+snap 01b-filtre-draft
+click Draft
+click Tous les modes
+expect Tous les modes
 
 click 30:00, à l'instant
 waitfor Courbe de la partie|20000
