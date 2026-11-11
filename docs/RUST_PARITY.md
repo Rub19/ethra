@@ -173,8 +173,8 @@ Toutes les clés `rw-*` : `rw-settings`, `rw-recent`, `rw-game`, `rw-route-*`, `
 
 `[ ]` à faire, `[x]` fait et vérifié (tests ou parcours e2e), avec la preuve dans « Fait ensuite » ou ici.
 
-- [~] 1. Champions à éviter : pires taux de victoire récents (au moins 3 parties, moins de 45 %). La série en cours existait déjà ; ligne de la carte « Tendances », testée mais absente du jeu d'essai (aucun champion sous 45 %)
-- [~] 2. Conseil de pause après 3 défaites d'affilée, sous la session du jour (test streak_counts_the_latest_run), réglable dans Réglages (« Conseil de pause ») ; pas vu à l'écran : le jeu d'essai finit sur des victoires
+- [x] 1. Champions à éviter : pires taux de victoire récents (au moins 3 parties, moins de 45 %). La série en cours existait déjà ; ligne de la carte « Tendances », testée mais absente du jeu d'essai (aucun champion sous 45 %) ; e2e/serie.txt (jeu d'essai -Variant losing) : « 3 défaites d'affilée… » et « À éviter en ce moment » affichés, 2026-11-11
+- [x] 2. Conseil de pause après 3 défaites d'affilée, sous la session du jour (test streak_counts_the_latest_run), réglable dans Réglages (« Conseil de pause ») ; pas vu à l'écran : le jeu d'essai finit sur des victoires ; e2e/serie.txt (jeu d'essai -Variant losing) : « 3 défaites d'affilée… » et « À éviter en ce moment » affichés, 2026-11-11
 - [x] 3. Objectif de session : lien sous la session du jour qui passe de 2 à 3 puis 5 victoires, « Objectif : 1/3 victoires », « Objectif atteint » (test session_goals_cycle_and_report), joué dans le parcours e2e à 68 étapes ; objectif en LP non fait
 - [x] 4. Taux de victoire par moment de la journée (nuit, matin, après-midi, soir, 3 parties au moins) : carte « Tendances » du profil (test insights_come_from_kept_games), vue dans le parcours e2e à 56 étapes
 - [x] 5. Taux de victoire par jour de la semaine : carte « Tendances » du profil (test insights_come_from_kept_games), vue dans le parcours e2e à 56 étapes

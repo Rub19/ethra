@@ -1,12 +1,13 @@
 import json, sys, time, base64
 out, phase, vphase = sys.argv[1], sys.argv[2], sys.argv[3]
+variant = sys.argv[4] if len(sys.argv) > 4 else ""
 now = int(time.time() * 1000)
 ids = [103, 238, 157, 64, 67, 22, 412, 54, 24, 89]
 def stats(i, win, g):
     return {"win": win, "kills": 3 + i + g % 3, "deaths": 2 + (i % 4), "assists": 5 + i, "totalMinionsKilled": 120 + 12 * i, "neutralMinionsKilled": 4, "totalDamageDealtToChampions": 9000 + 1800 * i, "goldEarned": 9000 + 700 * i, "visionScore": 12 + i, "champLevel": 14, "damageDealtToObjectives": 2000 + 300 * i, "largestMultiKill": 2 + (i % 3), "largestCriticalStrike": 300, "totalHeal": 900,
             "item0": 3089, "item1": 3020, "item2": 3157, "item3": 4645, "item4": 0, "item5": 3135, "item6": 3340, "perk0": 8112, "perk1": 8126, "perk2": 8138, "perk3": 8135, "perk4": 8345, "perk5": 8347, "perkPrimaryStyle": 8100, "perkSubStyle": 8300, "statPerk0": 5008, "statPerk1": 5008, "statPerk2": 5002}
 def full(gid, n):
-    win = n % 3 != 2
+    win = (n % 3 == 0 and n >= 3) if variant == "losing" else n % 3 != 2
     parts = []; idents = []
     for i in range(10):
         team = 100 if i < 5 else 200
@@ -14,7 +15,7 @@ def full(gid, n):
         pu = "me" if i == 0 else f"p{i}"
         idents.append({"participantId": i + 1, "player": {"puuid": pu, "gameName": "Testeur" if i == 0 else f"Joueur{i}", "tagLine": "EUW", "summonerName": ""}})
     teams = [{"teamId": t, "towerKills": 6, "dragonKills": 2, "baronKills": 1, "riftHeraldKills": 1, "hordeKills": 3} for t in (100, 200)]
-    return {"gameId": gid, "gameCreation": now - n * 3600_000 * 5, "gameDuration": 1800 if n != 7 else 200, "queueId": 420 if n % 2 else 400, "mapId": 11, "participants": parts, "participantIdentities": idents, "teams": teams}
+    return {"gameId": gid, "gameCreation": now - (n * 600_000 if n < 5 else n * 3600_000 * 5), "gameDuration": 1800 if n != 7 else 200, "queueId": 420 if n % 2 else 400, "mapId": 11, "participants": parts, "participantIdentities": idents, "teams": teams}
 d = {"lcu:/lol-end-of-game/v1/eog-stats-block": {"gameId": 2000, "gameMode": "ARAM"}, "lcu:/lol-gameflow/v1/gameflow-phase": phase, "lcu:/lol-summoner/v1/current-summoner": {"puuid": "me", "gameName": "Testeur", "tagLine": "EUW", "summonerLevel": 120, "profileIconId": 29, "summonerId": 1}}
 d["lcu:/lol-ranked/v1/ranked-stats/me"] = {"queueMap": {"RANKED_SOLO_5x5": {"tier": "GOLD", "division": "II", "leaguePoints": 40, "wins": 50, "losses": 45}, "RANKED_TFT": {"tier": "SILVER", "division": "I", "leaguePoints": 12, "wins": 5, "losses": 30}}}
 d["lcu:/lol-game-queues/v1/queues"] = [{"id": 420, "description": "Classé Solo/Duo", "name": ""}, {"id": 400, "description": "Draft", "name": ""}, {"id": 450, "description": "ARAM", "name": ""}]

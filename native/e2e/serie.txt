@@ -1,0 +1,7 @@
+# Lancer avec -Script serie.txt -Variant losing : série de défaites et champion à éviter
+wait 3000
+key Ctrl+1
+waitfor Testeur|20000
+waitfor 3 défaites d'affilée : une pause de 10 minutes aide souvent à repartir.|15000
+expect À éviter en ce moment
+snap 01-serie-de-defaites

@@ -39,6 +39,7 @@ click Draft
 click Tous les modes
 expect Tous les modes
 
+scrollto 30:00, à l'instant|300,400
 click 30:00, à l'instant
 waitfor Courbe de la partie|20000
 expect Ton point fort
