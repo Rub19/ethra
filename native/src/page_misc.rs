@@ -286,7 +286,7 @@ fn kept_games() -> usize {
 }
 
 fn human(b: u64) -> String {
-    format!("{:.1} Mo", b as f64 / 1_048_576.0)
+    format!("{:.1} Mo", b as f64 / 1_048_576.0).replace('.', ",")
 }
 
 pub fn render_settings(a: &mut App) {
@@ -325,7 +325,7 @@ pub fn render_settings(a: &mut App) {
         rank_label: ss(rank_label),
         rank_opts: ms(RANK_FILTERS.iter().map(|(k, l)| opt(format!("setrank:{k}"), l, s.rank_filter == *k)).collect()),
         seen: setrow("Joueurs croisés".into(), format!("{seen} joueurs mémorisés pour la recherche. Ils restent sur ce PC."), "Oublier", "clear:seen", seen > 0),
-        keys: ms([("Ctrl K", "Rechercher un joueur ou un champion"), ("Ctrl 1, 2, 3", "Passer sur League, VALORANT ou TFT"), ("Alt ← et Alt →", "Page précédente et suivante"), ("Boutons latéraux", "Page précédente et suivante"), ("F5", "Recharger la page")].iter().map(|(k, t)| KeyLine { key: ss(k), text: ss(t) }).collect()),
+        keys: ms([("Ctrl K", "Rechercher un joueur ou un champion"), ("Ctrl 1, 2, 3", "Passer sur League, VALORANT ou TFT"), ("Alt ← et Alt →", "Page précédente et suivante"), ("Boutons latéraux", "Page précédente et suivante"), ("Ctrl Maj O", "Montrer ou cacher les overlays, même en jeu"), ("F5", "Recharger la page")].iter().map(|(k, t)| KeyLine { key: ss(k), text: ss(t) }).collect()),
         data_rows: ms(vec![
             setrow("Cache TFT".into(), "Noms et icônes du set en cours, rechargés une fois par jour.".into(), "Vider", "clear:tft", true),
             setrow("Images".into(), format!("{} d'images gardées sur ce PC pour aller plus vite.", human(crate::images::disk_cache_size())), "Vider", "clear:images", true),
