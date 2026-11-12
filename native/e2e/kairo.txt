@@ -101,5 +101,8 @@ click Toutes
 click Ascent
 waitfor Manches|20000
 snap 07-valo-match
+scrollto #EUW · Duo A|900,700
+expect #EUW · Duo A
+expect #000 · Duo A
 key Alt+Left
 waitfor Session du jour|10000
