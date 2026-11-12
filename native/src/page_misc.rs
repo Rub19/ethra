@@ -260,10 +260,18 @@ fn set_startup(on: bool) -> Result<(), String> {
     }
 }
 
+pub fn csv_path(name: &str) -> Option<std::path::PathBuf> {
+    #[cfg(feature = "e2e")]
+    if let Some(dir) = std::env::var_os("KAIRO_E2E_EXPORT") {
+        return Some(std::path::PathBuf::from(dir).join(name));
+    }
+    rfd::FileDialog::new().set_file_name(name).add_filter("CSV", &["csv"]).save_file()
+}
+
 fn export_csv(a: &mut App) {
     let mut all: Vec<Game> = store::keys_with("rw-games-").iter().flat_map(|k| store::load::<Vec<Game>>(k).unwrap_or_default()).collect();
     all.sort_by_key(|g| std::cmp::Reverse(g.game_creation));
-    let Some(path) = rfd::FileDialog::new().set_file_name("kairo-parties.csv").add_filter("CSV", &["csv"]).save_file() else { return };
+    let Some(path) = csv_path("kairo-parties.csv") else { return };
     let d = a.d.clone();
     let queues = a.profile.queues.clone();
     let text = games_csv(&all, |c| d.as_ref().and_then(|d| d.champs.get(&c)).map(|x| x.name.clone()).unwrap_or_else(|| c.to_string()), |q| queues.get(&q).cloned().unwrap_or_else(|| q.to_string()), date_long_time);

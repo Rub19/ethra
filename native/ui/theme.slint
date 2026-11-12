@@ -208,9 +208,13 @@ export component CardTitle inherits Text {
 
 export component Ghost {
     in property <string> label;
+    in property <string> a11y;
     in property <bool> enabled: true;
     in property <bool> armed: false;
     callback clicked;
+    accessible-role: button;
+    accessible-label: root.a11y != "" ? root.a11y : root.label;
+    accessible-action-default => { if (root.enabled) { root.clicked(); } }
     min-width: lb.preferred-width + 28px;
     min-height: 36px;
     max-height: 36px;

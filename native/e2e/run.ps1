@@ -18,8 +18,11 @@ $env:KAIRO_OFFSCREEN = "1"
 $env:KAIRO_E2E = Join-Path $PSScriptRoot $Script
 $env:KAIRO_E2E_LOG = "$out\journal.txt"
 $env:KAIRO_E2E_SNAP = "$out\captures"
+New-Item -ItemType Directory "$out\exports" | Out-Null
+$env:KAIRO_E2E_EXPORT = "$out\exports"
 $app = Start-Process "target\debug\ethra.exe" -PassThru -WindowStyle Hidden
 $app.PriorityClass = "BelowNormal"
 $app.WaitForExit()
 Get-Content "$out\journal.txt" -Encoding utf8
+Get-ChildItem "$out\exports" -ErrorAction SilentlyContinue | ForEach-Object { "export : {0} ({1} octets)" -f $_.Name, $_.Length }
 "Captures : $out\captures"

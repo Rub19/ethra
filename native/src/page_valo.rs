@@ -469,7 +469,7 @@ pub fn export_csv(a: &mut App) {
         a.toast("Aucune partie VALORANT chargée pour l'instant");
         return;
     }
-    let Some(path) = rfd::FileDialog::new().set_file_name("kairo-valorant.csv").add_filter("CSV", &["csv"]).save_file() else { return };
+    let Some(path) = crate::page_misc::csv_path("kairo-valorant.csv") else { return };
     match std::fs::write(&path, matches_csv(&lines)) {
         Ok(()) => a.toast(format!("{} parties VALORANT exportées", lines.len())),
         Err(e) => a.toast(format!("Export impossible : {e}")),

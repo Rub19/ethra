@@ -21,6 +21,7 @@ component SetLine {
             horizontal-stretch: 0;
             Ghost {
                 label: root.r.btn;
+                a11y: root.r.btn + " : " + root.r.title;
                 enabled: root.r.enabled;
                 armed: root.r.armed;
                 clicked => { Act.act(root.r.key); }

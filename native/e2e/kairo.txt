@@ -101,5 +101,15 @@ waitfor Manches|20000
 snap 07-valo-match
 scrollto Valo1|900,700
 snap 07b-valo-groupes
+click Réglages
+wait 1500
+scrollto Exporter : Exporter mes parties VALORANT|900,500
+invoke Exporter : Exporter mes parties VALORANT
+wait 800
+expect parties VALORANT exportées
+invoke Exporter : Exporter mes parties
+wait 800
+key Alt+Left
+wait 800
 key Alt+Left
 waitfor Session du jour|10000
