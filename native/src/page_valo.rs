@@ -743,6 +743,7 @@ pub fn render_match(a: &mut App) {
             }
         })
         .collect();
+    let groups = crate::valo_api::match_parties(&m.players);
     let player = |id: &str| m.players.iter().find(|x| x.subject == id);
     let label = |id: &str| {
         player(id)
@@ -825,7 +826,8 @@ pub fn render_match(a: &mut App) {
             let diff = ps.kills - ps.deaths;
             let tier = d.tiers.get(&x.competitive_tier).filter(|_| x.competitive_tier > 2);
             let mut c0 = iconed(if name.is_empty() { "…".to_string() } else { name }, agent_icon(&d, &x.character_id));
-            c0.sub = ss(if tag.is_empty() { String::new() } else { format!("#{tag}") });
+            let party = groups.get(&x.subject).map(|g| format!(" · {g}")).unwrap_or_default();
+            c0.sub = ss(if tag.is_empty() { party.trim_start_matches(" · ").to_string() } else { format!("#{tag}{party}") });
             let mut rk = txt(if tier.is_some() { "" } else { "–" });
             if let Some(t) = tier {
                 rk.kind = 2;

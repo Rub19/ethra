@@ -368,6 +368,54 @@ pub fn highlight(g: &Game, p: &Participant) -> (&'static str, &'static str, f64)
     best
 }
 
+pub fn parties(team: &[(String, Vec<i64>)], skip: i64) -> std::collections::HashMap<String, (usize, usize)> {
+    let mut root: Vec<usize> = (0..team.len()).collect();
+    fn find(root: &mut Vec<usize>, i: usize) -> usize {
+        if root[i] != i {
+            let r = find(root, root[i]);
+            root[i] = r;
+        }
+        root[i]
+    }
+    for i in 0..team.len() {
+        for j in i + 1..team.len() {
+            if team[i].0.is_empty() || team[j].0.is_empty() {
+                continue;
+            }
+            let shared = team[i].1.iter().filter(|id| **id != skip && team[j].1.contains(id)).count();
+            if shared >= 2 {
+                let (a, b) = (find(&mut root, i), find(&mut root, j));
+                root[a] = b;
+            }
+        }
+    }
+    let mut groups: Vec<(usize, Vec<usize>)> = Vec::new();
+    for i in 0..team.len() {
+        let r = find(&mut root, i);
+        match groups.iter_mut().find(|g| g.0 == r) {
+            Some(g) => g.1.push(i),
+            None => groups.push((r, vec![i])),
+        }
+    }
+    let mut out = std::collections::HashMap::new();
+    for (n, (_, members)) in groups.into_iter().filter(|g| g.1.len() >= 2).enumerate() {
+        for i in &members {
+            out.insert(team[*i].0.clone(), (n, members.len()));
+        }
+    }
+    out
+}
+
+pub fn party_label(index: usize, size: usize) -> String {
+    let kind = match size {
+        2 => "Duo",
+        3 => "Trio",
+        4 => "Quatuor",
+        _ => "Five stack",
+    };
+    format!("{kind} {}", ["A", "B", "C"].get(index).unwrap_or(&""))
+}
+
 pub const PINS: usize = 10;
 
 pub fn toggle_pin(list: &mut Vec<Value>, puuid: &str, name: &str) -> bool {
@@ -476,6 +524,22 @@ pub fn streak<I: IntoIterator<Item = bool>>(results: I) -> Option<(bool, usize)>
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn players_sharing_recent_games_form_parties() {
+        let p = |id: &str, games: &[i64]| (id.to_string(), games.to_vec());
+        let team = vec![p("a", &[1, 2, 3]), p("b", &[2, 3, 9]), p("c", &[3, 4, 5]), p("d", &[4, 5]), p("e", &[7])];
+        let found = parties(&team, 0);
+        assert_eq!(found["a"].1, 2);
+        assert_eq!(found["a"].0, found["b"].0);
+        assert_eq!(found["c"].1, 2);
+        assert_ne!(found["a"].0, found["c"].0);
+        assert!(!found.contains_key("e"));
+        let five = vec![p("a", &[1, 2]), p("b", &[1, 2]), p("c", &[1, 2]), p("d", &[1, 2]), p("e", &[1, 2])];
+        assert_eq!(party_label(0, parties(&five, 0)["e"].1), "Five stack A");
+        assert!(parties(&five, 1).is_empty());
+        assert_eq!(party_label(1, 3), "Trio B");
+    }
 
     #[test]
     fn highlight_picks_the_stat_where_i_rank_best() {

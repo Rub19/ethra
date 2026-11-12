@@ -890,7 +890,6 @@ export component AppWindow inherits Window {
     in-out property <bool> gmenu;
     in-out property <bool> gsticky;
     in-out property <bool> account;
-    property <bool> over-menu: gm.visible && gmt.has-hover;
     public function focus-search() {
         head.focus-search();
     }
@@ -981,24 +980,6 @@ export component AppWindow inherits Window {
                 root.gsticky = !root.gsticky;
                 root.gmenu = root.gsticky;
             }
-            changed pick-hover => {
-                if (self.pick-hover) {
-                    root.gmenu = true;
-                    close-timer.running = false;
-                } else if (!root.gsticky) {
-                    close-timer.running = true;
-                }
-            }
-        }
-        close-timer := Timer {
-            interval: 180ms;
-            running: false;
-            triggered => {
-                self.running = false;
-                if (!head.pick-hover && !gmt.has-hover && !root.gsticky) {
-                    root.gmenu = false;
-                }
-            }
         }
         gm := GameMenu {
             x: 10px;
@@ -1006,17 +987,6 @@ export component AppWindow inherits Window {
             width: 620px;
             height: 346px;
             open: root.gmenu;
-            gmt := TouchArea {
-                x: 0px;
-                y: 0px;
-                changed has-hover => {
-                    if (!self.has-hover && !root.gsticky) {
-                        close-timer.running = true;
-                    } else {
-                        close-timer.running = false;
-                    }
-                }
-            }
         }
         SearchResults {
             x: head.search-x;

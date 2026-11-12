@@ -44,12 +44,16 @@ click 30:00, à l'instant
 waitfor Courbe de la partie|20000
 expect Ton point fort
 expect Copier l'image
+wait 3000
 type Ma note sur cette partie, gardée sur ce PC…|Bon early
 click Or
 click XP
 click CS
 snap 02-partie
 scrollto Joueur3|900,700
+scrollto #EUW · Trio A|900,700
+expect #EUW · Trio A
+snap 02b-groupes
 click Joueur3
 waitfor Épingler ce joueur|20000
 click Épingler ce joueur

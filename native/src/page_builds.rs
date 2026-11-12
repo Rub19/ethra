@@ -763,7 +763,12 @@ fn damage(team: &[Slot], d: &DD, label: &str) -> DmgBar {
     DmgBar { label: ss(label), ad: (ad / tot) as f32, ap: (ap / tot) as f32, ad_text: ss(format!("{}% AD", (ad / tot * 100.0).round())), ap_text: ss(format!("{}% AP", (ap / tot * 100.0).round())), show: true }
 }
 
-fn player_card(s: &Slot, a: &App, d: &DD) -> PlayerCard {
+fn team_parties(a: &App, team: &[Slot]) -> HashMap<String, (usize, usize)> {
+    let list: Vec<(String, Vec<i64>)> = team.iter().map(|s| (s.puuid.clone(), a.live.info.get(&s.puuid).map(|i| i.games.iter().map(|g| g.game_id).collect()).unwrap_or_default())).collect();
+    crate::history::parties(&list, 0)
+}
+
+fn player_card(s: &Slot, a: &App, d: &DD, party: Option<&(usize, usize)>) -> PlayerCard {
     let info = a.live.info.get(&s.puuid);
     let g: &[Game] = info.map(|i| i.games.as_slice()).unwrap_or(&[]);
     let c = d.champs.get(&s.champion);
@@ -776,7 +781,7 @@ fn player_card(s: &Slot, a: &App, d: &DD) -> PlayerCard {
     let wr = if g.is_empty() { 0.0 } else { wins as f64 / g.len() as f64 };
     PlayerCard {
         art: ss(c.map(|x| img_loading(&x.id)).unwrap_or_default()),
-        tags: ms(info.map(|i| player_tags(i, s.champion)).unwrap_or_default().iter().map(ss).collect()),
+        tags: ms(party.map(|(n, size)| crate::history::party_label(*n, *size)).into_iter().chain(info.map(|i| player_tags(i, s.champion)).unwrap_or_default()).map(ss).collect()),
         rank: ss(match tier {
             Some(q) => {
                 let high = TIERS.iter().position(|t| *t == q.tier).unwrap_or(0) >= 7;
@@ -821,8 +826,14 @@ pub fn render_live(a: &mut App) {
         build_hint: cs_phase && a.live.mine.0 == 0,
         dmg1: damage(&t[0], &d, "Dégâts de ton équipe (estimés)"),
         dmg2: if t[1].iter().any(|x| x.champion != 0) { damage(&t[1], &d, "Dégâts adverses (estimés)") } else { DmgBar::default() },
-        team1: ms(t[0].iter().map(|s| player_card(s, a, &d)).collect()),
-        team2: ms(t[1].iter().map(|s| player_card(s, a, &d)).collect()),
+        team1: {
+            let p = team_parties(a, &t[0]);
+            ms(t[0].iter().map(|s| player_card(s, a, &d, p.get(&s.puuid))).collect())
+        },
+        team2: {
+            let p = team_parties(a, &t[1]);
+            ms(t[1].iter().map(|s| player_card(s, a, &d, p.get(&s.puuid))).collect())
+        },
     };
     a.data().set_live(data);
 }

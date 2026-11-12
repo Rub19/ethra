@@ -569,6 +569,7 @@ pub struct MatchState {
     pub queues: Arc<HashMap<i64, String>>,
     pub share: Option<ShareData>,
     pub share_win: Option<crate::ShareWindow>,
+    pub histories: HashMap<String, Vec<i64>>,
 }
 
 pub fn open_match(a: &mut App, game_id: i64, puuid: String) {
@@ -576,6 +577,7 @@ pub fn open_match(a: &mut App, game_id: i64, puuid: String) {
     a.match_.frames.clear();
     a.match_.puuid = puuid;
     a.match_.metric = "cs".into();
+    a.match_.histories.clear();
     a.data().set_match(MatchPage { loading: true, ..Default::default() });
     let gen = a.gen;
     spawn(async move {
@@ -591,9 +593,21 @@ pub fn open_match(a: &mut App, game_id: i64, puuid: String) {
             match res {
                 Ok((d, g, q)) => {
                     a.d = Some(d);
+                    let players: Vec<String> = g.participant_identities.iter().map(|x| x.player.puuid.clone()).filter(|p| !p.is_empty()).collect();
                     a.match_.game = Some(g);
                     a.match_.queues = q;
                     render_match(a);
+                    for puuid in players {
+                        spawn(async move {
+                            let ids: Vec<i64> = history(&puuid, 20).await.unwrap_or_default().iter().map(|x| x.game_id).collect();
+                            on_ui(move |a| {
+                                if a.gen == gen {
+                                    a.match_.histories.insert(puuid, ids);
+                                    render_match(a);
+                                }
+                            });
+                        });
+                    }
                 }
                 Err(e) => a.data().set_match(MatchPage { error: ss(crate::text::friendly_error(&e)), ..Default::default() }),
             }
@@ -662,6 +676,10 @@ fn hex(v: u32) -> Color {
 }
 
 pub fn scoreboard(g: &Game, d: &DD, puuid: &str) -> (Vec<Col>, Vec<TRow>) {
+    scoreboard_with(g, d, puuid, &HashMap::new())
+}
+
+pub fn scoreboard_with(g: &Game, d: &DD, puuid: &str, histories: &HashMap<String, Vec<i64>>) -> (Vec<Col>, Vec<TRow>) {
     let cols = vec![col("", 0.0), col("K / D / A", 120.0), col("KP", 70.0), col("CS", 110.0), col("Dégâts", 170.0), col("Objets", 240.0)];
     let min = g.game_duration as f64 / 60.0;
     let max_dmg = g.participants.iter().map(|x| n(&x.stats, "totalDamageDealtToChampions")).fold(1.0, f64::max);
@@ -669,6 +687,8 @@ pub fn scoreboard(g: &Game, d: &DD, puuid: &str) -> (Vec<Col>, Vec<TRow>) {
     let mut rows = vec![];
     for t in [my_team, if my_team == 100 { 200 } else { 100 }] {
         let list: Vec<&Participant> = g.participants.iter().filter(|x| x.team_id == t).collect();
+        let team_ids: Vec<(String, Vec<i64>)> = list.iter().map(|x| g.who(x.participant_id).map(|w| w.puuid.clone()).unwrap_or_default()).map(|p| { let ids = histories.get(&p).cloned().unwrap_or_default(); (p, ids) }).collect();
+        let groups = crate::history::parties(&team_ids, g.game_id);
         let won = list.first().is_some_and(|p| win(p));
         let sum = |k: &str| list.iter().map(|x| n(&x.stats, k)).sum::<f64>() as i64;
         let (k, de, asst) = (sum("kills"), sum("deaths"), sum("assists"));
@@ -682,7 +702,8 @@ pub fn scoreboard(g: &Game, d: &DD, puuid: &str) -> (Vec<Col>, Vec<TRow>) {
             let who = g.who(x.participant_id);
             let dmg = n(&x.stats, "totalDamageDealtToChampions");
             let mut c0 = iconed(who.map(|w| w.game_name.clone()).filter(|s| !s.is_empty()).unwrap_or_else(|| "?".into()), img_champ(d, x.champion_id));
-            c0.sub = ss(format!("#{}", who.map(|w| w.tag_line.clone()).unwrap_or_default()));
+            let party = who.and_then(|w| groups.get(&w.puuid)).map(|(n, size)| format!(" · {}", crate::history::party_label(*n, *size))).unwrap_or_default();
+            c0.sub = ss(format!("#{}{party}", who.map(|w| w.tag_line.clone()).unwrap_or_default()));
             let mut c1 = txt(format!("{} / {} / {}", n(&x.stats, "kills"), n(&x.stats, "deaths"), n(&x.stats, "assists")));
             c1.sub = ss(format!("{:.2} KDA", kda(&x.stats)));
             let mut c3 = txt((cs(&x.stats) as i64).to_string());
@@ -793,7 +814,7 @@ fn render_match(a: &mut App) {
             })
             .collect()
     };
-    let (cols, rows) = scoreboard(&g, &d, &puuid);
+    let (cols, rows) = scoreboard_with(&g, &d, &puuid, &a.match_.histories);
     let msg = a.data().get_match().share_msg;
     let page = MatchPage {
         loading: false,
