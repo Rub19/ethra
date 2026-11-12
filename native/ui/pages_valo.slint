@@ -666,7 +666,6 @@ component VLiveRowView inherits Rectangle {
                     spacing: 8px;
                     alignment: start;
                     Small { text: root.p.sub; font-size: 13px; }
-                    if root.p.party != "": VerticalLayout { alignment: center; Em { text: root.p.party; fg: root.p.party-color; } }
                     if root.p.locked: VerticalLayout { alignment: center; Em { text: "Verrouillé"; fg: Theme.teal; } }
                     if root.p.level != "": Small { text: root.p.level; font-size: 13px; }
                 }

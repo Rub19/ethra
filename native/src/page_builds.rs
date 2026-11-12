@@ -781,7 +781,8 @@ fn player_card(s: &Slot, a: &App, d: &DD, party: Option<&(usize, usize)>) -> Pla
     let wr = if g.is_empty() { 0.0 } else { wins as f64 / g.len() as f64 };
     PlayerCard {
         art: ss(c.map(|x| img_loading(&x.id)).unwrap_or_default()),
-        tags: ms(party.map(|(n, size)| crate::history::party_label(*n, *size)).into_iter().chain(info.map(|i| player_tags(i, s.champion)).unwrap_or_default()).map(ss).collect()),
+        party_color: party.map(|(n, _)| Color::from_argb_encoded(0xff000000 | crate::history::party_rgb(*n))).unwrap_or(Color::from_argb_encoded(0)),
+        tags: ms(info.map(|i| player_tags(i, s.champion)).unwrap_or_default().iter().map(ss).collect()),
         rank: ss(match tier {
             Some(q) => {
                 let high = TIERS.iter().position(|t| *t == q.tier).unwrap_or(0) >= 7;

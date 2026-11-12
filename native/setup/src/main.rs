@@ -352,7 +352,7 @@ mod tests {
     #[test]
     fn tauri_update_arguments_are_understood() {
         let args: Vec<String> = ["/P", "/UPDATE", "/R", "/ARGS", "\"--background\""].iter().map(|s| s.to_string()).collect();
-        let parsed = parse(&args, "Kairo_0.4.0_x64-setup.exe");
+        let parsed = parse(&args, "Kairo_0.4.1_x64-setup.exe");
         assert!(parsed.mode == Mode::Install && parsed.passive && parsed.relaunch && !parsed.silent);
         assert_eq!(parsed.app_args, vec!["--background".to_string()]);
         let parsed = parse(&["/S".to_string()], "uninstall.exe");

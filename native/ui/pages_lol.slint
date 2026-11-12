@@ -1705,6 +1705,13 @@ component PCard inherits Rectangle {
         animate border-color { duration: Motion.fast; }
         Pic { url: root.c.art; }
         Rectangle { background: @linear-gradient(180deg, #0b0f17 0%, #0b0f17aa 45%, #0b0f17ee 100%); }
+        if root.c.party-color.alpha > 0: Rectangle {
+            x: 0px;
+            y: 0px;
+            width: 4px;
+            height: parent.height;
+            background: root.c.party-color;
+        }
         pp := Press {
             enabled: root.c.route != "";
             ring-radius: 12px;

@@ -51,8 +51,6 @@ click XP
 click CS
 snap 02-partie
 scrollto Joueur3|900,700
-scrollto #EUW · Trio A|900,700
-expect #EUW · Trio A
 snap 02b-groupes
 click Joueur3
 waitfor Épingler ce joueur|20000
@@ -101,8 +99,7 @@ click Toutes
 click Ascent
 waitfor Manches|20000
 snap 07-valo-match
-scrollto #EUW · Duo A|900,700
-expect #EUW · Duo A
-expect #000 · Duo A
+scrollto Valo1|900,700
+snap 07b-valo-groupes
 key Alt+Left
 waitfor Session du jour|10000

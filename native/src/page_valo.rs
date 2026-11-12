@@ -826,8 +826,11 @@ pub fn render_match(a: &mut App) {
             let diff = ps.kills - ps.deaths;
             let tier = d.tiers.get(&x.competitive_tier).filter(|_| x.competitive_tier > 2);
             let mut c0 = iconed(if name.is_empty() { "…".to_string() } else { name }, agent_icon(&d, &x.character_id));
-            let party = groups.get(&x.subject).map(|g| format!(" · {g}")).unwrap_or_default();
-            c0.sub = ss(if tag.is_empty() { party.trim_start_matches(" · ").to_string() } else { format!("#{tag}{party}") });
+            let group = groups.get(&x.subject);
+            c0.sub = ss(if tag.is_empty() { String::new() } else { format!("#{tag}") });
+            if let Some((_, n)) = group {
+                c0.mark = Color::from_argb_encoded(0xff000000 | crate::history::party_rgb(*n));
+            }
             let mut rk = txt(if tier.is_some() { "" } else { "–" });
             if let Some(t) = tier {
                 rk.kind = 2;

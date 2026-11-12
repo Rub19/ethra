@@ -406,14 +406,18 @@ pub fn parties(team: &[(String, Vec<i64>)], skip: i64) -> std::collections::Hash
     out
 }
 
-pub fn party_label(index: usize, size: usize) -> String {
-    let kind = match size {
+pub fn party_label(size: usize) -> String {
+    match size {
         2 => "Duo",
         3 => "Trio",
         4 => "Quatuor",
         _ => "Five stack",
-    };
-    format!("{kind} {}", ["A", "B", "C"].get(index).unwrap_or(&""))
+    }
+    .to_string()
+}
+
+pub fn party_rgb(index: usize) -> u32 {
+    [0xf6c867, 0x6fa8ff, 0xc58cff, 0xff9a62, 0x5fe0c8][index % 5]
 }
 
 pub const PINS: usize = 10;
@@ -536,9 +540,10 @@ mod tests {
         assert_ne!(found["a"].0, found["c"].0);
         assert!(!found.contains_key("e"));
         let five = vec![p("a", &[1, 2]), p("b", &[1, 2]), p("c", &[1, 2]), p("d", &[1, 2]), p("e", &[1, 2])];
-        assert_eq!(party_label(0, parties(&five, 0)["e"].1), "Five stack A");
+        assert_eq!(party_label(parties(&five, 0)["e"].1), "Five stack");
         assert!(parties(&five, 1).is_empty());
-        assert_eq!(party_label(1, 3), "Trio B");
+        assert_eq!(party_label(3), "Trio");
+        assert_ne!(party_rgb(0), party_rgb(1));
     }
 
     #[test]

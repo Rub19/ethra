@@ -702,8 +702,11 @@ pub fn scoreboard_with(g: &Game, d: &DD, puuid: &str, histories: &HashMap<String
             let who = g.who(x.participant_id);
             let dmg = n(&x.stats, "totalDamageDealtToChampions");
             let mut c0 = iconed(who.map(|w| w.game_name.clone()).filter(|s| !s.is_empty()).unwrap_or_else(|| "?".into()), img_champ(d, x.champion_id));
-            let party = who.and_then(|w| groups.get(&w.puuid)).map(|(n, size)| format!(" · {}", crate::history::party_label(*n, *size))).unwrap_or_default();
-            c0.sub = ss(format!("#{}{party}", who.map(|w| w.tag_line.clone()).unwrap_or_default()));
+            let group = who.and_then(|w| groups.get(&w.puuid));
+            c0.sub = ss(format!("#{}", who.map(|w| w.tag_line.clone()).unwrap_or_default()));
+            if let Some((n, _)) = group {
+                c0.mark = Color::from_argb_encoded(0xff000000 | crate::history::party_rgb(*n));
+            }
             let mut c1 = txt(format!("{} / {} / {}", n(&x.stats, "kills"), n(&x.stats, "deaths"), n(&x.stats, "assists")));
             c1.sub = ss(format!("{:.2} KDA", kda(&x.stats)));
             let mut c3 = txt((cs(&x.stats) as i64).to_string());

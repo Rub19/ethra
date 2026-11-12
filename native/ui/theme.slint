@@ -57,7 +57,7 @@ export struct Stat { value: string, label: string, tone: int }
 export struct Badge { text: string, gold: bool }
 export struct Perf { icon: string, title: string, sub: string, right: string, right-sub: string, tone: int, route: string }
 export struct RankRow { emblem: string, has: bool, label: string, value: string, color: color, sub: string }
-export struct Cell { text: string, sub: string, icon: string, tone: int, bar: float, icons: [string], kind: int, key: string, on: bool, color: color, use-color: bool }
+export struct Cell { text: string, sub: string, icon: string, tone: int, bar: float, icons: [string], kind: int, key: string, on: bool, color: color, use-color: bool, mark: color }
 export struct Col { label: string, px: length, sort: string, active: bool, desc: bool }
 export struct TRow { cells: [Cell], route: string, me: bool, header: bool }
 export struct Chip { text: string, tone: int, pill: bool }
@@ -726,6 +726,15 @@ component CellView inherits Rectangle {
         spacing: 8px;
         padding-left: 8px;
         padding-right: 8px;
+        if root.c.kind == 0 && (root.c.icon != "" || root.c.mark.alpha > 0): VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 3px;
+                height: 30px;
+                border-radius: 2px;
+                background: root.c.mark;
+            }
+        }
         if root.c.kind == 0 && root.c.icon != "": VerticalLayout {
             alignment: center;
             Pic {

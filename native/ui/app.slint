@@ -374,24 +374,6 @@ component Header {
                         }
                     }
                 }
-                if !Data.has-account: HorizontalLayout {
-                    spacing: 8px;
-                    VerticalLayout {
-                        alignment: center;
-                        Rectangle {
-                            width: 8px;
-                            height: 8px;
-                            border-radius: 4px;
-                            background: Data.client-on ? Theme.teal : Theme.loss;
-                        }
-                    }
-                    if Theme.win-w > 1200px: Text {
-                        text: Data.client-text;
-                        font-size: 13.5px;
-                        color: Theme.muted;
-                        vertical-alignment: center;
-                    }
-                }
             }
             HorizontalLayout {
                 padding-left: 12px;

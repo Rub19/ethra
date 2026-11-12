@@ -491,7 +491,7 @@ pub async fn v_parties(puuids: &[String], self_id: &str) -> HashMap<String, Stri
 
 pub const PARTY_LABEL: [&str; 6] = ["", "", "Duo", "Trio", "Quatuor", "Five stack"];
 
-pub fn match_parties(players: &[VPlayer]) -> HashMap<String, String> {
+pub fn match_parties(players: &[VPlayer]) -> HashMap<String, (String, usize)> {
     let mut groups: Vec<(&str, &str, Vec<&str>)> = Vec::new();
     for p in players.iter().filter(|p| !p.party_id.is_empty()) {
         match groups.iter_mut().find(|g| g.0 == p.party_id && g.1 == p.team_id) {
@@ -500,13 +500,10 @@ pub fn match_parties(players: &[VPlayer]) -> HashMap<String, String> {
         }
     }
     let mut out = HashMap::new();
-    let mut letter = std::collections::HashMap::<&str, usize>::new();
-    for (_, team, members) in groups.iter().filter(|g| g.2.len() >= 2) {
-        let n = letter.entry(team).or_insert(0);
+    for (n, (_, _, members)) in groups.iter().filter(|g| g.2.len() >= 2).enumerate() {
         for m in members {
-            out.insert(m.to_string(), format!("{} {}", PARTY_LABEL[members.len().min(5)], ["A", "B", "C"].get(*n).unwrap_or(&"")));
+            out.insert(m.to_string(), (PARTY_LABEL[members.len().min(5)].to_string(), n));
         }
-        *n += 1;
     }
     out
 }
@@ -593,8 +590,9 @@ mod tests {
         let p = |id: &str, party: &str, team: &str| VPlayer { subject: id.into(), party_id: party.into(), team_id: team.into(), ..Default::default() };
         let players = vec![p("a", "x", "Blue"), p("b", "x", "Blue"), p("c", "y", "Blue"), p("d", "z", "Red"), p("e", "z", "Red"), p("f", "z", "Red"), p("g", "w", "Red")];
         let found = match_parties(&players);
-        assert_eq!(found["a"], "Duo A");
-        assert_eq!(found["d"], "Trio A");
+        assert_eq!(found["a"].0, "Duo");
+        assert_eq!(found["d"].0, "Trio");
+        assert_ne!(found["a"].1, found["d"].1);
         assert!(!found.contains_key("c") && !found.contains_key("g"));
     }
 

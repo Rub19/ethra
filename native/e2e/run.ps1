@@ -1,9 +1,9 @@
-param([string]$Script = "kairo.txt", [string]$Phase = "None", [string]$ValoPhase = "MENUS", [string]$Remove = "", [string]$Variant = "")
+param([string]$Script = "kairo.txt", [string]$Phase = "None", [string]$ValoPhase = "MENUS", [string]$Remove = "", [string]$Variant = "", [switch]$PendantJeu)
 $ErrorActionPreference = "Stop"
 Set-Location (Split-Path $PSScriptRoot)
-if (Get-Process "League of Legends","VALORANT-Win64-Shipping" -ErrorAction SilentlyContinue) { "Un jeu est ouvert : rien n'est lancé."; exit 2 }
-$build = Start-Process cargo -ArgumentList "build","--features","e2e","-j","3" -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP\kairo-e2e-build.txt"
-$build.PriorityClass = "BelowNormal"
+if (-not $PendantJeu -and (Get-Process "League of Legends","VALORANT-Win64-Shipping" -ErrorAction SilentlyContinue)) { "Un jeu est ouvert : rien n'est lancé."; exit 2 }
+$build = Start-Process cargo -ArgumentList "build","--features","e2e","-j",$(if ($PendantJeu) { "2" } else { "3" }) -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP\kairo-e2e-build.txt"
+$build.PriorityClass = $(if ($PendantJeu) { "Idle" } else { "BelowNormal" })
 $build.WaitForExit()
 if (Select-String -Path "$env:TEMP\kairo-e2e-build.txt" -Pattern "^error" -Quiet) { Get-Content "$env:TEMP\kairo-e2e-build.txt" | Select-String "^error" -Context 0,10 | Select-Object -First 3; exit 1 }
 $out = Join-Path $env:TEMP "kairo-e2e"

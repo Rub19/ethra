@@ -28,8 +28,6 @@ aram = full(2000, 0)
 aram.update({"queueId": 450, "mapId": 12, "gameDuration": 596})
 aram["participants"][0]["stats"].update({"totalHeal": 1932, "timeCCingOthers": 36, "totalDamageTaken": 21000})
 d["lcu:/lol-match-history/v1/games/2000"] = aram
-for pu in ("p1", "p2"):
-    d[f"lcu:/lol-match-history/v1/products/lol/{pu}/matches?begIndex=0&endIndex=19"] = {"games": {"games": [games[1], games[2]]}}
 for count in (19, 99):
     d[f"lcu:/lol-match-history/v1/products/lol/me/matches?begIndex=0&endIndex={count}"] = {"games": {"games": games}}
 tft = [{"metadata": {"match_id": f"T{i}"}, "json": {"game_datetime": now - i * 7200_000, "game_length": 1800.5, "queue_id": 1100, "participants": [{"puuid": "me", "placement": 1 + i % 8, "level": 8, "units": [{"characterId": "TFT15_Ahri", "tier": 2, "rarity": 2}], "traits": [{"name": "TFT15_Mage", "num_units": 3, "style": 2}]}]}} for i in range(20)]
@@ -38,7 +36,7 @@ d["lcu:/lol-match-history/v1/products/tft/me/matches?begin=20&count=20"] = {"gam
 for i in range(1, 10):
     d[f"lcu:/lol-summoner/v2/summoners/puuid/p{i}"] = {"puuid": f"p{i}", "gameName": f"Joueur{i}", "tagLine": "EUW", "summonerLevel": 50, "profileIconId": 29}
     d[f"lcu:/lol-ranked/v1/ranked-stats/p{i}"] = {"queueMap": {"RANKED_SOLO_5x5": {"tier": "PLATINUM", "division": "III", "leaguePoints": 10, "wins": 10, "losses": 5}}}
-    d[f"lcu:/lol-match-history/v1/products/lol/p{i}/matches?begIndex=0&endIndex=19"] = {"games": {"games": games}}
+    d[f"lcu:/lol-match-history/v1/products/lol/p{i}/matches?begIndex=0&endIndex=19"] = {"games": {"games": [games[1], games[2]] if i in (1, 2) else [dict(g, gameId=g["gameId"] + 1000 * i) for g in games]}}
 d["lcu:/lol-summoner/v2/summoners/puuid/me"] = d["lcu:/lol-summoner/v1/current-summoner"]
 d["lcu:/lol-champ-select/v1/session"] = {"localPlayerCellId": 0, "myTeam": [{"cellId": i, "puuid": "me" if i == 0 else f"p{i}", "championId": ids[i], "assignedPosition": ["middle", "jungle", "top", "bottom", "utility"][i], "gameName": ""} for i in range(5)], "theirTeam": [{"cellId": 5 + i, "puuid": "", "championId": ids[5 + i], "assignedPosition": "", "gameName": ""} for i in range(5)]}
 d["lcu:/lol-champ-select/v1/current-champion"] = 103

@@ -54,7 +54,7 @@ export struct BuildsData {
     has-skills: bool, max-line: string, variants: [SkillVariant], skills: [SkillRow], levels: [string], jungle: JungleData,
     has-counters: bool, weak: [CounterCell], strong: [CounterCell],
 }
-export struct PlayerCard { art: string, tags: [string], rank: string, rank-color: color, record: string, name: string, sub: string, wr: string, wr-tone: int, champ-line: string, route: string, me: bool }
+export struct PlayerCard { party-color: color, art: string, tags: [string], rank: string, rank-color: color, record: string, name: string, sub: string, wr: string, wr-tone: int, champ-line: string, route: string, me: bool }
 export struct DmgBar { label: string, ad: float, ap: float, ad-text: string, ap-text: string, show: bool }
 export struct LiveData { waiting: bool, title: string, show-build: bool, build-hint: bool, dmg1: DmgBar, dmg2: DmgBar, team1: [PlayerCard], team2: [PlayerCard] }
 export struct OvRow { icon: string, label: string, value: string, tone: int, bar: float }
